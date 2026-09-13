@@ -10,10 +10,10 @@
 ## 基本方針
 
 - Marine APIとWeather APIを分離して取得する。
-- Marineは海グリッドを優先し、Weatherは陸上風と海上風を分けて取得する。
+- Marineは海グリッド、Weatherは海岸側の10m風を基準として使う。
 - 代表9地点の表示名ではなく `docs/representative-spots.md` の内部基準点を使う。
 - APIレスポンスが返す実際のグリッド中心座標を保存する。要求座標と数kmずれる場合があるため、要求座標だけを記録して終わらせない。
-- 湾、岬、堤防、ヘッドランドによる遮蔽は5〜9km級の波浪モデルだけでは解像できない前提で、地点別補正を後段に持つ。
+- 湾、岬、堤防、ヘッドランドによる遮蔽は波浪モデル格子だけでは解像できない前提で、地点別補正を後段に持つ。
 - 関西版のサイズ閾値・点数ロジックをそのままコピーしない。
 
 ## Marine API
@@ -70,6 +70,7 @@ Open-Meteo自身が沿岸域での潮位・海流精度に注意を出してい�
 
 - `timezone=Asia/Tokyo`
 - `wind_speed_unit=ms`
+- `cell_selection=land`
 - モデルはまず `auto` を使用し、検証で明確な改善がある場合だけ固定モデルを検討する。
 
 ### 必須変数
@@ -85,27 +86,19 @@ Open-Meteo自身が沿岸域での潮位・海流精度に注意を出してい�
 - `temperature_2m`
 - `cloud_cover`
 
-## 風データは2系統で取る
-
-### 1. beach wind
+## 風データのv1方針
 
 内部基準点座標を使い `cell_selection=land` で取得する。
-サーファーが海岸で受ける陸側10m風の基準値として扱う。
+サーファーが海岸で受ける10m風の基準値として扱う。
 
-### 2. sea wind
+当初は同一座標で `cell_selection=land` と `cell_selection=sea` の2系統取得を想定したが、2026-09-13の9地点実通信テストでは、全地点でland/seaが同一のWeather格子座標に解決された。同一座標からsea指定を追加しても独立した風情報にならないため、v1では重複取得を行わない。
 
-同じ代表点付近を `cell_selection=sea` で取得する。
-沖側の風系統と陸側の局地風の差を見る補助値として扱う。
+Open-Meteoの `cell_selection` は格子選択の「preference」であり、同一海岸座標でlandとseaが必ず別格子になる保証として扱わない。
 
-### 差が大きい場合
+### 将来のoffshore wind
 
-以下は「予報不確実度が高い」とみなし、点数を過信しない。
-
-- land / sea の風向差が大きい。
-- land / sea の風速差が大きい。
-- live/report上の風向とモデル風向が継続的にずれる。
-
-具体閾値は検証ログを見て決める。初期実装で恣意的な固定値を入れない。
+沖側風を追加する場合は、海岸座標に `cell_selection=sea` を付けるだけではなく、地点ごとに検証済みの明示的な沖側サンプル座標を持たせる。
+海岸法線や数km沖などの座標は推測で決めず、実波・風観測との比較後に追加する。
 
 ## 地点別に補正が必要な理由
 
@@ -145,10 +138,18 @@ Open-Meteo自身が沿岸域での潮位・海流精度に注意を出してい�
 
 南寄りうねりへの反応を独立評価し、御宿とは別係数にする。
 
+## 実通信で確認したモデル格子の注意点
+
+2026-09-13の9地点取得テストではMarine / Weatherとも正常取得できたが、Marine格子は代表ポイントの局所差を直接表現できる細かさではなかった。
+
+特に片貝新堤と一宮は同じMarine格子座標に解決された。したがってMarine値が同じでも実際の波質・サイズ・風耐性が同じとは判断しない。
+
+また、大洗・大貫など要求した海岸座標からMarineの実格子中心が大きく沖側へずれる地点もあった。レスポンスの実格子座標を保存し、どの海域値を基礎にした予報なのか追跡できるようにする。
+
 ## 生データからランキングまでの処理順
 
 1. Open-Meteo Marine取得
-2. Weather land/sea風取得
+2. Weather beach wind取得
 3. APIレスポンスの実グリッド座標・取得時刻を保存
 4. 波向と各ポイントの有効うねりセクターを比較
 5. swell成分とwind-wave成分を分離
@@ -157,7 +158,7 @@ Open-Meteo自身が沿岸域での潮位・海流精度に注意を出してい�
 8. 風速・ガストで面への影響を補正
 9. 実波サイズへ変換する地点別サイズ係数を適用
 10. live/reportとの乖離を記録
-11. 点数化
+11. 十分な検証後に点数化
 
 ## 初期点数化で避けること
 
@@ -165,6 +166,7 @@ Open-Meteo自身が沿岸域での潮位・海流精度に注意を出してい�
 - 海岸向きを無視して全方向のswellを同じ強さとして扱う。
 - 風向だけで、風速・ガストを無視する。
 - 一宮と太東、御宿とマルキ等の近接地点に同じ補正係数を使う。
+- 同じMarine格子に解決された地点を同一条件とみなす。
 - 他社の点数を教師データとしてそのままコピーする。
 - 1日や1イベントの一致だけで補正係数を確定する。
 
@@ -175,13 +177,11 @@ Open-Meteo自身が沿岸域での潮位・海流精度に注意を出してい�
 - request latitude / longitude
 - resolved marine grid latitude / longitude
 - resolved weather land grid latitude / longitude
-- resolved weather sea grid latitude / longitude
 - wave height / direction / period
 - swell height / direction / period / peak period
 - secondary swell（存在時）
 - wind-wave height / direction / period
-- land wind speed / direction / gust
-- sea wind speed / direction / gust
+- beach wind speed / direction / gust
 - human report size
 - human report wind
 - human report score（参考値、コピーには使わない）
@@ -207,8 +207,9 @@ Open-Meteo自身が沿岸域での潮位・海流精度に注意を出してい�
 
 ## 次工程
 
-1. 9地点をまとめて取得できるAPIリクエスト形式を実コードへ落とす。
-2. raw JSONの保存形式を決める。
-3. live/reportとの比較用 `validation` データ構造を作る。
-4. まず点数化せず、数日分のraw/observed差分を確認する。
-5. 地点別の方向係数・遮蔽係数・風係数を決める。
+1. 9地点のraw取得基盤を安定運用できる形にする。
+2. live/reportとの比較用 `validation` データ構造へ実観測を入れる。
+3. 数日・複数条件のraw/observed差分を確認する。
+4. 地点別の方向係数・遮蔽係数・風係数を決める。
+5. 必要性が確認できた場合のみ、明示的offshore windサンプル座標を追加する。
+6. その後にサイズ判定・点数ロジックを実装する。
