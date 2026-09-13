@@ -1,0 +1,19 @@
+{
+  "schema_version": "surf-data-contract/1.0",
+  "region": "kanto",
+  "generated_at": "2026-09-13T13:00:00+09:00",
+  "product": "today",
+  "status": "provisional",
+  "spots": [
+    {
+      "id": "kugenuma",
+      "name": "鵠沼",
+      "area": "湘南",
+      "wave": {
+        "size_label": "ヒザ〜モモ"
+      },
+      "validation_status": "provisional",
+      "confidence": "medium"
+    }
+  ]
+}
