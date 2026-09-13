@@ -1,0 +1,12 @@
+# Runtime Open-Meteo output
+/data/raw/*.json
+!/data/raw/.gitkeep
+
+# Local validation observations
+/data/validation/*.json
+!/data/validation/.gitkeep
+
+# Local/editor noise
+.DS_Store
+Thumbs.db
+*.tmp
