@@ -20,6 +20,7 @@
 - 波伝説は情報と有料ライブ映像を分けて扱う。
 - Surflineは日本向けページが現存するため補助予報ソースとして利用可能。403だけで日本非対応と判断しない。
 - 古い配信サービスや終了したカメラを現役として扱わない。一宮町公式カメラは旧FRESH!記載があり要確認。
+- 他社ライブ映像・画像・有料波情報は転載・再配信・保存ミラーしない。自動取得は利用規約/API提供状況を確認してから別途設計する。
 
 ## 代表9地点の現在地
 独立再検証の結果、入れ替え不要と判断し、`docs/representative-spots.md` にv1運用ベースラインを作成済み。
@@ -55,21 +56,54 @@
 - 片貝新堤は堤防による北東風軽減、一宮は東向きオープンビーチ、太東は岬・堤防の風耐性があり、千葉北3地点は近距離でも統合しない。
 - 御宿は湾状で北〜東寄りの風を比較的かわしやすく、マルキは南寄りうねりを補完するため、千葉南2枠として役割が分かれる。
 
+## 作成済み設計文書
+
+### `docs/representative-spots.md`
+- 代表9地点v1。
+- ランキング表示名とAPI内部基準点を分離。
+- 緯度経度、海岸向き、主要うねり方向、主オフショア、採用理由を記載。
+
+### `docs/source-matrix.md`
+- 代表9地点ごとのBCM/SurfPatrol、波伝説、なみある？、自治体/公開ライブの現役性を整理。
+- BCM/SurfPatrol同系統は1ソース扱い。
+- 有料ライブと無料公開ライブを区別。
+- 無料独立カメラが未確認の地点は追加確認TODOとして残した。
+
+### `docs/open-meteo-design.md`
+- Marine `/v1/marine` と Weather `/v1/forecast` を分離取得する設計。
+- Marineは `cell_selection=sea`、Weatherはland/sea双方の風を取得する。
+- Marine必須候補: wave height/direction/period、swell height/direction/period/peak、wind-wave height/direction/period。
+- Weather必須候補: 10m wind speed/direction/gust、precipitation、weather code。
+- APIが返す実グリッド座標も保存する。
+- 海岸向き・有効うねり方向・岬/湾/堤防の遮蔽を地点別補正する。
+- 関西版のサイズ閾値・点数ロジックをそのままコピーしない。
+- 初期段階では係数を決め打ちせず、live/reportとの差分ログを集めてから地点別係数を確定する。
+
+## Open-Meteo実装の重要ルール
+- `wave_height`だけでサイズを決めない。
+- swell成分とwind-wave成分を分ける。
+- 風向だけでなく風速・ガストも使う。
+- 一宮/太東、御宿/マルキ等の近接地点へ同じ補正係数を使わない。
+- Marine/Weatherの要求座標だけでなくレスポンスの実グリッド座標を保存する。
+- sea level/currentは沿岸精度に注意が必要なため、v1ランキングの中核点数には使わない。
+- 他社の点数を教師値としてコピーしない。比較は誤差検証用に限定する。
+
 ## 次にやること
-1. ユーザー最終ロックまでは代表9をv1ベースラインとして扱い、入れ替えがなければそのまま公開仕様へ昇格する。
-2. `docs/representative-spots.md` の座標を使い、Open-Meteo Marine/Weatherの取得変数と取得方針を設計する。
-3. なみある？ / BCM / 波伝説 / 自治体 / YouTube等の現役ソースを地点ごとにsource matrix化する。
-4. 地点ごとの海岸向き・うねり方向・風耐性を使って、関西版とは別の補正係数を設計する。
-5. DB用の周辺ポイント一覧をエリア別に作成する。
-6. 関西サーファーKSを参考に、関東版トップ/ランキング/Notebook動画フローを実装する。
+1. 代表9をv1ベースラインのまま使い、入れ替えがなければ公開仕様へ昇格する。
+2. Open-Meteo取得コードを実装する。9地点一括取得、Marine + Weather land/sea、raw JSON保存まで作る。
+3. `validation` データ構造を作り、実波サイズ・風・live目視メモとの比較を保存できるようにする。
+4. 点数化より先にrawデータと実波の乖離を数パターン集める。
+5. 地点別の方向係数・遮蔽係数・風係数を決める。
+6. DB用の周辺ポイント一覧をエリア別に作成する。
+7. 関西サーファーKSを参考に、関東版トップ/ランキング/Notebook動画フローを実装する。
 
 ## Repository状態
 - Repository: `oosaka0123-sudo/kanto-surfer-ks`
 - default branch: `main`
 - PR #1 `Initialize Kanto Surfer project rules` はopen。
 - branch: `chore/initial-project-rules`
-- `docs/representative-spots.md` を追加済み。
-- PR #1にはREADME、AGENTS.md、HANDOFF.md、代表9地点v1文書が含まれる。
+- PR #1にはREADME、AGENTS.md、HANDOFF.mdに加え、`docs/representative-spots.md`、`docs/source-matrix.md`、`docs/open-meteo-design.md` が含まれる。
+- 現在の次工程は「設計」から「Open-Meteo取得コード＋raw validation基盤の実装」へ進んだ。
 
 ## 注意
 このファイルは現在地の引き継ぎ用。最終仕様確定後は正本へ反映し、HANDOFFに古い仕様を残し続けない。
