@@ -11,99 +11,131 @@
 - 同じ向き・隣接・同じうねり/風にほぼ同じ反応をするポイントを代表9地点で重複採用しない。
 - 近接していても岬・河口・堤防・リーフ等で風耐性や波質が明確に違う場合は別候補として評価する。
 - ランキング代表から外れた人気ポイントも削除せず、SEO用の個別ページ/周辺ポイントとして残す。
-- 人気・検索需要、公開波情報、ライブカメラ、地域バランス、Open-Meteo等との照合しやすさを総合評価する。
+- 関西版のサイズ閾値・点数ロジックをそのままコピーせず、関東9地点を実波と突合して補正する。
 
-## 情報源の扱い
-- BCM / SurfPatrol は同一系統として数え、独立2ソースとして扱わない。
-- BCMのライブカメラは無料公開カメラとは区別する。
-- なみある？無料ライブ、自治体ライブ、YouTube等は無料目視ソースとして別評価する。
-- 波伝説は情報と有料ライブ映像を分けて扱う。
-- Surflineは日本向けページが現存するため補助予報ソースとして利用可能。403だけで日本非対応と判断しない。
-- 古い配信サービスや終了したカメラを現役として扱わない。一宮町公式カメラは旧FRESH!記載があり要確認。
-- 他社ライブ映像・画像・有料波情報は転載・再配信・保存ミラーしない。自動取得は利用規約/API提供状況を確認してから別途設計する。
+## 情報源ルール
+- BCM / SurfPatrol は同一系統として1ソース扱い。
+- BCMライブは無料公開カメラとは分ける。
+- 波伝説は波情報とサービス内ライブを分ける。
+- なみある？独自ライブ、自治体・観光協会・YouTube等の公開ライブは独立目視ソースとして評価する。
+- 古い/終了済みカメラは現役扱いしない。
+- 他社ライブ映像・画像・有料波情報は転載・再配信・保存ミラーしない。
+- 自動取得は利用規約・API提供状況を確認してから設計する。
 
-## 代表9地点の現在地
-独立再検証の結果、入れ替え不要と判断し、`docs/representative-spots.md` にv1運用ベースラインを作成済み。
-公開ランキング仕様としてのユーザー最終ロックはまだ行っていないため、文書上は再検証済みベースラインとして扱う。
+## 代表9地点 v1
+独立再検証では入れ替え不要と判断。`docs/representative-spots.md` を正本とする。
+公開ランキング仕様としてのユーザー最終ロック前なので、現在は「再検証済みv1ベースライン」。
 
-1. 鵠沼 — 湘南東部
-2. 由比ヶ浜 — 湘南・鎌倉
-3. 大洗・大貫 — 茨城。内部基準点は大貫つるかめ下
-4. 鹿嶋・平井 — 茨城。内部基準点は平井浜
-5. 片貝 — 千葉北中央。内部基準点は片貝新堤
-6. 一宮 — 千葉北南部。東浪見/志田下/サンライズを周辺DBへ保持
-7. 太東 — 千葉北最南端。岬・堤防による風耐性差を評価
-8. 御宿 — 千葉南・外房。内部基準点は御宿中央
-9. 鴨川・マルキ — 千葉南。内部基準点はマルキ
+1. 鵠沼 — 内部基準点: 鵠沼海岸
+2. 由比ヶ浜 — 内部基準点: 由比ヶ浜海岸
+3. 大洗・大貫 — 内部基準点: 大貫つるかめ下
+4. 鹿嶋・平井 — 内部基準点: 平井浜
+5. 片貝 — 内部基準点: 片貝新堤
+6. 一宮 — 内部基準点: 一宮
+7. 太東 — 内部基準点: 太東
+8. 御宿 — 内部基準点: 御宿中央
+9. 鴨川・マルキ — 内部基準点: マルキ
 
 地域配分: 湘南2 / 茨城2 / 千葉北3 / 千葉南2。
 
-## 代表から外しても重要なSEO/詳細ポイント
-- 湘南: 茅ヶ崎・西浜、辻堂、大磯、江ノ島水族館前、引地川河口、七里ヶ浜等
-- 千葉北: 飯岡、作田、本須賀、白子、サンライズ、東浪見、志田下等
-- 千葉南: 部原、勝浦周辺、岩和田/浦仲等
-- 茨城: トップサンテ、波崎、大竹等
+## mainへマージ済み
+PR #1 `Initialize Kanto Surfer project foundation` は2026-09-13にmainへマージ済み。
+Merge commit: `3ca2ad8cdecd4db4415e66f9e5589c997edcb1f0`。
 
-## Gensparkクロスチェックで得た重要点
-- Genspark案: 鵠沼 / 一宮 / 片貝 / 茅ヶ崎・西浜 / 部原 / 由比ヶ浜 / トップサンテ / 太東 / 御宿。
-- 再評価では、茨城1枠より大洗+鹿嶋・平井の2枠が波向き差・人気・公式カメラ面で有力。
-- 部原と御宿はかなり近接するため、代表9では両採用より御宿+鴨川・マルキの方が重複を減らせる可能性が高い。
-- 茅ヶ崎・西浜はSEO需要が強いため個別ページは重要だが、鵠沼との代表枠重複を避ける案が有力。
+正本:
+- `AGENTS.md`
+- `README.md`
+- `docs/representative-spots.md`
+- `docs/source-matrix.md`
+- `docs/open-meteo-design.md`
 
-## 2026-09-13 再検証で確認した判断
-- 鵠沼と由比ヶ浜は同じ湘南でも、由比ヶ浜は湾・岬の影響が強く鵠沼より小さめになりやすいので2枠を維持する価値がある。
-- 大洗・大貫は南東系、平井は北東向きで、主オフショアも北西系対南西となるため茨城2枠の条件差が大きい。
-- 片貝新堤は堤防による北東風軽減、一宮は東向きオープンビーチ、太東は岬・堤防の風耐性があり、千葉北3地点は近距離でも統合しない。
-- 御宿は湾状で北〜東寄りの風を比較的かわしやすく、マルキは南寄りうねりを補完するため、千葉南2枠として役割が分かれる。
-
-## 作成済み設計文書
-
-### `docs/representative-spots.md`
-- 代表9地点v1。
-- ランキング表示名とAPI内部基準点を分離。
-- 緯度経度、海岸向き、主要うねり方向、主オフショア、採用理由を記載。
-
-### `docs/source-matrix.md`
-- 代表9地点ごとのBCM/SurfPatrol、波伝説、なみある？、自治体/公開ライブの現役性を整理。
-- BCM/SurfPatrol同系統は1ソース扱い。
-- 有料ライブと無料公開ライブを区別。
-- 無料独立カメラが未確認の地点は追加確認TODOとして残した。
-
-### `docs/open-meteo-design.md`
-- Marine `/v1/marine` と Weather `/v1/forecast` を分離取得する設計。
-- Marineは `cell_selection=sea`、Weatherはland/sea双方の風を取得する。
-- Marine必須候補: wave height/direction/period、swell height/direction/period/peak、wind-wave height/direction/period。
-- Weather必須候補: 10m wind speed/direction/gust、precipitation、weather code。
+## Open-Meteo v1設計
+### Marine
+- `/v1/marine`
+- `timezone=Asia/Tokyo`
+- `cell_selection=sea`
+- wave / swell / wind-wave の高さ・方向・周期を取得する。
 - APIが返す実グリッド座標も保存する。
-- 海岸向き・有効うねり方向・岬/湾/堤防の遮蔽を地点別補正する。
-- 関西版のサイズ閾値・点数ロジックをそのままコピーしない。
-- 初期段階では係数を決め打ちせず、live/reportとの差分ログを集めてから地点別係数を確定する。
 
-## Open-Meteo実装の重要ルール
+### Weather
+- `/v1/forecast`
+- `timezone=Asia/Tokyo`
+- `wind_speed_unit=ms`
+- `cell_selection=land`
+- 海岸側の10m風・ガスト・降水・weather code等を取得する。
+
+### 重要な修正
+当初は同一海岸座標でWeatherのland/seaを2系統取得する設計だったが、2026-09-13の9地点実通信テストでは全地点で同一Weather格子に解決された。
+独立情報にならないため、v1では同一座標の`weather_sea`取得を削除した。
+沖側風が必要になった場合は、検証済みの明示的な沖側サンプル座標を地点別に追加する。
+
+## PR #2 — Open-Meteo raw data foundation
+Branch: `feat/open-meteo-data-foundation`
+Base: `main`
+
+### 実装済み
+- `config/representative-spots.json`
+  - 代表9地点を機械可読化。
+- `scripts/fetch_open_meteo.php`
+  - Marine + Weather beach/landを9地点取得。
+  - 3日分=72時間のraw hourlyを保存。
+  - `data/raw/<timestamp>.json` と `data/raw/latest.json` をatomic write。
+  - APIキー不要。
+  - ランキング/サイズ判定はまだ行わない。
+  - PHP 7.4+を想定した構文。
+- `schemas/validation-record.schema.json`
+  - raw snapshotと実波観測を結びつけるvalidation record schema。
+  - 外部スコアは比較専用。
+- `.gitignore`
+  - runtime raw/validation JSONをGit管理対象外。
+- `docs/open-meteo-design.md`
+  - 実通信結果を反映し、same-coordinate sea windをv1から削除。
+
+## 実通信検証 — 2026-09-13
+許可済みRemote Desktop端末でfeature branchを新規cloneして検証。
+
+結果:
+- PHP 8.4.24 CLIで `php -l scripts/fetch_open_meteo.php`: PASS
+- 代表9地点: 9/9取得成功
+- Marine: 全地点72時間
+- Weather land: 全地点72時間
+- fetch errors: 0
+- `weather_sea`: 修正版出力には存在しないことを確認
+
+### 実グリッドの重要な発見
+- Open-Meteoのレスポンスlat/lonは要求した海岸座標と異なる場合がある。
+- 片貝新堤と一宮は今回、同じMarine格子座標に解決された。
+- 大洗・大貫などは要求海岸座標からMarine格子中心がかなり沖側へずれた。
+
+結論:
+- Marine生値だけで近接ポイントの差を表現できない。
+- 地点別の海岸向き・遮蔽・堤防/岬等の補正は必須。
+- 同じMarine格子だから同じ波と判断してはいけない。
+
+## 補正ルール
 - `wave_height`だけでサイズを決めない。
-- swell成分とwind-wave成分を分ける。
-- 風向だけでなく風速・ガストも使う。
-- 一宮/太東、御宿/マルキ等の近接地点へ同じ補正係数を使わない。
-- Marine/Weatherの要求座標だけでなくレスポンスの実グリッド座標を保存する。
-- sea level/currentは沿岸精度に注意が必要なため、v1ランキングの中核点数には使わない。
-- 他社の点数を教師値としてコピーしない。比較は誤差検証用に限定する。
+- swellとwind-waveを分ける。
+- 海岸向き/有効うねり方向を加味する。
+- 風向だけでなく風速・ガストを使う。
+- 一宮/太東、御宿/マルキ等の近接地点に同じ補正係数を使わない。
+- sea level/currentはv1ランキング中核点数には使わない。
+- 他社点数はコピーせず誤差比較用に限定する。
 
 ## 次にやること
-1. 代表9をv1ベースラインのまま使い、入れ替えがなければ公開仕様へ昇格する。
-2. Open-Meteo取得コードを実装する。9地点一括取得、Marine + Weather land/sea、raw JSON保存まで作る。
-3. `validation` データ構造を作り、実波サイズ・風・live目視メモとの比較を保存できるようにする。
-4. 点数化より先にrawデータと実波の乖離を数パターン集める。
+1. PR #2をReadyへ変更し、最終差分レビュー後mainへマージする。
+2. validation recordへ実観測を入れる仕組みを作る。
+3. live/reportとraw予報を同時刻で比較する。
+4. 小波/通常/サイズアップ/北東風/南西風/台風うねり/風波主体の複数条件を集める。
 5. 地点別の方向係数・遮蔽係数・風係数を決める。
-6. DB用の周辺ポイント一覧をエリア別に作成する。
-7. 関西サーファーKSを参考に、関東版トップ/ランキング/Notebook動画フローを実装する。
+6. その後に初めてサイズ判定・ランキング点数ロジックを実装する。
+7. 周辺ポイントDB、SEO個別ページ、トップ/ランキング/Notebook動画フローへ進む。
 
 ## Repository状態
 - Repository: `oosaka0123-sudo/kanto-surfer-ks`
 - default branch: `main`
-- PR #1 `Initialize Kanto Surfer project rules` はopen。
-- branch: `chore/initial-project-rules`
-- PR #1にはREADME、AGENTS.md、HANDOFF.mdに加え、`docs/representative-spots.md`、`docs/source-matrix.md`、`docs/open-meteo-design.md` が含まれる。
-- 現在の次工程は「設計」から「Open-Meteo取得コード＋raw validation基盤の実装」へ進んだ。
+- PR #1: merged
+- PR #2: open / final review pending
+- Active implementation scope: Open-Meteo raw data foundation
 
 ## 注意
-このファイルは現在地の引き継ぎ用。最終仕様確定後は正本へ反映し、HANDOFFに古い仕様を残し続けない。
+このHANDOFFは未完了状態の再開用。確定仕様は各docs/設定ファイルを正本とする。

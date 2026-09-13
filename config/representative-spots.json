@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "updated_at": "2026-09-13",
+  "timezone": "Asia/Tokyo",
+  "spots": [
+    {
+      "id": "kugenuma",
+      "display_name": "鵠沼",
+      "internal_name": "鵠沼海岸",
+      "region": "湘南",
+      "latitude": 35.3148611,
+      "longitude": 139.4708889,
+      "coast_facing": "南〜南南西",
+      "effective_swell": "南〜南南西中心、東〜南東も反応",
+      "offshore": "北〜北東"
+    },
+    {
+      "id": "yuigahama",
+      "display_name": "由比ヶ浜",
+      "internal_name": "由比ヶ浜海岸",
+      "region": "湘南",
+      "latitude": 35.3094444,
+      "longitude": 139.5377778,
+      "coast_facing": "南〜南南東",
+      "effective_swell": "南〜南東",
+      "offshore": "北〜北東"
+    },
+    {
+      "id": "oarai_onuki",
+      "display_name": "大洗・大貫",
+      "internal_name": "大貫つるかめ下",
+      "region": "茨城",
+      "latitude": 36.297107,
+      "longitude": 140.562901,
+      "coast_facing": "南東系",
+      "effective_swell": "南〜東、特に南東系",
+      "offshore": "北西系"
+    },
+    {
+      "id": "kashima_hirai",
+      "display_name": "鹿嶋・平井",
+      "internal_name": "平井浜",
+      "region": "茨城",
+      "latitude": 35.9698889,
+      "longitude": 140.7083056,
+      "coast_facing": "北東",
+      "effective_swell": "東〜北",
+      "offshore": "南西"
+    },
+    {
+      "id": "katakai",
+      "display_name": "片貝",
+      "internal_name": "片貝新堤",
+      "region": "千葉北",
+      "latitude": 35.532121,
+      "longitude": 140.456944,
+      "coast_facing": "南東",
+      "effective_swell": "東〜南",
+      "offshore": "北西中心、北寄りも対応"
+    },
+    {
+      "id": "ichinomiya",
+      "display_name": "一宮",
+      "internal_name": "一宮",
+      "region": "千葉北",
+      "latitude": 35.379078,
+      "longitude": 140.391197,
+      "coast_facing": "東",
+      "effective_swell": "北東〜南東",
+      "offshore": "西"
+    },
+    {
+      "id": "taito",
+      "display_name": "太東",
+      "internal_name": "太東",
+      "region": "千葉北",
+      "latitude": 35.329271,
+      "longitude": 140.398686,
+      "coast_facing": "東〜北東系",
+      "effective_swell": "北〜東",
+      "offshore": "南〜西、特に西〜南西"
+    },
+    {
+      "id": "onjuku",
+      "display_name": "御宿",
+      "internal_name": "御宿中央",
+      "region": "千葉南",
+      "latitude": 35.182087,
+      "longitude": 140.355492,
+      "coast_facing": "南東",
+      "effective_swell": "東〜南",
+      "offshore": "北〜北西、西も対応"
+    },
+    {
+      "id": "kamogawa_maruki",
+      "display_name": "鴨川・マルキ",
+      "internal_name": "マルキ",
+      "region": "千葉南",
+      "latitude": 35.120797,
+      "longitude": 140.132091,
+      "coast_facing": "南東",
+      "effective_swell": "南南西〜東南東",
+      "offshore": "北北西"
+    }
+  ]
+}
