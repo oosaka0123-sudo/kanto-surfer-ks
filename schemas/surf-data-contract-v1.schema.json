@@ -1,0 +1,304 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rss7.net/schemas/surf-data-contract-v1.schema.json",
+  "title": "SURF DATA CONTRACT v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "region",
+    "generated_at",
+    "product",
+    "status",
+    "spots"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "surf-data-contract/1.0"
+    },
+    "region": {
+      "type": "string",
+      "enum": [
+        "kansai",
+        "kanto"
+      ]
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "forecast_for": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "product": {
+      "type": "string",
+      "enum": [
+        "current",
+        "today",
+        "tomorrow",
+        "forecast"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "validated",
+        "provisional",
+        "partial",
+        "unavailable"
+      ]
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "spots": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/spot"
+      }
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "degradation_reasons": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/degradation_reason"
+      }
+    }
+  },
+  "$defs": {
+    "spot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "area",
+        "validation_status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "area": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "wave": {
+          "$ref": "#/$defs/wave"
+        },
+        "wind": {
+          "$ref": "#/$defs/wind"
+        },
+        "swell": {
+          "$ref": "#/$defs/swell"
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "rank": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "validation_status": {
+          "type": "string",
+          "enum": [
+            "validated",
+            "provisional",
+            "pending",
+            "unavailable"
+          ]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "high",
+            "medium",
+            "low",
+            "unknown"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "degradation_reasons": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/degradation_reason"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "validation_status": {
+                "const": "unavailable"
+              }
+            },
+            "required": [
+              "validation_status"
+            ]
+          },
+          "then": {
+            "required": [
+              "degradation_reasons"
+            ]
+          }
+        }
+      ]
+    },
+    "wave": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "size_label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "min_cm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_cm": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "wind": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "direction_label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "speed_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gust_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "quality": {
+          "type": "string",
+          "enum": [
+            "offshore",
+            "cross_offshore",
+            "side",
+            "cross_onshore",
+            "onshore",
+            "variable",
+            "unknown"
+          ]
+        },
+        "direction_deg_from": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMaximum": 360
+        }
+      }
+    },
+    "swell": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "period_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "significant_height_m": {
+          "type": "number",
+          "minimum": 0
+        },
+        "direction_deg_from": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMaximum": 360
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "model_time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "degradation_reason": {
+      "type": "string",
+      "enum": [
+        "SOURCE_UNAVAILABLE",
+        "SOURCE_STALE",
+        "VALIDATION_INCOMPLETE",
+        "PARTIAL_SPOT_COVERAGE",
+        "ADAPTER_ERROR",
+        "UNKNOWN"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "partial",
+              "unavailable"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "degradation_reasons"
+        ]
+      }
+    }
+  ]
+}

@@ -17,6 +17,17 @@
 4. APIキー、認証情報、個人情報、非公開データはCommitしない。
 5. 変更は原則としてBranch → Review → Pull Request → Mergeで進める。
 
+## 関西版との接続方針
+
+関西版と関東版は当面、独立した予報・運用システムとして維持します。
+
+共通化はプログラム本体から始めず、まず地域間の公開データ形式を `SURF DATA CONTRACT v1` として統一します。地域固有の波サイズ補正、風評価、ランキング点数は各地域側に残し、十分に実績が出た処理だけを将来の共通Core候補とします。
+
+- 仕様: `docs/surf-data-contract-v1.md`
+- JSON Schema: `schemas/surf-data-contract-v1.schema.json`
+
+この契約の導入を理由に、関西本番の既存PHPパス、CRON、ディレクトリ、点数ロジックを先に変更しません。
+
 ## 次に決めること
 
 - β版の対象スポット

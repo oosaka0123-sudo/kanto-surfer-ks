@@ -1,0 +1,43 @@
+name: Validate SURF DATA CONTRACT
+
+on:
+  pull_request:
+    paths:
+      - 'schemas/surf-data-contract-v1.schema.json'
+      - 'docs/surf-data-contract-v1.md'
+      - 'docs/surf-data-contract-governance.md'
+      - 'scripts/validate_surf_contract.py'
+      - 'scripts/test_surf_contract.py'
+      - 'tests/fixtures/surf-data-contract/v1/**'
+      - '.github/workflows/validate-surf-data-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'schemas/surf-data-contract-v1.schema.json'
+      - 'docs/surf-data-contract-v1.md'
+      - 'docs/surf-data-contract-governance.md'
+      - 'scripts/validate_surf_contract.py'
+      - 'scripts/test_surf_contract.py'
+      - 'tests/fixtures/surf-data-contract/v1/**'
+      - '.github/workflows/validate-surf-data-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install validator
+        run: python -m pip install --disable-pip-version-check jsonschema==4.23.0
+      - name: Run contract conformance tests
+        run: python scripts/test_surf_contract.py
+      - name: Validate published fixtures directly
+        run: |
+          python scripts/validate_surf_contract.py \
+            tests/fixtures/surf-data-contract/v1/valid-kanto.json \
+            tests/fixtures/surf-data-contract/v1/valid-kansai-minimal.json

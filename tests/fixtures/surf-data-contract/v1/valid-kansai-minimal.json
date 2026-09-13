@@ -1,0 +1,22 @@
+{
+  "schema_version": "surf-data-contract/1.0",
+  "region": "kansai",
+  "generated_at": "2026-09-13T13:00:00+09:00",
+  "product": "today",
+  "status": "partial",
+  "degradation_reasons": [
+    "PARTIAL_SPOT_COVERAGE"
+  ],
+  "spots": [
+    {
+      "id": "isonoura",
+      "name": "磯ノ浦",
+      "area": "和歌山",
+      "validation_status": "unavailable",
+      "confidence": "unknown",
+      "degradation_reasons": [
+        "SOURCE_UNAVAILABLE"
+      ]
+    }
+  ]
+}
