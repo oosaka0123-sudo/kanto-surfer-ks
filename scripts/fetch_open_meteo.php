@@ -12,10 +12,10 @@ $outputDir = $projectRoot . '/data/raw';
 $dryRun = in_array('--dry-run', $argv, true);
 
 foreach ($argv as $arg) {
-    if (str_starts_with($arg, '--config=')) {
+    if (strpos($arg, '--config=') === 0) {
         $configPath = substr($arg, strlen('--config='));
     }
-    if (str_starts_with($arg, '--output-dir=')) {
+    if (strpos($arg, '--output-dir=') === 0) {
         $outputDir = substr($arg, strlen('--output-dir='));
     }
 }
@@ -232,7 +232,7 @@ function fetchJson(string $url): array
             throw new RuntimeException('HTTP fetch failed: ' . $error);
         }
 
-        $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         $body = $response;
     } else {
@@ -298,7 +298,7 @@ function atomicWrite(string $path, string $contents): void
     }
 }
 
-function fail(string $message): never
+function fail(string $message): void
 {
     fwrite(STDERR, $message . PHP_EOL);
     exit(2);
