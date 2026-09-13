@@ -80,21 +80,14 @@ foreach ($spots as $spot) {
         'cell_selection' => 'sea',
     ]);
 
-    $weatherBase = [
+    $weatherLandUrl = buildUrl(WEATHER_ENDPOINT, [
         'latitude' => $latitude,
         'longitude' => $longitude,
         'hourly' => implode(',', $weatherHourly),
         'timezone' => $timezone,
         'forecast_days' => 3,
         'wind_speed_unit' => 'ms',
-    ];
-
-    $weatherLandUrl = buildUrl(WEATHER_ENDPOINT, $weatherBase + [
         'cell_selection' => 'land',
-    ]);
-
-    $weatherSeaUrl = buildUrl(WEATHER_ENDPOINT, $weatherBase + [
-        'cell_selection' => 'sea',
     ]);
 
     $entry = [
@@ -104,11 +97,9 @@ foreach ($spots as $spot) {
             'longitude' => $longitude,
             'marine_url' => $dryRun ? $marineUrl : null,
             'weather_land_url' => $dryRun ? $weatherLandUrl : null,
-            'weather_sea_url' => $dryRun ? $weatherSeaUrl : null,
         ],
         'marine' => null,
         'weather_land' => null,
-        'weather_sea' => null,
         'errors' => [],
     ];
 
@@ -116,7 +107,6 @@ foreach ($spots as $spot) {
         foreach ([
             'marine' => $marineUrl,
             'weather_land' => $weatherLandUrl,
-            'weather_sea' => $weatherSeaUrl,
         ] as $key => $url) {
             try {
                 $entry[$key] = fetchJson($url);
