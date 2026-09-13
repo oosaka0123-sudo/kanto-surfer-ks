@@ -9,7 +9,12 @@
     "observed_at",
     "spot_id",
     "raw_snapshot",
-    "observation"
+    "normalized_snapshot",
+    "forecast_time",
+    "forecast_gap_minutes",
+    "model",
+    "observation",
+    "cross_check"
   ],
   "properties": {
     "schema_version": {
@@ -28,29 +33,79 @@
       "minLength": 1,
       "description": "Relative path or immutable identifier for the matching raw Open-Meteo snapshot."
     },
+    "normalized_snapshot": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Relative path or immutable identifier for the normalized snapshot used to select the forecast hour."
+    },
+    "forecast_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "forecast_gap_minutes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grids",
+        "marine",
+        "weather_land"
+      ],
+      "properties": {
+        "grids": {
+          "type": "object"
+        },
+        "marine": {
+          "type": "object"
+        },
+        "weather_land": {
+          "type": "object"
+        }
+      }
+    },
     "observation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sources"],
+      "required": [
+        "sources"
+      ],
       "properties": {
         "wave_size_label": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "wind_direction_label": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "wind_speed_mps": {
-          "type": ["number", "null"],
+          "type": [
+            "number",
+            "null"
+          ],
           "minimum": 0
         },
         "reference_score": {
-          "type": ["number", "null"],
+          "type": [
+            "number",
+            "null"
+          ],
           "minimum": 0,
           "maximum": 100,
           "description": "Optional external/reference score used only for comparison, never copied into KS scoring."
         },
         "visual_note": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "sources": {
           "type": "array",
@@ -58,7 +113,10 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["provider", "kind"],
+            "required": [
+              "provider",
+              "kind"
+            ],
             "properties": {
               "provider": {
                 "type": "string",
@@ -66,39 +124,154 @@
               },
               "kind": {
                 "type": "string",
-                "enum": ["public_live", "commercial_live", "wave_report", "manual_visual", "other"]
+                "enum": [
+                  "public_live",
+                  "commercial_live",
+                  "wave_report",
+                  "manual_visual",
+                  "other"
+                ]
               },
               "observed_at": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "format": "date-time"
               },
               "note": {
-                "type": ["string", "null"]
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             }
           }
         }
       }
     },
+    "cross_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "api_integrity",
+        "observation_alignment",
+        "spot_context",
+        "overall_status"
+      ],
+      "properties": {
+        "api_integrity": {
+          "$ref": "#/$defs/check"
+        },
+        "observation_alignment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "independent_source_count"
+          ],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "pass",
+                "warn",
+                "fail"
+              ]
+            },
+            "independent_source_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "note": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "spot_context": {
+          "$ref": "#/$defs/check"
+        },
+        "overall_status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "pass",
+            "warn",
+            "fail"
+          ]
+        },
+        "review_note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
     "ks_prediction": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "additionalProperties": false,
       "properties": {
         "wave_size_label": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "score": {
-          "type": ["number", "null"],
+          "type": [
+            "number",
+            "null"
+          ],
           "minimum": 0,
           "maximum": 100
         },
         "note": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     },
     "difference_note": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "pass",
+            "warn",
+            "fail"
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
     }
   }
 }

@@ -39,8 +39,10 @@
 地域配分: 湘南2 / 茨城2 / 千葉北3 / 千葉南2。
 
 ## mainへマージ済み
-PR #1 `Initialize Kanto Surfer project foundation` は2026-09-13にmainへマージ済み。
-Merge commit: `3ca2ad8cdecd4db4415e66f9e5589c997edcb1f0`。
+- PR #1 `Initialize Kanto Surfer project foundation`
+  - Merge commit: `3ca2ad8cdecd4db4415e66f9e5589c997edcb1f0`
+- PR #2 `Add Open-Meteo raw data foundation`
+  - Merge commit: `499136da8675f60a488708d2a489398cc5ba5dfe`
 
 正本:
 - `AGENTS.md`
@@ -64,53 +66,65 @@ Merge commit: `3ca2ad8cdecd4db4415e66f9e5589c997edcb1f0`。
 - `cell_selection=land`
 - 海岸側の10m風・ガスト・降水・weather code等を取得する。
 
-### 重要な修正
-当初は同一海岸座標でWeatherのland/seaを2系統取得する設計だったが、2026-09-13の9地点実通信テストでは全地点で同一Weather格子に解決された。
-独立情報にならないため、v1では同一座標の`weather_sea`取得を削除した。
-沖側風が必要になった場合は、検証済みの明示的な沖側サンプル座標を地点別に追加する。
+### 実通信で確認した重要事項
+- 2026-09-13の9地点実通信テストでMarine/Weatherとも全地点72時間取得成功、fetch errors 0。
+- 同一海岸座標のWeather land/seaは全9地点で同一格子に解決されたため、重複の`weather_sea`取得はv1から削除した。
+- 片貝新堤と一宮は同じMarine格子に解決された。
+- Marine生値だけでは近接ポイント差を表現できないため、地点別の海岸向き・遮蔽・堤防/岬等の補正が必須。
 
-## PR #2 — Open-Meteo raw data foundation
-Branch: `feat/open-meteo-data-foundation`
+## 現在の実装ブランチ
+Branch: `feat/validation-baseline`
 Base: `main`
 
 ### 実装済み
-- `config/representative-spots.json`
-  - 代表9地点を機械可読化。
-- `scripts/fetch_open_meteo.php`
-  - Marine + Weather beach/landを9地点取得。
-  - 3日分=72時間のraw hourlyを保存。
-  - `data/raw/<timestamp>.json` と `data/raw/latest.json` をatomic write。
-  - APIキー不要。
-  - ランキング/サイズ判定はまだ行わない。
-  - PHP 7.4+を想定した構文。
+- `scripts/normalize_open_meteo.php`
+  - raw Open-Meteoを地点×時刻の比較しやすい形式へ正規化。
+  - Marine/Weatherをtimestampで突合し、欠損・重複・時刻不一致はfail。
+  - 点数はまだ作らない。
+- `scripts/create_validation_record.php`
+  - normalized snapshotと実波観測を同時刻で結びつける。
+  - `--observed-at` は明示タイムゾーン必須。
+  - 最寄りforecast hourを選び、標準90分を超えるとfail。
+  - Marine/Weatherの値と実グリッド情報をvalidation recordに埋め込む。
 - `schemas/validation-record.schema.json`
-  - raw snapshotと実波観測を結びつけるvalidation record schema。
-  - 外部スコアは比較専用。
+  - raw/normalized snapshot、forecast_time、gap、model、observation、cross_checkを保存。
+- `docs/wave-display-crosscheck.md`
+  - 波表示の3層クロスチェック仕様を定義。
 - `.gitignore`
-  - runtime raw/validation JSONをGit管理対象外。
-- `docs/open-meteo-design.md`
-  - 実通信結果を反映し、same-coordinate sea windをv1から削除。
+  - runtime raw/normalized/validation JSONをGit管理対象外。
 
-## 実通信検証 — 2026-09-13
-許可済みRemote Desktop端末でfeature branchを新規cloneして検証。
+## 波表示クロスチェック — 新ルール
+Open-Meteo APIと波情報を合わせる際、次の3項目を必ず記録する。
 
-結果:
-- PHP 8.4.24 CLIで `php -l scripts/fetch_open_meteo.php`: PASS
-- 代表9地点: 9/9取得成功
-- Marine: 全地点72時間
-- Weather land: 全地点72時間
-- fetch errors: 0
-- `weather_sea`: 修正版出力には存在しないことを確認
+1. `api_integrity`
+   - raw/normalized整合、時刻差、Marine/Weather格子を確認。
+2. `observation_alignment`
+   - ライブ/波情報/現地目視など実波側を照合。
+   - 可能なら独立2ソース以上。
+   - 1ソースだけなら原則`warn`。
+3. `spot_context`
+   - 海岸向き、有効うねり方向、岬・堤防・湾の遮蔽、風耐性を確認。
 
-### 実グリッドの重要な発見
-- Open-Meteoのレスポンスlat/lonは要求した海岸座標と異なる場合がある。
-- 片貝新堤と一宮は今回、同じMarine格子座標に解決された。
-- 大洗・大貫などは要求海岸座標からMarine格子中心がかなり沖側へずれた。
+判定:
+- 3項目すべて`pass`の時だけ`overall_status=pass`。
+- `fail`が1つでもあればfail。
+- `warn`/`pending`が残る間は公開確定値へ自動昇格しない。
 
-結論:
-- Marine生値だけで近接ポイントの差を表現できない。
-- 地点別の海岸向き・遮蔽・堤防/岬等の補正は必須。
-- 同じMarine格子だから同じ波と判断してはいけない。
+`create_validation_record.php`作成直後は、API時刻照合のみpass、単一実波ソースはwarn、spot_contextはpending、overallはpendingとする。
+
+## テスト済み
+### 正規化
+- PHP lint PASS。
+- 実Open-Meteo 9地点データを入力して正規化成功。
+- 9地点すべて72時間。
+- scoreフィールドが勝手に作られていないことを確認。
+
+### validation record / cross-check
+- PHP 8.4で`create_validation_record.php` lint PASS。
+- synthetic normalized sampleで最寄り時刻選択を確認。
+- 12:28 JST観測 → 12:00 JST forecast、gap 28分。
+- 生成JSONをDraft 2020-12 JSON Schemaでvalidation PASS。
+- 初回のSchema不整合はテストで検出し、修正済み。
 
 ## 補正ルール
 - `wave_height`だけでサイズを決めない。
@@ -122,20 +136,21 @@ Base: `main`
 - 他社点数はコピーせず誤差比較用に限定する。
 
 ## 次にやること
-1. PR #2をReadyへ変更し、最終差分レビュー後mainへマージする。
-2. validation recordへ実観測を入れる仕組みを作る。
-3. live/reportとraw予報を同時刻で比較する。
-4. 小波/通常/サイズアップ/北東風/南西風/台風うねり/風波主体の複数条件を集める。
+1. `feat/validation-baseline` の差分をレビューしてPR化する。
+2. 独立2ソース目とspot_contextレビューを既存recordへ反映する更新CLIを追加する。
+3. live/reportとOpen-Meteoを同時刻で比較したvalidation recordを蓄積する。
+4. 小波/通常/サイズアップ/北東風/南西風/台風うねり/風波主体を集める。
 5. 地点別の方向係数・遮蔽係数・風係数を決める。
-6. その後に初めてサイズ判定・ランキング点数ロジックを実装する。
+6. その後にサイズ判定・ランキング点数ロジックを実装する。
 7. 周辺ポイントDB、SEO個別ページ、トップ/ランキング/Notebook動画フローへ進む。
 
 ## Repository状態
 - Repository: `oosaka0123-sudo/kanto-surfer-ks`
 - default branch: `main`
 - PR #1: merged
-- PR #2: open / final review pending
-- Active implementation scope: Open-Meteo raw data foundation
+- PR #2: merged
+- Active branch: `feat/validation-baseline`
+- Active scope: normalization + validation record + wave display cross-check gate
 
 ## 注意
 このHANDOFFは未完了状態の再開用。確定仕様は各docs/設定ファイルを正本とする。

@@ -2,6 +2,10 @@
 /data/raw/*.json
 !/data/raw/.gitkeep
 
+# Runtime normalized forecast output
+/data/normalized/*.json
+!/data/normalized/.gitkeep
+
 # Local validation observations
 /data/validation/*.json
 !/data/validation/.gitkeep
