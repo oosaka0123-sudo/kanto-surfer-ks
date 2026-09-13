@@ -2,142 +2,126 @@
 
 ## Purpose
 
-This contract defines the shared **output shape** used to exchange surf-condition data between regional systems such as Kansai Surfer and Kanto Surfer.
+This contract defines the shared published-data boundary between regional surf systems such as Kansai Surfer and Kanto Surfer.
+It defines data shape and semantics, not regional forecasting, scoring, validation gates, or deployment internals.
 
-It deliberately does **not** define how each region calculates wave size, score, wind quality, or spot-specific corrections.
+Core rule:
 
-The rule is:
-
-- common input/output vocabulary where practical;
-- region-specific forecast and scoring logic;
-- no forced migration of the existing Kansai production code;
-- no invented values merely to satisfy the contract.
-
-## Architecture decision
-
-For v1, Kansai and Kanto remain independent applications/repositories.
+- Kansai and Kanto remain independent applications for v1.
+- Regional wave-size corrections, wind interpretation, score logic, and publication gates stay regional.
+- Optional values are omitted when they cannot be produced safely.
+- No producer may invent a value only to satisfy the contract.
 
 ```text
-Kansai Engine  ── Kansai Adapter ──┐
-                                   ├── SURF DATA CONTRACT v1
-Kanto Engine   ── Kanto Adapter  ──┘
+Kansai Engine -> Kansai Adapter --+
+                                  +-> SURF DATA CONTRACT v1
+Kanto Engine  -> Kanto Adapter  --+
 ```
 
-A future shared `surf-core` may be extracted only after behavior has been proven stable in multiple regions. v1 is therefore a **data contract, not a shared runtime**.
+A shared runtime/core may be extracted later only after the governance eligibility conditions are met.
 
-## Versioning
+## Version
 
-Every document must contain:
-
-```json
-"schema_version": "surf-data-contract/1.0"
-```
-
-Breaking changes require a new major version. Additive optional fields may be introduced within v1 only when existing consumers continue to validate.
+Every payload must contain `"schema_version": "surf-data-contract/1.0"`.
+Breaking changes require a new major version. Backward-compatible additions require compatibility review.
 
 ## Top-level fields
 
 Required:
 
-- `schema_version` — exact contract version.
-- `region` — stable regional identifier, currently `kansai` or `kanto`.
-- `generated_at` — ISO 8601 timestamp with timezone.
-- `product` — output type: `current`, `today`, `tomorrow`, or `forecast`.
-- `status` — `validated`, `provisional`, `partial`, or `unavailable`.
-- `spots` — array of spot records.
+- `schema_version`
+- `region`: currently `kansai` or `kanto`
+- `generated_at`: RFC 3339 / ISO 8601 date-time with explicit timezone
+- `product`: `current`, `today`, `tomorrow`, or `forecast`
+- `status`: `validated`, `provisional`, `partial`, or `unavailable`
+- `spots`
 
 Optional:
 
-- `forecast_for` — ISO 8601 timestamp representing the main forecast time.
-- `source_updated_at` — most recent source-data timestamp.
-- `notes` — machine-safe operational note; not a substitute for missing data.
+- `forecast_for`: main forecast time
+- `source_updated_at`: newest source-data timestamp
+- `valid_until`: after this time consumers should treat the payload as stale unless refreshed
+- `degradation_reasons`: generic machine-readable reason codes; required when status is `partial` or `unavailable`
+- `notes`: operational note, never a substitute for missing data
 
-## Spot identity
+Allowed generic degradation reasons:
 
-Each spot must contain:
+- `SOURCE_UNAVAILABLE`
+- `SOURCE_STALE`
+- `VALIDATION_INCOMPLETE`
+- `PARTIAL_SPOT_COVERAGE`
+- `ADAPTER_ERROR`
+- `UNKNOWN`
 
-- `id` — stable ASCII identifier used by APIs/apps.
-- `name` — public Japanese display name.
-- `area` — regional grouping such as `湘南`, `千葉北`, `和歌山`.
+Regional gate names must not leak into this shared list.
 
-`id` must remain stable after publication. Display-name changes must not silently change the identifier.
+## Spot identity and status
 
-## Wave block
+Every spot contains `id`, `name`, `area`, and `validation_status`.
+`id` is a stable ASCII API identifier and must not silently change with display-name changes.
 
-`wave` is optional until a region has a validated value. When present it may contain:
+Spot `validation_status` is one of:
 
-- `size_label` — public display text such as `ヒザ〜モモ`.
-- `min_cm` / `max_cm` — normalized centimetre range where the regional engine can support it reliably.
-- `height_m` — model/derived numeric value when useful; it must not be presented as observed breaking-wave size unless it actually is.
+- `validated`
+- `provisional`
+- `pending`
+- `unavailable`
 
-Do not infer a fake centimetre range solely from a Japanese size label if that mapping has not been approved for the region.
+An `unavailable` spot must include generic `degradation_reasons`.
+Optional `confidence` is `high`, `medium`, `low`, or `unknown` and never overrides validation status.
 
-## Wind block
+## Wave
+
+`wave` is the public breaking-wave representation.
+
+Allowed fields:
+
+- `size_label`: public display text such as `ヒザ〜モモ`
+- `min_cm` / `max_cm`: numeric breaking-wave range only when the regional engine can support it reliably
+
+Model or ocean-state height must not be placed in `wave`.
+Do not derive fake centimetre ranges from Japanese body-size labels unless the regional mapping has been approved.
+
+## Wind
 
 `wind` may contain:
 
-- `direction_deg` — meteorological direction in degrees.
-- `direction_label` — display label such as `北東`.
-- `speed_ms` — 10 m wind speed in m/s.
-- `gust_ms` — gust in m/s when available.
-- `quality` — optional regional interpretation: `offshore`, `cross_offshore`, `side`, `cross_onshore`, `onshore`, `variable`, or `unknown`.
+- `direction_deg_from`: meteorological degrees clockwise from true north, describing where wind comes from
+- `direction_label`
+- `speed_ms`: 10 m wind speed in m/s
+- `gust_ms`
+- `quality`: `offshore`, `cross_offshore`, `side`, `cross_onshore`, `onshore`, `variable`, or `unknown`
 
-The same raw wind may have different `quality` at different spots because beach orientation and local geography remain regional/spot logic.
+Wind quality remains spot-specific regional logic.
 
-## Swell block
+## Swell
 
-`swell` may contain:
+`swell` describes model/ocean-state swell, not breaking-wave face size.
 
-- `height_m`
-- `period_s`
-- `direction_deg`
+Allowed fields:
 
-These are model/ocean-state values and must not be confused with public breaking-wave size.
+- `significant_height_m`: significant swell height in metres
+- `period_s`: swell period in seconds
+- `direction_deg_from`: degrees clockwise from true north, describing where swell comes from
 
 ## Score and rank
 
 `score` and `rank` are optional.
+A region must not emit them until its own publication policy allows public use.
+The contract does not require Kansai and Kanto to use the same scoring formula.
 
-A regional system must not emit either value until its own validation policy allows public use.
+## Validation policy
 
-- `score`: integer 0–100.
-- `rank`: integer 1 or greater.
+Kanto may keep internal gates such as `api_integrity`, `observation_alignment`, and `spot_context`.
+Those gate names are implementation details and are not required of Kansai.
 
-The contract does not require identical scoring formulas between Kansai and Kanto.
-
-## Validation / confidence
-
-Each spot must contain `validation_status`:
-
-- `validated` — region's publication gate passed.
-- `provisional` — usable internally/preview but not fully validated.
-- `pending` — validation incomplete.
-- `unavailable` — reliable output cannot currently be produced.
-
-Optional `confidence`:
-
-- `high`
-- `medium`
-- `low`
-- `unknown`
-
-For Kanto v1, `validation_status=validated` must not bypass the existing three-part gate (`api_integrity`, `observation_alignment`, `spot_context`).
-
-For Kansai, adopting this field later must not require rewriting its production forecast engine first; the adapter may initially expose only values already considered safe for publication.
+For Kansai, a future adapter must expose only values already considered safe by the existing Kansai operation.
+Adding the adapter must not require rewriting the production forecast engine first.
 
 ## Source metadata
 
-Optional `source` describes provenance without copying third-party content:
-
-```json
-{
-  "provider": "open-meteo",
-  "model_time": "2026-09-13T13:00:00+09:00",
-  "observed_at": "2026-09-13T12:55:00+09:00"
-}
-```
-
-Third-party paid surf reports, images, live-camera frames, or proprietary scores must not be embedded or redistributed through this contract unless separately licensed.
+Optional `source` may contain `provider`, `model_time`, and `observed_at`.
+Third-party paid reports, images, camera frames, or proprietary scores must not be redistributed unless separately licensed.
 
 ## Example
 
@@ -148,28 +132,23 @@ Third-party paid surf reports, images, live-camera frames, or proprietary scores
   "generated_at": "2026-09-13T13:00:00+09:00",
   "product": "today",
   "status": "provisional",
-  "forecast_for": "2026-09-13T13:00:00+09:00",
   "spots": [
     {
       "id": "kugenuma",
       "name": "鵠沼",
       "area": "湘南",
-      "wave": {
-        "size_label": "ヒザ〜モモ"
-      },
+      "wave": {"size_label": "ヒザ〜モモ"},
       "wind": {
-        "direction_deg": 45,
+        "direction_deg_from": 45,
         "direction_label": "北東",
         "speed_ms": 4.2,
         "quality": "offshore"
       },
       "swell": {
-        "height_m": 0.8,
+        "significant_height_m": 0.8,
         "period_s": 7.5,
-        "direction_deg": 145
+        "direction_deg_from": 145
       },
-      "score": 25,
-      "rank": 1,
       "validation_status": "provisional",
       "confidence": "medium"
     }
@@ -177,34 +156,33 @@ Third-party paid surf reports, images, live-camera frames, or proprietary scores
 }
 ```
 
-The values above are schema examples only. They are not a live forecast and must not be copied into runtime output.
+The example is schema-only and is not a live forecast.
 
-## Adapter rule
+## Adapter rules
 
-Each regional adapter is responsible for translating its existing internal representation into this contract.
+A regional adapter must:
 
-The adapter must:
-
-1. never modify source forecast/scoring logic merely to satisfy field names;
-2. omit optional values that are not safely available;
-3. preserve regional spot identifiers through an explicit mapping table;
+1. translate existing safe output without changing regional forecast/scoring logic;
+2. omit unsafe optional values rather than inventing them;
+3. preserve stable spot IDs through an explicit mapping;
 4. fail validation rather than fabricate required values;
-5. keep runtime secrets and private data out of exported JSON.
+5. keep credentials and private data out of exported JSON.
 
-## Rollout sequence
+## Rollout
 
 1. Keep Kansai production unchanged.
-2. Use this contract first in Kanto preview/export tooling.
-3. Validate real Kanto output against the JSON Schema.
-4. Add a read-only Kansai adapter later without changing Kansai scoring logic.
-5. Compare both regional outputs and consumer requirements.
-6. Extract truly duplicated, proven code into a shared core only after the two-region trial.
+2. Use the contract first in Kanto preview/export tooling.
+3. Validate generated Kanto output against the JSON Schema in CI.
+4. Add a read-only Kansai adapter later.
+5. Compare consumer behavior across both regions.
+6. Extract shared runtime code only after the governance eligibility conditions are met.
 
-## Non-goals for v1
+## Non-goals
 
-- one universal wave-size correction formula;
-- one universal score formula;
-- moving Kansai production directories;
-- sharing cron/runtime credentials;
-- merging repositories;
-- automatically deploying either production site.
+- one universal wave-size correction formula
+- one universal score formula
+- moving Kansai production directories
+- changing Kansai cron behavior to satisfy v1
+- sharing runtime credentials
+- merging repositories now
+- automatically deploying either production site
