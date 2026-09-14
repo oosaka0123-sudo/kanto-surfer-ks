@@ -1,12 +1,104 @@
-(()=>{"use strict";const root=document.querySelector("[data-forecast]");if(!root)return;const title=document.querySelector("#forecast-title"),panel=root.querySelector("#panel-forecast"),tabs=[...root.querySelectorAll("[role=tab]")],grid=root.querySelector("[data-grid]"),scroll=root.querySelector("[data-scroll]"),chart=root.querySelector("[data-chart]"),chartEmpty=root.querySelector("[data-chart-empty]"),state=root.querySelector("[data-state]");const source=window.KANTO_FORECAST_DATA||{};let mode="hourly";const pad=v=>String(v).padStart(2,"0"),dateKey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,numeric=v=>v===null||v===undefined||v===""?NaN:Number(v);
-function hourlySlots(){const supplied=Array.isArray(source.hourly)?source.hourly:[];if(supplied.length)return supplied;const now=new Date(),start=Math.floor(now.getHours()/2)*2;return Array.from({length:10},(_,i)=>{const d=new Date(now);d.setHours(start+i*2,0,0,0);return{time:d.toISOString(),placeholder:true}})}
-function weeklySlots(){const supplied=Array.isArray(source.weekly)?source.weekly:[];if(supplied.length)return supplied;const today=new Date();return Array.from({length:8},(_,i)=>{const d=new Date(today);d.setDate(today.getDate()+i);return{date:dateKey(d),placeholder:true}})}
-const getSlots=()=>mode==="hourly"?hourlySlots():weeklySlots();function slotDate(slot){const raw=mode==="hourly"?slot.time:slot.date;if(!raw)return null;const d=new Date(raw);return Number.isNaN(d.getTime())?null:d}
-function currentIndex(slots){if(mode==="weekly"){const today=dateKey(new Date());return slots.findIndex(s=>(s.date||"").slice(0,10)===today)}if(!slots.length)return-1;const now=Date.now();let best=-1,delta=Infinity;slots.forEach((s,i)=>{const d=slotDate(s);if(!d)return;const diff=Math.abs(d.getTime()-now);if(diff<delta){delta=diff;best=i}});return best}
-const fmt=(value,digits=1)=>Number.isFinite(numeric(value))?numeric(value).toFixed(digits):"--";function fmtTime(slot){const d=slotDate(slot);if(!d)return"--";return mode==="hourly"?`${d.getHours()}時`:`${d.getMonth()+1}/${d.getDate()}`}
-function weather(slot){return slot.weather_label||slot.weather||"--"}function wave(slot){const v=slot.wave_height_m??slot.wave?.height_m;return{main:fmt(v),sub:Number.isFinite(numeric(v))?"m":""}}function period(slot){const v=slot.period_s??slot.swell?.period_s;return{main:fmt(v),sub:Number.isFinite(numeric(v))?"秒":""}}function wind(slot){const v=slot.wind_speed_ms??slot.wind?.speed_ms;return{main:fmt(v),sub:Number.isFinite(numeric(v))?"m/s":"",direction:slot.wind_direction_label??slot.wind?.direction_label??""}}
-function addCell(fragment,className,html,current=false,ariaCurrent=false){const div=document.createElement("div");div.className=`cell ${className}${current?" current":""}`;div.innerHTML=html;if(ariaCurrent)div.setAttribute("aria-current",mode==="hourly"?"time":"date");fragment.appendChild(div)}
-function renderGrid(){const slots=getSlots(),nowIndex=currentIndex(slots);grid.style.setProperty("--columns",slots.length);grid.replaceChildren();const rows=[{label:mode==="hourly"?"時刻":"日付",unit:"",render:s=>({main:fmtTime(s),sub:""})},{label:"天気",unit:"",render:s=>({main:weather(s),sub:""})},{label:"波の高さ",unit:"m",render:wave},{label:"周期",unit:"秒",render:period},{label:"風",unit:"m/s",render:wind}];const fragment=document.createDocumentFragment();rows.forEach((row,rowIndex)=>{addCell(fragment,"label",`${row.label}${row.unit?`<small>${row.unit}</small>`:""}`);slots.forEach((slot,index)=>{const value=row.render(slot),direction=value.direction?`<span class="wind-arrow">${value.direction}</span>`:"";addCell(fragment,"value",`${direction}<span>${value.main}</span>${value.sub?`<span class="sub">${value.sub}</span>`:""}`,index===nowIndex,rowIndex===0&&index===nowIndex)})});grid.appendChild(fragment);requestAnimationFrame(()=>{if(nowIndex>=0){const col=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--col"))||96;scroll.scrollLeft=Math.max(0,(nowIndex-1)*col)}});renderChart(slots);state.textContent=slots.some(s=>!s.placeholder)?"公開データ接続":"データ未接続"}
-function renderChart(slots){const ns="http://www.w3.org/2000/svg";chart.replaceChildren();const waves=slots.map(s=>numeric(s.wave_height_m??s.wave?.height_m)),winds=slots.map(s=>numeric(s.wind_speed_ms??s.wind?.speed_ms)),hasWave=waves.some(Number.isFinite),hasWind=winds.some(Number.isFinite);chartEmpty.hidden=hasWave||hasWind;if(!hasWave&&!hasWind)return;const width=800,height=240,top=22,bottom=32,usable=height-top-bottom,step=slots.length>1?width/(slots.length-1):width,maxWave=Math.max(1,...waves.filter(Number.isFinite)),maxWind=Math.max(6,...winds.filter(Number.isFinite));if(hasWind)winds.forEach((v,i)=>{if(!Number.isFinite(v))return;const rect=document.createElementNS(ns,"rect"),barW=Math.max(8,Math.min(28,step*.34));rect.setAttribute("x",String(i*step-barW/2));rect.setAttribute("y",String(top+usable*(1-v/maxWind)));rect.setAttribute("width",String(barW));rect.setAttribute("height",String(usable*v/maxWind));rect.setAttribute("rx","2");rect.setAttribute("fill","#2d7281");rect.setAttribute("opacity",".75");chart.appendChild(rect)});if(hasWave){const points=waves.map((v,i)=>Number.isFinite(v)?`${i*step},${top+usable*(1-v/maxWave)}`:null).filter(Boolean);if(points.length>1){const poly=document.createElementNS(ns,"polyline");poly.setAttribute("points",points.join(" "));poly.setAttribute("fill","none");poly.setAttribute("stroke","#f45d43");poly.setAttribute("stroke-width","4");poly.setAttribute("vector-effect","non-scaling-stroke");chart.appendChild(poly)}}}
-function selectMode(next,focus=false){mode=next;tabs.forEach(tab=>{const selected=tab.dataset.mode===mode;tab.classList.toggle("is-active",selected);tab.setAttribute("aria-selected",String(selected));tab.tabIndex=selected?0:-1;if(selected)panel.setAttribute("aria-labelledby",tab.id)});title.textContent=mode==="hourly"?"時間別予報":"週間予報";renderGrid();if(focus)tabs.find(tab=>tab.dataset.mode===mode)?.focus()}
-tabs.forEach(tab=>{tab.addEventListener("click",()=>selectMode(tab.dataset.mode));tab.addEventListener("keydown",event=>{if(!["ArrowLeft","ArrowRight"].includes(event.key))return;event.preventDefault();selectMode(event.key==="ArrowRight"?"weekly":"hourly",true)})});selectMode("hourly")})();
+(()=>{"use strict";
+const root=document.querySelector("[data-forecast]");if(!root)return;
+const title=document.querySelector("#forecast-title"),panel=root.querySelector("#panel-forecast");
+const tabs=[...root.querySelectorAll("[role=tab]")],grid=root.querySelector("[data-grid]");
+const scroll=root.querySelector("[data-scroll]"),chart=root.querySelector("[data-chart]");
+const chartEmpty=root.querySelector("[data-chart-empty]"),state=root.querySelector("[data-state]");
+const waveLabel=root.querySelector("[data-wave-label]"),notice=document.querySelector("[data-forecast-note]");
+const observationBox=root.querySelector("[data-observation]");
+const menuButton=document.querySelector(".menu-button"),siteMenu=document.querySelector("#site-menu");
+function setMenu(open){if(!menuButton||!siteMenu)return;menuButton.setAttribute("aria-expanded",String(open));siteMenu.hidden=!open;document.body.classList.toggle("menu-open",open)}
+menuButton?.addEventListener("click",()=>setMenu(menuButton.getAttribute("aria-expanded")!=="true"));
+siteMenu?.querySelectorAll("a").forEach(link=>link.addEventListener("click",()=>setMenu(false)));
+document.addEventListener("keydown",event=>{if(event.key==="Escape")setMenu(false)});
+let source={},mode="hourly";
+const tzFmt=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Tokyo",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"});
+const getJst=d=>{const p={};for(const x of tzFmt.formatToParts(d))p[x.type]=x.value;return p;};
+const dateKey=d=>{const p=getJst(d);return`${p.year}-${p.month}-${p.day}`;};
+const pad=v=>String(v).padStart(2,"0");
+const numeric=v=>v===null||v===undefined||v===""?NaN:Number(v);
+const escapeHtml=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
+async function loadSource(){
+  if(window.KANTO_FORECAST_DATA&&typeof window.KANTO_FORECAST_DATA==="object")return window.KANTO_FORECAST_DATA;
+  const url=root.dataset.src;if(!url)return{};
+  try{const response=await fetch(url,{cache:"no-store"});if(!response.ok)throw new Error(String(response.status));return await response.json()}
+  catch(error){console.warn("Forecast payload unavailable",error);return{}}
+}
+function hourlySlots(){const supplied=Array.isArray(source.hourly)?source.hourly:[];if(supplied.length)return supplied;
+  const now=new Date(),start=Math.floor(now.getHours()/2)*2;return Array.from({length:10},(_,i)=>{const d=new Date(now);d.setHours(start+i*2,0,0,0);return{time:d.toISOString(),placeholder:true}})}
+function weeklySlots(){const supplied=Array.isArray(source.weekly)?source.weekly:[];if(supplied.length)return supplied;
+  const today=Date.now();return Array.from({length:8},(_,i)=>({date:dateKey(new Date(today+i*86400000)),placeholder:true}))}
+const getSlots=()=>mode==="hourly"?hourlySlots():weeklySlots();
+function slotDate(slot){
+  let raw=mode==="hourly"?slot.time:slot.date;if(!raw)return null;
+  if(mode==="weekly"&&raw.length===10)raw+="T00:00:00+09:00";
+  const d=new Date(raw);return Number.isNaN(d.getTime())?null:d;
+}
+function currentIndex(slots){
+  if(mode==="weekly"){const today=dateKey(new Date());return slots.findIndex(s=>(s.date||"").slice(0,10)===today)}
+  if(!slots.length)return-1;const now=Date.now();let best=-1,delta=Infinity;  slots.forEach((s,i)=>{const d=slotDate(s);if(!d)return;const diff=Math.abs(d.getTime()-now);if(diff<delta){delta=diff;best=i}});return best;
+}
+const fmt=(value,digits=1)=>Number.isFinite(numeric(value))?numeric(value).toFixed(digits):"--";
+function fmtTime(slot){
+  const d=slotDate(slot);if(!d)return"--";
+  const p=getJst(d);
+  return mode==="hourly"?`${p.hour}時`:`${parseInt(p.month,10)}/${parseInt(p.day,10)}`;
+}
+function weather(slot){return slot.weather_label||slot.weather||"--"}
+function wave(slot){const v=slot.wave_height_m??slot.model_wave_height_m??slot.wave?.height_m;return{main:fmt(v),sub:Number.isFinite(numeric(v))?"m":""}}
+function period(slot){const v=slot.period_s??slot.swell?.period_s;return{main:fmt(v),sub:Number.isFinite(numeric(v))?"秒":""}}
+function wind(slot){const v=slot.wind_speed_ms??slot.wind?.speed_ms;return{main:fmt(v),sub:Number.isFinite(numeric(v))?"m/s":"",direction:slot.wind_direction_label??slot.wind?.direction_label??""}}
+function addCell(fragment,className,html,current=false,ariaCurrent=false){
+  const div=document.createElement("div");div.className=`cell ${className}${current?" current":""}`;div.innerHTML=html;
+  if(ariaCurrent)div.setAttribute("aria-current",mode==="hourly"?"time":"date");fragment.appendChild(div);
+}
+function connectionLabel(){
+  if(source.status==="model_plus_verified_observation")return"モデル＋検証済み実波";
+  if(source.status==="model_only")return"モデル予報";
+  return getSlots().some(s=>!s.placeholder)?"公開データ接続":"データ未接続";
+}
+function renderGrid(){
+  const slots=getSlots(),nowIndex=currentIndex(slots);grid.style.setProperty("--columns",slots.length);grid.replaceChildren();
+  const waveName=source.wave_metric_label||"モデル波高";
+  const rows=[{label:mode==="hourly"?"時刻":"日付",unit:"",render:s=>({main:fmtTime(s),sub:""})},{label:"天気",unit:"",render:s=>({main:weather(s),sub:""})},{label:waveName,unit:"m",render:wave},{label:"周期",unit:"秒",render:period},{label:"風",unit:"m/s",render:wind}];
+  const fragment=document.createDocumentFragment();  rows.forEach((row,rowIndex)=>{addCell(fragment,"label",`${escapeHtml(row.label)}${row.unit?`<small>${escapeHtml(row.unit)}</small>`:""}`);slots.forEach((slot,index)=>{const value=row.render(slot),direction=value.direction?`<span class="wind-arrow">${escapeHtml(value.direction)}</span>`:"";addCell(fragment,"value",`${direction}<span>${escapeHtml(value.main)}</span>${value.sub?`<span class="sub">${escapeHtml(value.sub)}</span>`:""}`,index===nowIndex,rowIndex===0&&index===nowIndex)})});
+  grid.appendChild(fragment);
+  requestAnimationFrame(()=>{if(nowIndex>=0){const col=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--col"))||96;scroll.scrollLeft=Math.max(0,(nowIndex-1)*col)}});
+  renderChart(slots);state.textContent=connectionLabel();
+}
+function renderChart(slots){
+  const ns="http://www.w3.org/2000/svg";chart.replaceChildren();
+  const waves=slots.map(s=>numeric(s.wave_height_m??s.model_wave_height_m??s.wave?.height_m)),winds=slots.map(s=>numeric(s.wind_speed_ms??s.wind?.speed_ms));
+  const hasWave=waves.some(Number.isFinite),hasWind=winds.some(Number.isFinite);chartEmpty.hidden=hasWave||hasWind;if(!hasWave&&!hasWind)return;
+  const width=800,height=240,top=22,bottom=32,usable=height-top-bottom,step=slots.length>1?width/(slots.length-1):width;
+  const maxWave=Math.max(1,...waves.filter(Number.isFinite)),maxWind=Math.max(6,...winds.filter(Number.isFinite));
+  if(hasWind)winds.forEach((v,i)=>{if(!Number.isFinite(v))return;const rect=document.createElementNS(ns,"rect"),barW=Math.max(8,Math.min(28,step*.34));rect.setAttribute("x",String(i*step-barW/2));rect.setAttribute("y",String(top+usable*(1-v/maxWind)));rect.setAttribute("width",String(barW));rect.setAttribute("height",String(usable*v/maxWind));rect.setAttribute("rx","2");rect.setAttribute("fill","#2d7281");rect.setAttribute("opacity",".75");chart.appendChild(rect)});
+  if(hasWave){const points=waves.map((v,i)=>Number.isFinite(v)?`${i*step},${top+usable*(1-v/maxWave)}`:null).filter(Boolean);if(points.length>1){const poly=document.createElementNS(ns,"polyline");poly.setAttribute("points",points.join(" "));poly.setAttribute("fill","none");poly.setAttribute("stroke","#f45d43");poly.setAttribute("stroke-width","4");poly.setAttribute("vector-effect","non-scaling-stroke");chart.appendChild(poly)}}
+}
+function renderObservation(){
+  const list=Array.isArray(source.verified_observations)?[...source.verified_observations].sort((a,b)=>String(b.observed_at||"").localeCompare(String(a.observed_at||""))):[];
+  if(!observationBox||!list.length){if(observationBox)observationBox.hidden=true;return}
+  const latest=list[0],when=latest.observed_at?new Date(latest.observed_at):null;
+  const parts=[latest.wave_size_label||"サイズ記録なし"];
+  if(latest.wind_direction_label)parts.push(`風 ${latest.wind_direction_label}${Number.isFinite(numeric(latest.wind_speed_ms))?` ${fmt(latest.wind_speed_ms)}m/s`:""}`);  if(Number.isFinite(numeric(latest.source_count)))parts.push(`独立ソース ${latest.source_count}件`);
+  const heading=document.createElement("strong");heading.textContent="検証済み実波";
+  const detail=document.createElement("span");detail.textContent=`${when&&!Number.isNaN(when.getTime())?when.toLocaleString("ja-JP",{timeZone:"Asia/Tokyo",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"})+" / ":""}${parts.join(" / ")}`;
+  observationBox.replaceChildren(heading,detail);observationBox.hidden=false;
+}
+function selectMode(next,focus=false){
+  mode=next;tabs.forEach(tab=>{const selected=tab.dataset.mode===mode;tab.classList.toggle("is-active",selected);tab.setAttribute("aria-selected",String(selected));tab.tabIndex=selected?0:-1;if(selected)panel.setAttribute("aria-labelledby",tab.id)});
+  title.textContent=mode==="hourly"?"時間別予報":"週間予報";renderGrid();if(focus)tabs.find(tab=>tab.dataset.mode===mode)?.focus();
+}
+tabs.forEach(tab=>{tab.addEventListener("click",()=>selectMode(tab.dataset.mode));tab.addEventListener("keydown",event=>{if(!["ArrowLeft","ArrowRight"].includes(event.key))return;event.preventDefault();selectMode(event.key==="ArrowRight"?"weekly":"hourly",true)})});
+panel.setAttribute("aria-busy","true");
+selectMode("hourly");
+state.textContent="読み込み中";
+loadSource().then(data=>{
+  source=data&&typeof data==="object"?data:{};
+  if(waveLabel)waveLabel.textContent=`${source.wave_metric_label||"モデル波高"}(m)`;
+  if(notice&&source.model_notice)notice.textContent=source.model_notice;
+  renderObservation();
+  panel.setAttribute("aria-busy","false");
+  selectMode("hourly");
+});
+})();

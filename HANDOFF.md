@@ -1,6 +1,6 @@
 # HANDOFF — 関東サーファー｜波情報
 
-更新日: 2026-09-13
+更新日: 2026-09-14
 
 ## 目的
 関東サーファー向けの波情報・波予想サイトを立ち上げる。GitHubをProjectのSSOTとする。
@@ -73,7 +73,7 @@
 - Marine生値だけでは近接ポイント差を表現できないため、地点別の海岸向き・遮蔽・堤防/岬等の補正が必須。
 
 ## 現在の実装ブランチ
-Branch: `feat/validation-baseline`
+Branch: `feat/public-forecast-adapter`
 Base: `main`
 
 ### 実装済み
@@ -136,21 +136,32 @@ Open-Meteo APIと波情報を合わせる際、次の3項目を必ず記録す�
 - 他社点数はコピーせず誤差比較用に限定する。
 
 ## 次にやること
-1. `feat/validation-baseline` の差分をレビューしてPR化する。
-2. 独立2ソース目とspot_contextレビューを既存recordへ反映する更新CLIを追加する。
-3. live/reportとOpen-Meteoを同時刻で比較したvalidation recordを蓄積する。
-4. 小波/通常/サイズアップ/北東風/南西風/台風うねり/風波主体を集める。
-5. 地点別の方向係数・遮蔽係数・風係数を決める。
-6. その後にサイズ判定・ランキング点数ロジックを実装する。
-7. 周辺ポイントDB、SEO個別ページ、トップ/ランキング/Notebook動画フローへ進む。
+1. 独立2ソース目とspot_contextレビューを既存recordへ反映する更新CLIを追加する。
+2. live/reportとOpen-Meteoを同時刻で比較したvalidation recordを蓄積する。
+3. 小波/通常/サイズアップ/北東風/南西風/台風うねり/風波主体を集める。
+4. 地点別の方向係数・遮蔽係数・風係数を決める。
+5. その後に実ブレイクサイズ判定・ランキング点数ロジックを実装する。
+6. 周辺ポイントDB、SEO個別ページ、トップ/ランキング/Notebook動画フローへ進む。
 
 ## Repository状態
 - Repository: `oosaka0123-sudo/kanto-surfer-ks`
 - default branch: `main`
 - PR #1: merged
 - PR #2: merged
-- Active branch: `feat/validation-baseline`
-- Active scope: normalization + validation record + wave display cross-check gate
+- Active branch: `feat/public-forecast-adapter`
+- Active scope: 8-day Open-Meteo + public forecast payload + individual forecast UI integration
 
 ## 注意
 このHANDOFFは未完了状態の再開用。確定仕様は各docs/設定ファイルを正本とする。
+
+## 2026-09-14 実装更新
+
+- PR #3 validation baseline / 3層クロスチェックは main へマージ済み。
+- PR #7 individual spot forecast UI preview は main へマージ済み。
+  - Merge commit: `77e17b9b4ea92b67b4fcd62aab7a65dda11b19b7`
+- Open-Meteo取得期間を3日から8日へ拡張。
+- `scripts/build_public_forecast.php` を追加し、正規化済みモデル値から地点別公開payloadを生成。
+- 時間別は48時間/2時間刻み、週間は8日/各日12時代表。
+- モデル波高は実際のブレイクサイズと明確に分離して表示する。
+- `api_integrity` / `observation_alignment` / `spot_context` が全て `pass`、`overall_status=pass`、独立ソース2件以上の実波記録だけ公開payloadへ取り込む。
+- 個別ページUIは地点JSONを読み込み、時間別・週間とも横スクロールで表示する。
