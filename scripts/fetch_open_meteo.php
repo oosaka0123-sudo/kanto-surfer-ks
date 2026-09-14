@@ -148,6 +148,14 @@ fwrite(STDOUT, sprintf(
     $failures
 ));
 
+if ($failures > 0) {
+    foreach ($result['spots'] as $spotId => $entry) {
+        foreach (($entry['errors'] ?? []) as $source => $message) {
+            fwrite(STDERR, sprintf("Fetch error %s/%s: %s\n", $spotId, $source, $message));
+        }
+    }
+}
+
 exit($failures === count($spots) ? 2 : ($failures > 0 ? 1 : 0));
 
 function buildUrl(string $base, array $params): string
@@ -195,6 +203,23 @@ function validateSpot(array $spot): void
 }
 
 function fetchJson(string $url): array
+{
+    $lastError = null;
+    for ($attempt = 1; $attempt <= 3; $attempt++) {
+        try {
+            return fetchJsonOnce($url);
+        } catch (RuntimeException $e) {
+            $lastError = $e;
+            if (preg_match('/Open-Meteo returned HTTP (4\d\d)/', $e->getMessage(), $m) === 1 && (int)$m[1] !== 429) {
+                throw $e;
+            }
+            if ($attempt < 3) usleep(500000 * (2 ** ($attempt - 1)));
+        }
+    }
+    throw $lastError ?? new RuntimeException('HTTP fetch failed after retries.');
+}
+
+function fetchJsonOnce(string $url): array
 {
     $body = null;
     $status = 0;
