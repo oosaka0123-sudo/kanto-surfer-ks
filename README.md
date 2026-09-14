@@ -1,37 +1,26 @@
 # 関東サーファー｜波情報
 
-関東エリアのサーファー向けに、波情報・波予想・スポットガイドを提供するプロジェクトです。
+関東エリアのサーファー向けに、波情報・波予想・スポットガイドを構築するプロジェクトです。GitHubをProjectの正本（SSOT）として扱います。
 
-## 現在地
+## β版公開
 
-- 新規立ち上げ段階
-- 既存の関西サーファーKSで得た運用ノウハウを参考にする
-- 関東版の対象スポット、予報ロジック、UIはこのRepositoryで確定する
-- GitHubをこのProjectの正本（SSOT）として扱う
+GitHub Pagesでβ版を公開しています。
 
-## 初期方針
+- 公開URL: https://oosaka0123-sudo.github.io/kanto-surfer-ks/
+- 代表9地点を切替可能
+- 時間別: 直近48時間を2時間刻み
+- 週間: 8日間、各日12:00 JSTに最も近いモデル値
+- 更新: GitHub Actionsが毎時17分にOpen-Meteoを再取得して再デプロイ
+- β期間は `noindex,nofollow`
 
-1. 最初から全国共通化を前提に過剰設計せず、関東版を安全に立ち上げる。
-2. 関西版のコードやデータは、実確認せず機械的にコピーしない。
-3. 対象スポット・波サイズ補正・風向評価は、関東の特性を確認してから決定する。
-4. APIキー、認証情報、個人情報、非公開データはCommitしない。
-5. 変更は原則としてBranch → Review → Pull Request → Mergeで進める。
+表示する波高はOpen-Meteo Marineの**モデル波高**です。実際のブレイクサイズとは明確に分離し、実波観測は3層クロスチェックと独立2ソース条件を満たした場合だけ別枠で公開します。
 
-## 関西版との接続方針
+## データパイプライン
 
-関西版と関東版は当面、独立した予報・運用システムとして維持します。
+1. `scripts/fetch_open_meteo.php` — Marine / Weatherを8日取得
+2. `scripts/normalize_open_meteo.php` — 地点×時刻で正規化
+3. `scripts/build_public_forecast.php` — 公開用payload生成
+4. `scripts/build_pages_site.php` — Pages用静的サイト生成
+5. `.github/workflows/deploy-pages.yml` — build / verify / deploy
 
-共通化はプログラム本体から始めず、まず地域間の公開データ形式を `SURF DATA CONTRACT v1` として統一します。地域固有の波サイズ補正、風評価、ランキング点数は各地域側に残し、十分に実績が出た処理だけを将来の共通Core候補とします。
-
-- 仕様: `docs/surf-data-contract-v1.md`
-- JSON Schema: `schemas/surf-data-contract-v1.schema.json`
-
-この契約の導入を理由に、関西本番の既存PHPパス、CRON、ディレクトリ、点数ロジックを先に変更しません。
-
-## 次に決めること
-
-- β版の対象スポット
-- データ取得元と更新頻度
-- ランキング算出ルール
-- トップページ構成
-- GitHub Pages等の公開方式
+raw・normalized・validation record・認証情報はPages成果物へ含めません。
