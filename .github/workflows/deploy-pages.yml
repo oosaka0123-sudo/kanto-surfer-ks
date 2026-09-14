@@ -1,0 +1,98 @@
+name: Deploy Kanto Surfer Beta
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'config/**'
+      - 'prototype/spot-forecast/**'
+      - 'scripts/fetch_open_meteo.php'
+      - 'scripts/normalize_open_meteo.php'
+      - 'scripts/build_public_forecast.php'
+      - 'scripts/build_pages_site.php'
+      - '.github/workflows/deploy-pages.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'config/**'
+      - 'prototype/spot-forecast/**'
+      - 'scripts/fetch_open_meteo.php'
+      - 'scripts/normalize_open_meteo.php'
+      - 'scripts/build_public_forecast.php'
+      - 'scripts/build_pages_site.php'
+      - '.github/workflows/deploy-pages.yml'
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: curl, openssl
+          coverage: none
+
+      - name: Syntax checks
+        run: |
+          php -l scripts/fetch_open_meteo.php
+          php -l scripts/normalize_open_meteo.php
+          php -l scripts/build_public_forecast.php
+          php -l scripts/build_pages_site.php
+          node --check prototype/spot-forecast/app.js
+
+      - name: Fetch 8-day Open-Meteo forecast
+        run: php scripts/fetch_open_meteo.php --output-dir="$RUNNER_TEMP/raw"
+
+      - name: Normalize forecast
+        run: php scripts/normalize_open_meteo.php --input="$RUNNER_TEMP/raw/latest.json" --output-dir="$RUNNER_TEMP/normalized"
+
+      - name: Build public forecast payloads
+        run: php scripts/build_public_forecast.php --input="$RUNNER_TEMP/normalized/latest.json" --output-dir="$RUNNER_TEMP/public" --validation-dir="data/validation"
+
+      - name: Build Pages site
+        run: php scripts/build_pages_site.php --public-dir="$RUNNER_TEMP/public" --output-dir="$RUNNER_TEMP/site"
+
+      - name: Verify Pages artifact
+        run: |
+          test -f "$RUNNER_TEMP/site/index.html"
+          test -f "$RUNNER_TEMP/site/app.js"
+          test -f "$RUNNER_TEMP/site/styles.css"
+          test "$(find "$RUNNER_TEMP/site/data" -maxdepth 1 -name '*.json' | wc -l)" -eq 10
+          ! grep -R -E 'password|api[_-]?key|Authorization: Bearer' "$RUNNER_TEMP/site" --exclude='*.json'
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ runner.temp }}/site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

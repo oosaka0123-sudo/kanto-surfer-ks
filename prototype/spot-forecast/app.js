@@ -18,9 +18,14 @@ const dateKey=d=>{const p=getJst(d);return`${p.year}-${p.month}-${p.day}`;};
 const pad=v=>String(v).padStart(2,"0");
 const numeric=v=>v===null||v===undefined||v===""?NaN:Number(v);
 const escapeHtml=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
+function requestedSpot(){
+  const requested=new URLSearchParams(location.search).get("spot");
+  return requested&&/^[a-z0-9_-]+$/.test(requested)?requested:(root.dataset.defaultSpot||"kugenuma");
+}
 async function loadSource(){
   if(window.KANTO_FORECAST_DATA&&typeof window.KANTO_FORECAST_DATA==="object")return window.KANTO_FORECAST_DATA;
-  const url=root.dataset.src;if(!url)return{};
+  const base=root.dataset.dataBase;
+  const url=base?`${base}${requestedSpot()}.json`:root.dataset.src;if(!url)return{};
   try{const response=await fetch(url,{cache:"no-store"});if(!response.ok)throw new Error(String(response.status));return await response.json()}
   catch(error){console.warn("Forecast payload unavailable",error);return{}}
 }
@@ -98,6 +103,8 @@ loadSource().then(data=>{
   if(waveLabel)waveLabel.textContent=`${source.wave_metric_label||"モデル波高"}(m)`;
   if(notice&&source.model_notice)notice.textContent=source.model_notice;
   renderObservation();
+  const spotName=document.querySelector("[data-spot-name]");if(spotName&&source.spot?.name)spotName.textContent=source.spot.name;
+  document.querySelectorAll("[data-spot-link]").forEach(link=>link.toggleAttribute("aria-current",link.dataset.spotLink===source.spot?.id));
   panel.setAttribute("aria-busy","false");
   selectMode("hourly");
 });
