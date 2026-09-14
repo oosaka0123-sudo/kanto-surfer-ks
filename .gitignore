@@ -14,3 +14,7 @@
 .DS_Store
 Thumbs.db
 *.tmp
+
+# Runtime public forecast payloads
+/data/public/*.json
+!/data/public/.gitkeep

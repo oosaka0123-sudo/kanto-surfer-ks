@@ -76,7 +76,7 @@ foreach ($spots as $spot) {
         'longitude' => $longitude,
         'hourly' => implode(',', $marineHourly),
         'timezone' => $timezone,
-        'forecast_days' => 3,
+        'forecast_days' => 8,
         'cell_selection' => 'sea',
     ]);
 
@@ -85,7 +85,7 @@ foreach ($spots as $spot) {
         'longitude' => $longitude,
         'hourly' => implode(',', $weatherHourly),
         'timezone' => $timezone,
-        'forecast_days' => 3,
+        'forecast_days' => 8,
         'wind_speed_unit' => 'ms',
         'cell_selection' => 'land',
     ]);

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://rss7.net/schemas/public-forecast-v1.schema.json",
+  "title": "Kanto Surfer Public Forecast v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "generated_at", "timezone", "spot", "status", "wave_metric_label", "model_notice", "hourly", "weekly", "verified_observations"],
+  "properties": {
+    "schema_version": {"const": "public-forecast/1.0"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "source_generated_at": {"type": ["string", "null"], "format": "date-time"},
+    "timezone": {"const": "Asia/Tokyo"},
+    "spot": {"$ref": "#/$defs/spot"},
+    "status": {"enum": ["model_only", "model_plus_verified_observation"]},
+    "wave_metric_label": {"type": "string", "minLength": 1},
+    "model_notice": {"type": "string", "minLength": 1},
+    "hourly": {"type": "array", "maxItems": 24, "items": {"$ref": "#/$defs/row"}},
+    "weekly": {"type": "array", "maxItems": 8, "items": {"$ref": "#/$defs/weeklyRow"}},
+    "verified_observations": {"type": "array", "items": {"$ref": "#/$defs/observation"}}
+  },
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "model_only"}}}, "then": {"properties": {"verified_observations": {"type": "array", "maxItems": 0}}}},
+    {"if": {"properties": {"status": {"const": "model_plus_verified_observation"}}}, "then": {"properties": {"verified_observations": {"type": "array", "minItems": 1}}}}
+  ],
+  "$defs": {
+    "spot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "area"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "area": {"type": "string"}
+      }
+    },
+    "row": {
+      "type": "object", "additionalProperties": false,
+      "required": ["time", "weather_label", "model_wave_height_m", "period_s", "wind_speed_ms", "wind_gust_ms", "wind_direction_label", "validation_status"],
+      "properties": {
+        "time": {"type": "string", "format": "date-time"},
+        "weather_label": {"type": "string"},
+        "model_wave_height_m": {"type": ["number", "null"], "minimum": 0},
+        "period_s": {"type": ["number", "null"], "minimum": 0},
+        "wind_speed_ms": {"type": ["number", "null"], "minimum": 0},
+        "wind_gust_ms": {"type": ["number", "null"], "minimum": 0},
+        "wind_direction_label": {"type": ["string", "null"]},
+        "validation_status": {"const": "provisional"},
+        "date": {"type": "string", "format": "date"}
+      }
+    },
+    "weeklyRow": {
+      "allOf": [
+        {"$ref": "#/$defs/row"},
+        {"type": "object", "required": ["date"]}
+      ]
+    },
+    "observation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["observed_at", "wave_size_label", "wind_direction_label", "wind_speed_ms", "source_count"],
+      "properties": {
+        "observed_at": {"type": ["string", "null"], "format": "date-time"},
+        "wave_size_label": {"type": ["string", "null"]},
+        "wind_direction_label": {"type": ["string", "null"]},
+        "wind_speed_ms": {"type": ["number", "null"], "minimum": 0},
+        "source_count": {"type": "integer", "minimum": 2}
+      }
+    }
+  }
+}
