@@ -1,6 +1,6 @@
 # HANDOFF — 関東サーファー｜波情報
 
-更新日: 2026-09-14
+更新日: 2026-09-15
 
 ## 目的
 関東サーファー向けの波情報・波予想サイトを立ち上げる。GitHubをProjectのSSOTとする。
@@ -72,9 +72,9 @@
 - 片貝新堤と一宮は同じMarine格子に解決された。
 - Marine生値だけでは近接ポイント差を表現できないため、地点別の海岸向き・遮蔽・堤防/岬等の補正が必須。
 
-## 現在の実装ブランチ
-Branch: `feat/public-forecast-adapter`
-Base: `main`
+## 現在の実装状態
+Branch: `main`
+公開β: GitHub Pages
 
 ### 実装済み
 - `scripts/normalize_open_meteo.php`
@@ -148,8 +148,9 @@ Open-Meteo APIと波情報を合わせる際、次の3項目を必ず記録す�
 - default branch: `main`
 - PR #1: merged
 - PR #2: merged
-- Active branch: `feat/public-forecast-adapter`
-- Active scope: 8-day Open-Meteo + public forecast payload + individual forecast UI integration
+- Active branch: `main`
+- Public beta: `https://oosaka0123-sudo.github.io/kanto-surfer-ks/`
+- Active scope: validation accumulation + Kanto spot correction + ranking logic
 
 ## 注意
 このHANDOFFは未完了状態の再開用。確定仕様は各docs/設定ファイルを正本とする。
@@ -165,3 +166,17 @@ Open-Meteo APIと波情報を合わせる際、次の3項目を必ず記録す�
 - モデル波高は実際のブレイクサイズと明確に分離して表示する。
 - `api_integrity` / `observation_alignment` / `spot_context` が全て `pass`、`overall_status=pass`、独立ソース2件以上の実波記録だけ公開payloadへ取り込む。
 - 個別ページUIは地点JSONを読み込み、時間別・週間とも横スクロールで表示する。
+
+## 2026-09-15 β公開更新
+
+- PR #8 public forecast data adapter は main へマージ済み。
+  - Merge commit: `1dbf053ff3885ce6a0ae9080fe3f3b03c035d0b9`
+- PR #9 GitHub Pages beta deployment は main へマージ済み。
+  - Merge commit: `6cdaeca6d70293d0edbe3bf066800722cbe0c010`
+- GitHub PagesをGitHub Actions方式で有効化済み。
+- 公開URL: https://oosaka0123-sudo.github.io/kanto-surfer-ks/
+- 毎時17分にOpen-Meteo取得 → 正規化 → 公開payload → 静的Pagesを自動再生成する。
+- GitHub Runnerの一時通信失敗対策として429 / 5xx / transport errorを最大3回リトライする。恒久的な4xxは即fail。
+- 本番QA: 390px / 1200pxでページ横はみ出しなし、週間横スクロール、sticky、メニュー、9地点切替PASS。
+- 公開9地点JSONは全てHTTP 200を確認。β期間は `noindex,nofollow`。
+- raw / normalized / validation record / PHPソース / credentialsはPages成果物へ含めない。
