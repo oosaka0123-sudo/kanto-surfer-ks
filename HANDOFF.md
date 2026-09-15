@@ -180,3 +180,30 @@ Open-Meteo APIと波情報を合わせる際、次の3項目を必ず記録す�
 - 本番QA: 390px / 1200pxでページ横はみ出しなし、週間横スクロール、sticky、メニュー、9地点切替PASS。
 - 公開9地点JSONは全てHTTP 200を確認。β期間は `noindex,nofollow`。
 - raw / normalized / validation record / PHPソース / credentialsはPages成果物へ含めない。
+
+## 2026-09-15 次回引き継ぎ
+
+### 現在の公開状態
+- 公開βは **1ページ + 9地点切替** のまま維持する。
+- 公開URL: https://oosaka0123-sudo.github.io/kanto-surfer-ks/
+- GitHub Pages / 毎時17分更新 / 8日モデル予報は稼働中。
+- 現在の本番main: `5e758912cb0dcb66464b7090621baabd41cb750a`
+
+### ページ構成について
+- 将来的にはトップ1ページ + 9スポット個別ページ = 最低10ページ構成を有力案とする。
+- ただし **ページ構成全体が固まるまでは分割実装しない**。
+- トップ、スポット個別、ランキング、ガイド、お問い合わせ等の役割とURL設計を先に確定し、その後まとめてページ化する。
+- `feat/seo-spot-pages` はローカルで作成しただけで実装変更なし。main・本番への影響なし。
+
+### 未完了WIP
+- validation review CLIの途中作業はPC02の `stash@{0}` に退避済み。
+- stash名: `wip validation review cli`
+- 次回、ページ構成を優先する場合はこのstashを触らず保持する。
+- 実波検証作業へ戻る場合のみ、専用ブランチでstashを復元して続きを行う。
+
+### 次回の開始手順
+1. `HANDOFF.md` と `docs/pages-deployment.md` を読む。
+2. 公開βが正常稼働していることだけ確認する。
+3. まずサイト全体の最終ページ構成を確定する。
+4. ページ構成確定後にURL / SEO / 内部リンクをまとめて設計する。
+5. その後に10ページ以上への分割実装を一括で行う。
