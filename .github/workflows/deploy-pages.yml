@@ -73,6 +73,19 @@ jobs:
           test -f "$RUNNER_TEMP/site/app.js"
           test -f "$RUNNER_TEMP/site/styles.css"
           test "$(find "$RUNNER_TEMP/site/data" -maxdepth 1 -name '*.json' | wc -l)" -eq 10
+          test "$(find "$RUNNER_TEMP/site/spots" -mindepth 2 -maxdepth 2 -name 'index.html' | wc -l)" -eq 9
+          for page in about contact privacy; do
+            test -f "$RUNNER_TEMP/site/$page/index.html"
+          done
+          grep -q 'spots/kugenuma/' "$RUNNER_TEMP/site/index.html"
+          grep -q 'noindex,nofollow' "$RUNNER_TEMP/site/index.html"
+          while IFS= read -r page; do
+            grep -q 'noindex,nofollow' "$page"
+          done < <(find "$RUNNER_TEMP/site/spots" -mindepth 2 -maxdepth 2 -name 'index.html')
+          for page in about contact privacy; do
+            grep -q 'noindex,nofollow' "$RUNNER_TEMP/site/$page/index.html"
+          done
+          test ! -e "$RUNNER_TEMP/site/sitemap.xml"
           ! grep -R -E 'password|api[_-]?key|Authorization: Bearer' "$RUNNER_TEMP/site" --exclude='*.json'
 
       - name: Upload Pages artifact
