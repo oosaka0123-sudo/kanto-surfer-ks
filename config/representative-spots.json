@@ -1,10 +1,11 @@
 {
   "version": 1,
-  "updated_at": "2026-09-13",
+  "updated_at": "2026-09-15",
   "timezone": "Asia/Tokyo",
   "spots": [
     {
       "id": "kugenuma",
+      "slug": "kugenuma",
       "display_name": "鵠沼",
       "internal_name": "鵠沼海岸",
       "region": "湘南",
@@ -16,6 +17,7 @@
     },
     {
       "id": "yuigahama",
+      "slug": "yuigahama",
       "display_name": "由比ヶ浜",
       "internal_name": "由比ヶ浜海岸",
       "region": "湘南",
@@ -27,6 +29,7 @@
     },
     {
       "id": "oarai_onuki",
+      "slug": "oarai-onuki",
       "display_name": "大洗・大貫",
       "internal_name": "大貫つるかめ下",
       "region": "茨城",
@@ -38,6 +41,7 @@
     },
     {
       "id": "kashima_hirai",
+      "slug": "kashima-hirai",
       "display_name": "鹿嶋・平井",
       "internal_name": "平井浜",
       "region": "茨城",
@@ -49,6 +53,7 @@
     },
     {
       "id": "katakai",
+      "slug": "katakai",
       "display_name": "片貝",
       "internal_name": "片貝新堤",
       "region": "千葉北",
@@ -60,6 +65,7 @@
     },
     {
       "id": "ichinomiya",
+      "slug": "ichinomiya",
       "display_name": "一宮",
       "internal_name": "一宮",
       "region": "千葉北",
@@ -71,6 +77,7 @@
     },
     {
       "id": "taito",
+      "slug": "taito",
       "display_name": "太東",
       "internal_name": "太東",
       "region": "千葉北",
@@ -82,6 +89,7 @@
     },
     {
       "id": "onjuku",
+      "slug": "onjuku",
       "display_name": "御宿",
       "internal_name": "御宿中央",
       "region": "千葉南",
@@ -93,6 +101,7 @@
     },
     {
       "id": "kamogawa_maruki",
+      "slug": "kamogawa-maruki",
       "display_name": "鴨川・マルキ",
       "internal_name": "マルキ",
       "region": "千葉南",
