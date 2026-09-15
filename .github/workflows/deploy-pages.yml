@@ -1,3 +1,4 @@
+# Canonical GitHub Pages workflow for Kanto Surfer. Keep Pages deployment in this file only.
 name: Deploy Kanto Surfer Beta
 
 on:
