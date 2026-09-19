@@ -18,7 +18,13 @@ const dateKey=d=>{const p=getJst(d);return`${p.year}-${p.month}-${p.day}`;};
 const pad=v=>String(v).padStart(2,"0");
 const numeric=v=>v===null||v===undefined||v===""?NaN:Number(v);
 const escapeHtml=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
-const cssPx=(name,fallback)=>{const v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));return Number.isFinite(v)&&v>0?v:fallback;};\nconst getColWidth=()=>cssPx("--col",96);\nconst getLabelWidth=()=>cssPx("--label",96);\nlet syncingScroll=false;\nfunction bindScrollSync(from,to){if(!from||!to)return;from.addEventListener("scroll",()=>{if(syncingScroll)return;syncingScroll=true;to.scrollLeft=from.scrollLeft;requestAnimationFrame(()=>{syncingScroll=false;});},{passive:true});}\nbindScrollSync(scroll,chartScroll);bindScrollSync(chartScroll,scroll);\nfunction requestedSpot(){
+const cssPx=(name,fallback)=>{const v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));return Number.isFinite(v)&&v>0?v:fallback;};
+const getColWidth=()=>cssPx("--col",96);
+const getLabelWidth=()=>cssPx("--label",96);
+let syncingScroll=false;
+function bindScrollSync(from,to){if(!from||!to)return;from.addEventListener("scroll",()=>{if(syncingScroll)return;syncingScroll=true;to.scrollLeft=from.scrollLeft;requestAnimationFrame(()=>{syncingScroll=false;});},{passive:true});}
+bindScrollSync(scroll,chartScroll);bindScrollSync(chartScroll,scroll);
+function requestedSpot(){
   const requested=new URLSearchParams(location.search).get("spot");
   return requested&&/^[a-z0-9_-]+$/.test(requested)?requested:(root.dataset.defaultSpot||"kugenuma");
 }
