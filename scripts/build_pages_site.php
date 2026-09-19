@@ -186,7 +186,7 @@ function buildForecastPage(
         </div>
         <div class="forecast-panel" id="panel-forecast" role="tabpanel" aria-labelledby="tab-hourly">
           <div class="forecast-legend" aria-label="グラフ凡例"><span><i class="legend-wave"></i><span data-wave-label>モデル波高(m)</span></span><span><i class="legend-wind"></i>風(m/s)</span><span class="data-state" data-state>読み込み中</span></div>
-          <div class="chart-wrap" aria-label="モデル波高と風速の推移"><svg class="forecast-chart" viewBox="0 0 800 240" preserveAspectRatio="none" data-chart aria-hidden="true"></svg><p class="chart-empty" data-chart-empty>予報データ未接続</p></div>
+          <div class="chart-wrap" aria-label="モデル波高と風速の推移"><div class="chart-scroll" data-chart-scroll><div class="chart-inner" data-chart-inner><svg class="forecast-chart" viewBox="0 0 800 240" preserveAspectRatio="none" data-chart aria-hidden="true"></svg></div></div><p class="chart-empty" data-chart-empty>予報データ未接続</p></div>
           <div class="scroll-hint" aria-hidden="true">← 横にスワイプ →</div>
           <div class="forecast-scroll" tabindex="0" aria-label="予報表。左右にスクロールできます" data-scroll><div class="forecast-grid" data-grid></div></div>
           <aside class="verified-observation" data-observation hidden aria-live="polite"></aside>
