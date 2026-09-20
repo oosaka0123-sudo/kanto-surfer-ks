@@ -26,8 +26,10 @@
   .value .wind-arrow{margin-bottom:2px}
   .forecast-note{margin-top:12px;font-size:11px}
   .verified-observation{margin:12px 8px;padding:10px 12px}
-  .site-footer{padding:18px 10px}
-}.forecast-section{width:calc(100% - 36px);padding-top:54px}.brand-mark{font-size:40px}.brand-copy{font-size:18px}.site-footer{display:block}.site-footer span{display:block;margin-top:6px}}@media(min-width:760px){:root{--label:118px;--col:112px}.forecast-section{padding-top:70px}.cell{min-height:88px}}@media(prefers-reduced-motion:reduce){.forecast-scroll{scroll-behavior:auto}}
+  .site-footer{display:block;padding:18px 10px}
+  .site-footer span{display:block;margin-top:6px}
+}
+@media(min-width:760px){:root{--label:118px;--col:112px}.forecast-section{padding-top:70px}.cell{min-height:88px}}@media(prefers-reduced-motion:reduce){.forecast-scroll{scroll-behavior:auto}}
 .verified-observation{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin:18px 14px 16px;padding:14px 16px;border:1px solid var(--line2);background:rgba(143,181,196,.06);font-family:"Yu Gothic",sans-serif}.verified-observation[hidden]{display:none}.verified-observation strong{color:var(--wave);font-size:12px;letter-spacing:.04em}.verified-observation span{color:var(--text);font-size:12px;line-height:1.7}
 
 .site-header{position:relative;z-index:20}.site-menu{position:absolute;top:88px;right:18px;z-index:30;min-width:190px;padding:10px;border:1px solid var(--line2);background:#082331;box-shadow:0 18px 45px rgba(0,0,0,.28)}.site-menu[hidden]{display:none}.site-menu a{display:block;padding:13px 14px;color:var(--text);text-decoration:none;border-bottom:1px solid var(--line);font:600 13px/1.4 "Yu Gothic",sans-serif}.site-menu a:last-child{border-bottom:0}.site-menu a:focus-visible,.site-menu a:hover{background:var(--soft);outline:none}.menu-button[aria-expanded="true"] span:nth-child(1){transform:translateY(9px) rotate(45deg)}.menu-button[aria-expanded="true"] span:nth-child(2){opacity:0}.menu-button[aria-expanded="true"] span:nth-child(3){transform:translateY(-9px) rotate(-45deg)}.menu-button span{transition:transform .18s ease,opacity .18s ease}
