@@ -69,7 +69,19 @@ function fmtTime(slot){
   const p=getJst(d);
   return mode==="hourly"?`${p.hour}時`:`${parseInt(p.month,10)}/${parseInt(p.day,10)}`;
 }
-function weather(slot){return slot.weather_label||slot.weather||"--"}
+function weather(slot){
+  const label=String(slot.weather_label||slot.weather||"--");
+  const v=label.toLowerCase();
+  let icon="•";
+  if(/雷|thunder/.test(v))icon="⛈️";
+  else if(/雪|snow|sleet/.test(v))icon="🌨️";
+  else if(/霧|fog|mist/.test(v))icon="🌫️";
+  else if(/小雨|霧雨|drizzle|light rain/.test(v))icon="🌦️";
+  else if(/雨|rain|shower/.test(v))icon="🌧️";
+  else if(/曇|くもり|cloud|overcast/.test(v))icon="☁️";
+  else if(/晴|clear|sunny/.test(v))icon="☀️";
+  return{icon,label};
+}
 function wave(slot){const v=slot.wave_height_m??slot.model_wave_height_m??slot.wave?.height_m;return{main:fmt(v),sub:Number.isFinite(numeric(v))?"m":""}}
 function period(slot){const v=slot.period_s??slot.swell?.period_s;return{main:fmt(v),sub:Number.isFinite(numeric(v))?"秒":""}}
 function wind(slot){const v=slot.wind_speed_ms??slot.wind?.speed_ms;return{main:fmt(v),sub:Number.isFinite(numeric(v))?"m/s":"",direction:slot.wind_direction_label??slot.wind?.direction_label??""}}
@@ -85,8 +97,8 @@ function connectionLabel(){
 function renderGrid(){
   const slots=getSlots(),nowIndex=currentIndex(slots);grid.style.setProperty("--columns",slots.length);grid.replaceChildren();
   const waveName=source.wave_metric_label||"モデル波高";
-  const rows=[{label:mode==="hourly"?"時刻":"日付",unit:"",render:s=>({main:fmtTime(s),sub:""})},{label:"天気",unit:"",render:s=>({main:weather(s),sub:""})},{label:waveName,unit:"m",render:wave},{label:"周期",unit:"秒",render:period},{label:"風",unit:"m/s",render:wind}];
-  const fragment=document.createDocumentFragment();  rows.forEach((row,rowIndex)=>{addCell(fragment,"label",`${escapeHtml(row.label)}${row.unit?`<small>${escapeHtml(row.unit)}</small>`:""}`);slots.forEach((slot,index)=>{const value=row.render(slot),direction=value.direction?`<span class="wind-arrow">${escapeHtml(value.direction)}</span>`:"";addCell(fragment,"value",`${direction}<span>${escapeHtml(value.main)}</span>${value.sub?`<span class="sub">${escapeHtml(value.sub)}</span>`:""}`,index===nowIndex,rowIndex===0&&index===nowIndex)})});
+  const rows=[{label:mode==="hourly"?"時刻":"日付",unit:"",render:s=>({main:fmtTime(s),sub:""})},{label:"天気",unit:"",render:s=>{const w=weather(s);return{main:w.icon,sub:w.label,weather:true}}},{label:waveName,unit:"m",render:wave},{label:"周期",unit:"秒",render:period},{label:"風",unit:"m/s",render:wind}];
+  const fragment=document.createDocumentFragment();  rows.forEach((row,rowIndex)=>{addCell(fragment,"label",`${escapeHtml(row.label)}${row.unit?`<small>${escapeHtml(row.unit)}</small>`:""}`);slots.forEach((slot,index)=>{const value=row.render(slot),direction=value.direction?`<span class="wind-arrow">${escapeHtml(value.direction)}</span>`:"";addCell(fragment,"value",`${direction}<span${value.weather?` class="weather-icon" aria-hidden="true"`:""}>${escapeHtml(value.main)}</span>${value.sub?`<span class="sub${value.weather?" weather-text":""}">${escapeHtml(value.sub)}</span>`:""}`,index===nowIndex,rowIndex===0&&index===nowIndex)})});
   grid.appendChild(fragment);
   requestAnimationFrame(()=>{if(nowIndex>=0){const col=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--col"))||96;scroll.scrollLeft=Math.max(0,(nowIndex-1)*col)}});
   renderChart(slots);state.textContent=connectionLabel();
