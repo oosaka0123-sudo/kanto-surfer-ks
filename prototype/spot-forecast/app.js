@@ -21,8 +21,22 @@ const escapeHtml=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"
 const cssPx=(name,fallback)=>{const v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));return Number.isFinite(v)&&v>0?v:fallback;};
 const getColWidth=()=>cssPx("--col",96);
 const getLabelWidth=()=>cssPx("--label",96);
-let syncingScroll=false;
-function bindScrollSync(from,to){if(!from||!to)return;from.addEventListener("scroll",()=>{if(syncingScroll)return;syncingScroll=true;to.scrollLeft=from.scrollLeft;requestAnimationFrame(()=>{syncingScroll=false;});},{passive:true});}
+let scrollOwner=null,scrollOwnerTimer=0;
+function markScrollOwner(el){
+  scrollOwner=el;
+  clearTimeout(scrollOwnerTimer);
+}
+function bindScrollSync(from,to){
+  if(!from||!to)return;
+  ["pointerdown","touchstart","wheel"].forEach(type=>from.addEventListener(type,()=>markScrollOwner(from),{passive:true}));
+  from.addEventListener("scroll",()=>{
+    if(scrollOwner&&scrollOwner!==from)return;
+    markScrollOwner(from);
+    if(Math.abs(to.scrollLeft-from.scrollLeft)>.5)to.scrollLeft=from.scrollLeft;
+    clearTimeout(scrollOwnerTimer);
+    scrollOwnerTimer=setTimeout(()=>{if(scrollOwner===from)scrollOwner=null;},180);
+  },{passive:true});
+}
 bindScrollSync(scroll,chartScroll);bindScrollSync(chartScroll,scroll);
 function requestedSpot(){
   const requested=new URLSearchParams(location.search).get("spot");
