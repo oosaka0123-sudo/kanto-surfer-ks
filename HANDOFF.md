@@ -207,3 +207,188 @@ Open-Meteo APIと波情報を合わせる際、次の3項目を必ず記録す�
 3. まずサイト全体の最終ページ構成を確定する。
 4. ページ構成確定後にURL / SEO / 内部リンクをまとめて設計する。
 5. その後に10ページ以上への分割実装を一括で行う。
+
+
+---
+
+# 2026-09-21 最新引き継ぎ（この節を最優先で読む）
+
+更新日: 2026-09-21
+
+> この節は、上にある2026-09-15以前の状態説明を上書きする最新状態。
+> 次回はまずこの節から再開する。
+
+## 現在の公開状態
+- Repository: `oosaka0123-sudo/kanto-surfer-ks`
+- default branch: `main`
+- Public beta: https://oosaka0123-sudo.github.io/kanto-surfer-ks/
+- GitHub Pages: GitHub Actions方式で稼働中。
+- 毎時17分に Open-Meteo取得 → 正規化 → 公開payload → Pages生成。
+- β期間は引き続き `noindex,nofollow`。
+- 関西本番は今回の関東作業では変更していない。
+
+## ページ構成
+2026-09-15時点の「1ページ維持」はすでに次段階へ進んでいる。
+
+現在のβは次を生成する。
+- ルート `/`
+  - 9地点切替を維持。
+- 9スポット個別ページ
+  - `/spots/kugenuma/`
+  - `/spots/yuigahama/`
+  - `/spots/oarai-onuki/`
+  - `/spots/kashima-hirai/`
+  - `/spots/katakai/`
+  - `/spots/ichinomiya/`
+  - `/spots/taito/`
+  - `/spots/onjuku/`
+  - `/spots/kamogawa-maruki/`
+- 信頼ページ
+  - `/about/`
+  - `/contact/`
+  - `/privacy/`
+
+合計: ルート1 + スポット9 + 信頼3 = 13ページ。
+
+まだSEO本公開ではないため、
+- sitemapはまだ出さない。
+- canonicalはまだ付けない。
+- 全HTMLは `noindex,nofollow`。
+- 未検証の実ブレイクサイズ・点数・ランキングは公開しない。
+
+## URL / SEO設計
+- 公開スポットURLは `/spots/{slug}/` で固定。
+- 内部データIDと公開slugは分離する。
+- 正本: `docs/site-architecture-v1.md`
+- 代表9地点設定: `config/representative-spots.json`
+- 関東ローカル補正が固まる前に、関西のサイズ閾値や点数ロジックをコピーしない。
+
+## 直近の重要PR / Merge
+
+### PR #12
+- 重複していたGitHub Pages workflowと古い固定Pagesを整理。
+- 正本workflowを `.github/workflows/deploy-pages.yml` に一本化。
+- 9地点・毎時更新版が別workflowに上書きされる事故を防止。
+
+### PR #13
+- サイト構成 / URL / SEO / 内部リンク設計を正本化。
+- 公開slugを固定。
+- まだSEO本公開はしない。
+
+### PR #14
+- 13ページの静的β生成を実装。
+- 9スポット個別ページ + about/contact/privacy。
+- ルートの9地点切替は維持。
+- 横スクロール対応グラフの土台を追加。
+- Merge: `4df67e701ea739ca8dcc29034202ef8610c05caf`
+
+### PR #15
+- 波高 / 風グラフと下の予報表の横スクロール同期を修正。
+- 左固定ラベル列ぶんのX座標補正も追加。
+- Merge: `d5d3fde1f21aa2d551329e0057f75124f653e64a`
+
+### PR #16
+- スマホ用に余白・グラフ・セル・列幅を圧縮。
+- PC表示は維持。
+- Merge: `db604eb4c5e187fe4cd32386b2b531f6d1c8fe44`
+
+### PR #17
+- スマホ密度をさらに調整。
+- 目安:
+  - chart 160px
+  - cell 56px
+  - label / column 78px
+- Merge: `7e1b4038040b6fdb244becf27f3dd40f17c4f70d`
+- 初回Pages deployは御宿Marine取得の一時SSL timeoutで失敗したが、failed jobs再実行でsuccess。
+- コード不具合ではない。
+
+### PR #18
+- スマホで下の日付/数値表をスワイプした時の「震えて動かない」問題を修正。
+- 原因:
+  - `scroll-snap` と同期 `scrollLeft` の競合。
+  - グラフ側/表側の双方向同期が戻し合うケース。
+- 対策:
+  - 指で操作している側をscroll ownerとして扱う。
+  - programmaticな逆方向scrollイベントを一時無視。
+  - スマホではscroll-snapを無効化。
+- Merge: `8bf2cd1f2d832187e5dbf52a72064eff0938b173`
+
+### PR #19
+- 天気を文字中心からアイコン表示へ変更。
+- スマホではアイコンのみ、PCでは小さい補助テキストを残す。
+- 対応:
+  - 晴れ ☀️
+  - くもり ☁️
+  - 小雨 🌦️
+  - 雨 🌧️
+  - 雷雨 ⛈️
+  - 雪 🌨️
+  - 霧 🌫️
+- forecast値そのものは変更していない。
+- Merge: `ef26386ac74324eabcaf32821027b726fb833723`
+
+## 現在のUI仕様
+### スマホ
+- 予報グラフと表は左右スクロール連動。
+- グラフを指で動かしても表が追従。
+- 表を指で動かしてもグラフが追従。
+- mobileではscroll-snap無効。
+- 左ラベル列とグラフの列中心を合わせる。
+- 天気はアイコンのみ。
+- chart: 160px。
+- cell: 56px。
+- label / data column: 78px。
+- 余白はスマホ専用media queryで圧縮。
+
+### PC
+- モバイル圧縮の影響を受けない。
+- 天気はアイコン + 小さい補助テキスト。
+
+## データ / 安全ルール
+- モデル波高と実ブレイクサイズは別物として表示する。
+- 未検証の実ブレイクサイズを推測で出さない。
+- score / rankingは、地点補正・実波検証が終わるまで自動公開しない。
+- SECRET / private spot dataは公開契約・Pagesへ出さない。
+- Pages成果物にはraw / normalized / validation / PHP source / credentialsを含めない。
+- Open-Meteoの一時transport errorは起こり得る。429 / 5xx / transport errorは既存retry方針で扱う。
+
+## 現在の主な正本
+- `HANDOFF.md`
+- `AGENTS.md`
+- `README.md`
+- `docs/site-architecture-v1.md`
+- `docs/representative-spots.md`
+- `config/representative-spots.json`
+- `.github/workflows/deploy-pages.yml`
+- `scripts/build_pages_site.php`
+- `prototype/spot-forecast/app.js`
+- `prototype/spot-forecast/styles.css`
+
+## validation WIP
+- 以前のvalidation review CLI WIPは、PC02のstashに退避した履歴あり:
+  - `stash@{0}`
+  - `wip validation review cli`
+- ただしstash番号は今後変動し得るので、復元前に必ず `git stash list` で名称確認する。
+- ページ/UI作業とvalidation/calibration作業は分離して進める。
+
+## 次回の開始手順
+1. この最新引き継ぎ節を読む。
+2. 公開β `https://oosaka0123-sudo.github.io/kanto-surfer-ks/` をスマホで確認。
+3. 特に確認:
+   - 下の表を指で左右に動かして震えないか。
+   - グラフと表が同じ位置へ連動するか。
+   - 天気アイコンが正常か。
+   - 週間 / 時間別の両方で横スクロールできるか。
+4. UIが問題なければ、次は見た目の細部改善をするか、validation / spot calibrationへ戻る。
+5. SEO本公開（noindex解除 / sitemap / canonical）は、内容と検証が整ってから別PRで行う。
+6. 実ブレイクサイズ / ランキング点数は、実波検証が十分に蓄積するまで実装しない。
+
+## 現在の再開ポイント
+最優先は **スマホ実機QA**。
+特にPR #18のスクロール震え修正とPR #19の天気アイコンを実機確認する。
+
+問題なければ、次の大きな開発フェーズは:
+- A: UI仕上げ
+- B: validation review CLI再開
+- C: 関東9地点の補正係数蓄積
+のいずれか。B/Cへ進む場合も、公開βは今のnoindex安全版を維持する。
