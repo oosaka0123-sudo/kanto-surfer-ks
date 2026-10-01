@@ -1,5 +1,5 @@
 # Canonical GitHub Pages workflow for Kanto Surfer. Keep Pages deployment in this file only.
-name: Deploy Kanto Surfer Beta
+name: Deploy Kanto Surfer
 
 on:
   push:
@@ -78,14 +78,23 @@ jobs:
             test -f "$RUNNER_TEMP/site/$page/index.html"
           done
           grep -q 'spots/kugenuma/' "$RUNNER_TEMP/site/index.html"
-          grep -q 'noindex,nofollow' "$RUNNER_TEMP/site/index.html"
+          grep -q 'index,follow' "$RUNNER_TEMP/site/index.html"
+          grep -q '<link rel="canonical" href="https://kanto.rss7.net/' "$RUNNER_TEMP/site/index.html"
           while IFS= read -r page; do
-            grep -q 'noindex,nofollow' "$page"
+            grep -q 'index,follow' "$page"
+            grep -q '<link rel="canonical" href="https://kanto.rss7.net/' "$page"
           done < <(find "$RUNNER_TEMP/site/spots" -mindepth 2 -maxdepth 2 -name 'index.html')
           for page in about contact privacy; do
-            grep -q 'noindex,nofollow' "$RUNNER_TEMP/site/$page/index.html"
+            grep -q 'index,follow' "$RUNNER_TEMP/site/$page/index.html"
+            grep -q '<link rel="canonical" href="https://kanto.rss7.net/' "$RUNNER_TEMP/site/$page/index.html"
           done
-          test ! -e "$RUNNER_TEMP/site/sitemap.xml"
+          test -f "$RUNNER_TEMP/site/sitemap.xml"
+          test -f "$RUNNER_TEMP/site/robots.txt"
+          test -f "$RUNNER_TEMP/site/CNAME"
+          grep -q '<loc>https://kanto.rss7.net/</loc>' "$RUNNER_TEMP/site/sitemap.xml"
+          grep -q 'Sitemap: https://kanto.rss7.net/sitemap.xml' "$RUNNER_TEMP/site/robots.txt"
+          grep -qx 'kanto.rss7.net' "$RUNNER_TEMP/site/CNAME"
+          ! grep -R -q 'noindex,nofollow' "$RUNNER_TEMP/site" --include='*.html'
           ! grep -R -E 'password|api[_-]?key|Authorization: Bearer' "$RUNNER_TEMP/site" --exclude='*.json'
 
       - name: Upload Pages artifact

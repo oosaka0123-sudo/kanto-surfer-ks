@@ -19,6 +19,11 @@ ensureDirectory($outputDir . '/data');
 copyRequired($root . '/prototype/spot-forecast/app.js', $outputDir . '/app.js');
 copyRequired($root . '/prototype/spot-forecast/styles.css', $outputDir . '/styles.css');
 atomicWrite($outputDir . '/.nojekyll', '');
+atomicWrite($outputDir . '/CNAME', "kanto.rss7.net\n");
+atomicWrite(
+    $outputDir . '/robots.txt',
+    "User-agent: *\nAllow: /\nSitemap: https://kanto.rss7.net/sitemap.xml\n"
+);
 
 $seenSlugs = [];
 foreach ($spots as $index => $spot) {
@@ -60,29 +65,29 @@ foreach ($spots as $spot) {
 
 $infoPages = [
     'about' => [
-        'title' => 'サイト概要・データについて｜関東サーファーKS β',
-        'description' => '関東サーファーKS β版のデータ元、更新方法、モデル波高と実際のブレイクサイズの違い、検証方針を説明します。',
+        'title' => 'サイト概要・データについて｜関東サーファーKS',
+        'description' => '関東サーファーKSのデータ元、更新方法、モデル波高と実際のブレイクサイズの違い、検証方針を説明します。',
         'heading' => 'サイト概要・データについて',
-        'body' => '<p>関東サーファーKSは、関東主要サーフスポットの海洋モデル予報を見やすく確認するためのβ版です。</p>
+        'body' => '<p>関東サーファーKSは、関東主要サーフスポットの海洋モデル予報を見やすく確認するための波予報サイトです。</p>
 <h2>現在の公開データ</h2>
 <p>Open-MeteoのMarine / Weatherデータを定期取得し、関東9地点の時間別・8日間予報として表示しています。公開値はモデル値であり、実際のブレイクサイズを直接示すものではありません。</p>
 <h2>検証方針</h2>
 <p>モデル値と実波の照合、地点ごとの海岸向き・遮蔽・風の影響を段階的に検証しています。検証が終わっていない実ブレイクサイズ、点数、ランキングは公開値として自動生成しません。</p>
 <h2>更新</h2>
-<p>公開βはGitHub Actionsで定期生成しています。取得・生成に失敗した場合は、推測値で埋めず処理を失敗させる方針です。</p>'
+<p>公開サイトはGitHub Actionsで定期生成しています。取得・生成に失敗した場合は、推測値で埋めず処理を失敗させる方針です。</p>'
     ],
     'contact' => [
-        'title' => 'お問い合わせ｜関東サーファーKS β',
-        'description' => '関東サーファーKS β版のお問い合わせ案内です。',
+        'title' => 'お問い合わせ｜関東サーファーKS',
+        'description' => '関東サーファーKSのお問い合わせ案内です。',
         'heading' => 'お問い合わせ',
-        'body' => '<p>現在は公開βのため、一般向けのお問い合わせフォームは準備中です。正式公開前に窓口を整備します。</p>
+        'body' => '<p>お問い合わせ・情報提供は、<a href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer">関東サーファー YouTubeチャンネル</a>の案内をご利用ください。</p>
 <p>このサイトの波予報は海での安全を保証するものではありません。緊急連絡や救助要請の窓口としては使用できません。</p>'
     ],
     'privacy' => [
-        'title' => 'プライバシーポリシー｜関東サーファーKS β',
-        'description' => '関東サーファーKS β版の現在のプライバシー方針です。',
+        'title' => 'プライバシーポリシー｜関東サーファーKS',
+        'description' => '関東サーファーKSの現在のプライバシー方針です。',
         'heading' => 'プライバシーポリシー',
-        'body' => '<p>現在の公開βでは、このサイト独自のお問い合わせフォーム、独自Cookie、独自アクセス解析を導入していません。</p>
+        'body' => '<p>現在、このサイト独自のお問い合わせフォーム、独自Cookie、独自アクセス解析は導入していません。</p>
 <p>今後、問い合わせ機能やアクセス解析等を導入する場合は、実際の運用内容に合わせてこのページを更新します。</p>
 <p>公開サイトには、内部検証記録、認証情報、非公開スポット情報を含めません。</p>'
     ],
@@ -93,9 +98,23 @@ foreach ($infoPages as $slug => $page) {
     ensureDirectory($dir);
     atomicWrite(
         $dir . '/index.html',
-        buildInfoPage($page['title'], $page['description'], $page['heading'], $page['body'])
+        buildInfoPage($slug, $page['title'], $page['description'], $page['heading'], $page['body'])
     );
 }
+
+$sitemapUrls = ['https://kanto.rss7.net/'];
+foreach ($spots as $spot) {
+    $sitemapUrls[] = 'https://kanto.rss7.net/spots/' . rawurlencode((string)$spot['slug']) . '/';
+}
+foreach (array_keys($infoPages) as $slug) {
+    $sitemapUrls[] = 'https://kanto.rss7.net/' . rawurlencode((string)$slug) . '/';
+}
+$sitemap = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
+foreach ($sitemapUrls as $url) {
+    $sitemap .= '  <url><loc>' . htmlspecialchars($url, ENT_XML1 | ENT_QUOTES, 'UTF-8') . "</loc></url>\n";
+}
+$sitemap .= "</urlset>\n";
+atomicWrite($outputDir . '/sitemap.xml', $sitemap);
 
 $extraCss = "\nhtml,body{max-width:100%;overflow-x:hidden}.beta-intro{width:min(calc(100% - 36px),var(--max));margin:auto;padding:48px 0 10px}.beta-label,.current-spot{color:var(--wave);font:700 11px/1.5 \"Yu Gothic\",sans-serif;letter-spacing:.12em}.beta-intro h1{margin:8px 0 12px;font-size:clamp(34px,8vw,58px);font-weight:500}.beta-intro>p:not(.beta-label){margin:0;max-width:46rem;color:var(--muted);font:13px/1.9 \"Yu Gothic\",sans-serif}.spot-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:24px}.spot-link{min-width:0;padding:12px 10px;border:1px solid var(--line);color:var(--text);text-decoration:none;background:rgba(5,29,40,.18)}.spot-link small,.spot-link strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.spot-link small{color:var(--muted);font:9px/1.5 \"Yu Gothic\",sans-serif}.spot-link strong{margin-top:3px;font-size:14px}.spot-link[aria-current]{border-color:var(--wave);background:var(--soft)}.current-spot{margin:0 0 12px}.current-spot strong{color:var(--text);font-size:15px;margin-left:8px}.permanent-pages{width:min(calc(100% - 36px),var(--max));margin:24px auto 0;padding:18px;border:1px solid var(--line);background:rgba(5,29,40,.18)}.permanent-pages h2{margin:0 0 10px;font-size:15px}.permanent-links{display:flex;flex-wrap:wrap;gap:8px}.permanent-links a,.trust-links a{color:var(--text);text-decoration:none;border-bottom:1px solid var(--line);padding:5px 0}.spot-context{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:18px}.spot-context div{padding:12px;border:1px solid var(--line)}.spot-context dt{color:var(--muted);font:10px/1.5 \"Yu Gothic\",sans-serif}.spot-context dd{margin:5px 0 0;font:13px/1.6 \"Yu Gothic\",sans-serif}.trust-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}.info-page{width:min(calc(100% - 36px),760px);margin:0 auto;padding:64px 0 72px}.info-page h1{margin:0 0 28px;font-size:clamp(32px,7vw,52px);font-weight:500}.info-page h2{margin:34px 0 10px;font-size:20px}.info-page p{color:var(--muted);font:14px/2 \"Yu Gothic\",sans-serif}.info-page .back-home{display:inline-block;margin-bottom:28px;color:var(--text);text-decoration:none;border-bottom:1px solid var(--line)}.youtube-link{display:inline-flex;align-items:center;gap:6px;color:var(--text);text-decoration:none;font:12px/1.4 \"Yu Gothic\",sans-serif}.youtube-link svg{width:22px;height:auto;fill:#ff0033;flex:none}.youtube-link .youtube-play{fill:#fff}.youtube-link:hover{opacity:.82}@media(max-width:720px){.spot-context{grid-template-columns:1fr}.spot-picker{grid-template-columns:1fr}.beta-intro,.permanent-pages,.forecast-section,.info-page{width:calc(100% - 16px);max-width:100%;min-width:0}.beta-intro{padding-top:34px}.beta-intro h1{font-size:clamp(30px,9vw,42px);line-height:1.22;overflow-wrap:anywhere}.beta-intro>p:not(.beta-label){font-size:12px;line-height:1.8;overflow-wrap:anywhere}.spot-link{width:100%;min-width:0}.youtube-link{font-size:11px}.youtube-link svg{width:20px}}\n";
 if (file_put_contents($outputDir . '/styles.css', $extraCss, FILE_APPEND | LOCK_EX) === false) {
@@ -122,14 +141,14 @@ function buildForecastPage(
     $detailLinks = $homePage ? buildPermanentLinks($spots) : '';
 
     $title = $homePage
-        ? '関東サーファーKS｜時間別・週間波予報 β'
-        : $name . 'の波予報｜関東サーファーKS β';
+        ? '関東サーファーKS｜時間別・週間波予報'
+        : $name . 'の波予報｜関東サーファーKS';
     $description = $homePage
-        ? '関東サーファーKS β版。関東9地点の時間別・週間モデル波予報。'
-        : $name . '（' . $region . '）の時間別・8日間モデル波予報。Open-Meteo海洋モデルを使用したβ版です。';
+        ? '関東サーファーKS。関東9地点の時間別・週間モデル波予報。'
+        : $name . '（' . $region . '）の時間別・8日間モデル波予報。Open-Meteo海洋モデルを使用しています。';
     $heading = $homePage ? '関東9地点の波予報' : $name . 'の波予報';
     $intro = $homePage
-        ? 'Open-Meteoの海洋モデルを使ったβ版です。スポットを選ぶと、時間別と8日間の週間予報を確認できます。'
+        ? 'Open-Meteoの海洋モデルを使った波予報です。スポットを選ぶと、時間別と8日間の週間予報を確認できます。'
         : $name . '（' . $region . '）のモデル予報です。モデル波高は実際のブレイクサイズを直接示す値ではありません。';
 
     $context = '';
@@ -148,6 +167,8 @@ function buildForecastPage(
     }
 
     $trustPrefix = $assetPrefix;
+    $canonicalPath = $homePage ? '' : 'spots/' . rawurlencode((string)$activeSpot['slug']) . '/';
+    $canonicalUrl = 'https://kanto.rss7.net/' . $canonicalPath;
 
     return '<!doctype html>
 <html lang="ja">
@@ -155,8 +176,9 @@ function buildForecastPage(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#082331">
-  <meta name="robots" content="noindex,nofollow">
+  <meta name="robots" content="index,follow">
   <meta name="description" content="' . h($description) . '">
+  <link rel="canonical" href="' . h($canonicalUrl) . '">
   <title>' . h($title) . '</title>
   <link rel="stylesheet" href="' . h($assetPrefix) . 'styles.css">
   <script defer src="' . h($assetPrefix) . 'app.js"></script>
@@ -169,7 +191,7 @@ function buildForecastPage(
   </header>
   <main>
     <section class="beta-intro" id="spots">
-      <p class="beta-label">KANTO SURFER KS / BETA</p>
+      <p class="beta-label">KANTO SURFER KS / SURF FORECAST</p>
       <h1>' . h($heading) . '</h1>
       <p>' . h($intro) . '</p>
       ' . $context . '
@@ -195,7 +217,7 @@ function buildForecastPage(
       <p class="forecast-note" id="forecast-note" data-forecast-note>Open-Meteoの海洋モデル波高です。実際のブレイクサイズを直接示す値ではありません。</p>
     </section>
   </main>
-  <footer class="site-footer"><span>KS / KANTO SURFER</span><span>BETA / MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="trust-links" aria-label="サイト情報"><a href="' . h($trustPrefix) . 'about/">サイト概要</a><a href="' . h($trustPrefix) . 'contact/">お問い合わせ</a><a href="' . h($trustPrefix) . 'privacy/">プライバシー</a></nav></footer>
+  <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="trust-links" aria-label="サイト情報"><a href="' . h($trustPrefix) . 'about/">サイト概要</a><a href="' . h($trustPrefix) . 'contact/">お問い合わせ</a><a href="' . h($trustPrefix) . 'privacy/">プライバシー</a></nav></footer>
 </body>
 </html>
 ';
@@ -232,23 +254,25 @@ function contextItem(string $label, string $value): string
     return '<div><dt>' . h($label) . '</dt><dd>' . h($value) . '</dd></div>';
 }
 
-function buildInfoPage(string $title, string $description, string $heading, string $body): string
+function buildInfoPage(string $slug, string $title, string $description, string $heading, string $body): string
 {
+    $canonicalUrl = 'https://kanto.rss7.net/' . rawurlencode($slug) . '/';
     return '<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#082331">
-  <meta name="robots" content="noindex,nofollow">
+  <meta name="robots" content="index,follow">
   <meta name="description" content="' . h($description) . '">
+  <link rel="canonical" href="' . h($canonicalUrl) . '">
   <title>' . h($title) . '</title>
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
   <header class="site-header"><a class="brand" href="../" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a></header>
-  <main class="info-page"><a class="back-home" href="../">← ホームへ</a><p class="beta-label">KANTO SURFER KS / BETA</p><h1>' . h($heading) . '</h1>' . $body . '</main>
-  <footer class="site-footer"><span>KS / KANTO SURFER</span><span>BETA</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="trust-links" aria-label="サイト情報"><a href="../about/">サイト概要</a><a href="../contact/">お問い合わせ</a><a href="../privacy/">プライバシー</a></nav></footer>
+  <main class="info-page"><a class="back-home" href="../">← ホームへ</a><p class="beta-label">KANTO SURFER KS / SITE INFO</p><h1>' . h($heading) . '</h1>' . $body . '</main>
+  <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="trust-links" aria-label="サイト情報"><a href="../about/">サイト概要</a><a href="../contact/">お問い合わせ</a><a href="../privacy/">プライバシー</a></nav></footer>
 </body>
 </html>
 ';
