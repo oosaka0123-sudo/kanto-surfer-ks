@@ -21,6 +21,10 @@ copyRequired($root . '/prototype/spot-forecast/styles.css', $outputDir . '/style
 atomicWrite($outputDir . '/.nojekyll', '');
 atomicWrite($outputDir . '/CNAME', "kanto.rss7.net\n");
 atomicWrite(
+    $outputDir . '/google10b52f5d3ce8d9fd.html',
+    "google-site-verification: google10b52f5d3ce8d9fd.html\n"
+);
+atomicWrite(
     $outputDir . '/robots.txt',
     "User-agent: *\nAllow: /\nSitemap: https://kanto.rss7.net/sitemap.xml\n"
 );
