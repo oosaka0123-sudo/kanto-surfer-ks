@@ -24,6 +24,17 @@ atomicWrite(
     $outputDir . '/robots.txt',
     "User-agent: *\nAllow: /\nSitemap: https://kanto.rss7.net/sitemap.xml\n"
 );
+atomicWrite(
+    $outputDir . '/.htaccess',
+    "RewriteEngine On\n"
+    . "RewriteCond %{HTTPS} !=on\n"
+    . "RewriteRule ^ https://kanto.rss7.net%{REQUEST_URI} [R=301,L]\n"
+    . "ErrorDocument 404 /404.html\n"
+);
+atomicWrite(
+    $outputDir . '/404.html',
+    '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>ページが見つかりません｜関東サーファーKS</title><link rel="stylesheet" href="/styles.css"></head><body><main class="info-page"><p class="beta-label">KANTO SURFER KS</p><h1>ページが見つかりません</h1><p>指定されたページは見つかりませんでした。</p><p><a class="back-home" href="/">ホームへ戻る</a></p></main></body></html>'
+);
 
 $seenSlugs = [];
 foreach ($spots as $index => $spot) {
