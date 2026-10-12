@@ -392,3 +392,59 @@ Open-Meteo APIと波情報を合わせる際、次の3項目を必ず記録す�
 - B: validation review CLI再開
 - C: 関東9地点の補正係数蓄積
 のいずれか。B/Cへ進む場合も、公開βは今のnoindex安全版を維持する。
+
+
+---
+
+# 2026-10-12 最新運用整理（この節を最優先）
+
+## 実行環境
+- 今後のローカルWindows実行ノードは **ks-03** を第一選択とする。
+- Cloud Firstを維持し、GitHub Actions / GitHub上で完結できる作業はローカルPCへ寄せない。
+- ローカル実行が必要な場合のみks-03を使う。
+- ブラウザ自動化は **専用Chromeプロファイル + 固定DevToolsポート方式** を正規経路とする。
+- **Operaは現行の自動化経路から除外**する。
+- ks-04 / ks-pc02は原則fallback。ks-03で必要能力が使えない時だけ、live verification後に利用する。
+- PC再起動後の無人復旧は現時点の必須要件にしない。
+
+## GitHub / 現在状態
+- Repository: `oosaka0123-sudo/kanto-surfer-ks`
+- default branch: `main`
+- current main: `07326d5f61e1d7625cb95aea68295aac55443652`
+- Open PR: なし
+- Open Issue: なし
+- GitHub Pages workflow: `Deploy Kanto Surfer`
+- 2026-10-12の定期実行は success を確認。
+- Search Console確認用HTMLは生成処理へ組み込み済み。
+
+## 公開状態
+- GitHub Pagesは継続稼働中。
+- カスタムドメイン前提の成果物として `CNAME` / `robots.txt` / `sitemap.xml` / canonical / index設定を生成する構成へ移行済み。
+- 過去HANDOFFにある「β期間はnoindex」「sitemapを出さない」は過去状態であり、現在状態には適用しない。
+- 公開URL・DNS・HTTPSは作業時点でlive verificationしてから完了扱いにする。
+
+## データ / 波情報ルール
+- モデル波高と実ブレイクサイズを混同しない。
+- 関西版の点数・サイズ閾値を関東へ自動コピーしない。
+- 関東の実波検証が不足しているランキング・実ブレイクサイズを推測公開しない。
+- Open-Meteo transport errorは一時障害として既存retry方針で扱う。
+
+## SNS運用の現在整理
+- InstagramとThreadsは同じ元記事を使っている。
+- ThreadsはInstagramより反応が良いが、両者の閲覧定義・集計期間は同一とは限らないため単純比較しない。
+- Instagramの伸び悩みについては、内容そのものだけでなく、非フォロワー配信・発見/おすすめ面への露出不足を主要仮説として検証する。
+- 関西サーファーの実績は参考Evidenceだが、関東側のInstagram Insightsで仮説を検証してから仕様変更する。
+- 比較時は少なくとも、非フォロワーリーチ、発見/おすすめ経由、プロフィールアクセス、プロフィール→フォロー転換を確認する。
+
+## クロスチェック
+- ユーザーが明示的に「ChatGPT・Claude・Geminiでクロスチェック」と指定した場合はMasterのLv3ルールに従う。
+- 3者は同じEvidenceを独立評価し、擬似的な3役レビューで代替しない。
+- GeminiはAntigravity CLI経由を優先するが、未認証・利用不能なら未完了と明示し、他の作業まで止めない。
+
+## 次回の開始順
+1. `ai-master` の最新ルール確認。
+2. このHANDOFFの2026-10-12節を読む。
+3. current `main` / Open PR / Open Issue / latest Actionsを確認。
+4. 公開URLをlive verification。
+5. SNS課題ならInstagram Insightsの非フォロワー配信データを先に確認。
+6. 実装変更はProject AGENTSに従いBranch → Test → PR → Review → Merge → Deploy → Live Verificationで完了判定。
