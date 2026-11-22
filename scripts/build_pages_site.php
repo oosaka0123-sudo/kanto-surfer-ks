@@ -252,7 +252,7 @@ function buildDailySection(string $spotName): string
       <div class="daily-table-wrap">
         <table class="daily-table" aria-label="' . h($spotName) . ' 10日間の波と風の予報">
           <colgroup><col class="c-date"><col class="c-weather"><col class="c-wave"><col class="c-wind"><col class="c-dir"><col class="c-judge"></colgroup>
-          <thead><tr><th scope="col">日付</th><th scope="col">天気</th><th scope="col">モデル波高<small>(m)</small></th><th scope="col">風速<small>(m/s)</small></th><th scope="col">風向</th><th scope="col">判定</th></tr></thead>
+          <thead><tr><th scope="col">日付</th><th scope="col">天気</th><th scope="col">モデル波高 <small>(m)</small></th><th scope="col">風速 <small>(m/s)</small></th><th scope="col">風向</th><th scope="col">判定</th></tr></thead>
           <tbody data-daily-body><tr><td colspan="6" class="daily-empty">データ取得中...</td></tr></tbody>
         </table>
       </div>
