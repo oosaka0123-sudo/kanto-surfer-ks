@@ -63,7 +63,7 @@ $publicIndex = rtrim($publicDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'i
 if (is_file($publicIndex)) copyRequired($publicIndex, $outputDir . '/data/index.json');
 
 // 10日間の波・風予報を表示するスポット。null は全スポット。
-$dailySpotIds = ['kugenuma'];
+$dailySpotIds = null;
 $showDailyFor = static fn(string $spotId): bool => $dailySpotIds === null || in_array($spotId, $dailySpotIds, true);
 
 $defaultSpot = $spots[0];
@@ -207,7 +207,7 @@ function buildForecastPage(
   <header class="site-header">
     <a class="brand" href="' . h($homeHref) . '" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a>
     <button class="menu-button" type="button" aria-label="メニュー" aria-expanded="false" aria-controls="site-menu"><span></span><span></span><span></span></button>
-    <nav class="site-menu" id="site-menu" aria-label="ページメニュー" hidden><a href="' . h($homeHref) . '">ホーム</a><a href="#forecast-title">予報</a><a href="' . h($trustPrefix) . 'about/">データについて</a></nav>
+    <nav class="site-menu" id="site-menu" aria-label="ページメニュー" hidden><a href="' . h($homeHref) . '">ホーム</a><a href="#forecast-title">予報</a>' . ($showDaily ? '<a href="#daily-forecast">10日間予報</a>' : '') . '<a href="' . h($trustPrefix) . 'about/">データについて</a></nav>
   </header>
   <main>
     <section class="beta-intro" id="spots">
