@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+const DAILY_WINDOW_START_HOUR = 5;
+const DAILY_WINDOW_END_HOUR = 17; // inclusive
+const DAILY_WEATHER_HOUR = 11;
+
 $projectRoot = dirname(__DIR__);
 $options = parseOptions($argv);
 $inputPath = $options['input'] ?? ($projectRoot . '/data/normalized/latest.json');
@@ -10,9 +14,10 @@ $validationDir = $options['validation-dir'] ?? ($projectRoot . '/data/validation
 $hourlyHours = isset($options['hourly-hours']) ? (int)$options['hourly-hours'] : 48;
 $hourlyStep = isset($options['hourly-step']) ? (int)$options['hourly-step'] : 2;
 $weeklyDays = isset($options['weekly-days']) ? (int)$options['weekly-days'] : 8;
+$dailyDays = isset($options['daily-days']) ? (int)$options['daily-days'] : 10;
 
-if ($hourlyHours < 1 || $hourlyStep < 1 || $weeklyDays < 1) {
-    fail('hourly-hours, hourly-step and weekly-days must all be >= 1.');
+if ($hourlyHours < 1 || $hourlyStep < 1 || $weeklyDays < 1 || $dailyDays < 1) {
+    fail('hourly-hours, hourly-step, weekly-days and daily-days must all be >= 1.');
 }
 
 $normalized = readJson($inputPath);
@@ -49,6 +54,7 @@ foreach ($spots as $spotId => $spotEntry) {
     $spotMeta = is_array($spotEntry['spot'] ?? null) ? $spotEntry['spot'] : ['id' => (string)$spotId];
     $hourly = buildHourly($hours, $now, $tz, $hourlyHours, $hourlyStep);
     $weekly = buildWeekly($hours, $now, $tz, $weeklyDays);
+    $daily = buildDaily($hours, $now, $tz, $dailyDays, $normalized['source_generated_at'] ?? null);
     $observations = $verified[(string)$spotId] ?? [];
 
     $payload = [
@@ -66,6 +72,7 @@ foreach ($spots as $spotId => $spotEntry) {
         'model_notice' => 'Open-Meteoの海洋モデル波高です。実際のブレイクサイズを直接示す値ではありません。',
         'hourly' => $hourly,
         'weekly' => $weekly,
+        'daily' => $daily,
         'verified_observations' => $observations,
     ];
 
@@ -113,6 +120,108 @@ function buildWeekly(array $hours, DateTimeImmutable $now, DateTimeZone $tz, int
     }
     ksort($byDate);
     return array_slice(array_values(array_map(static fn(array $v): array => $v['row'], $byDate)), 0, $days);
+}
+
+/**
+ * Backend daily aggregation over the 05:00-17:00 JST window (inclusive).
+ * A metric is emitted only when every hourly sample in the window is present and numeric;
+ * otherwise it is null. No interpolation, no neighbour-day fill, no model daily aggregates.
+ */
+function buildDaily(array $hours, DateTimeImmutable $now, DateTimeZone $tz, int $days, $sourceGeneratedAt): array
+{
+    $byKey = [];
+    foreach ($hours as $hour) {
+        if (!is_array($hour) || !is_string($hour['time'] ?? null)) continue;
+        $time = parseLocalTime($hour['time'], $tz);
+        if ((int)$time->format('i') !== 0) continue;
+        $byKey[$time->format('Y-m-d H')] = $hour;
+    }
+
+    $windowSize = DAILY_WINDOW_END_HOUR - DAILY_WINDOW_START_HOUR + 1;
+    $start = $now->setTime(0, 0, 0);
+    $rows = [];
+    for ($i = 0; $i < $days; $i++) {
+        $day = $start->modify('+' . $i . ' days');
+        $date = $day->format('Y-m-d');
+        $waves = [];
+        $speeds = [];
+        $pairs = [];
+        for ($h = DAILY_WINDOW_START_HOUR; $h <= DAILY_WINDOW_END_HOUR; $h++) {
+            $hour = $byKey[$date . ' ' . sprintf('%02d', $h)] ?? null;
+            $marine = is_array($hour['marine'] ?? null) ? $hour['marine'] : [];
+            $weather = is_array($hour['weather_land'] ?? null) ? $hour['weather_land'] : [];
+            $wave = nonNegativeNumber($marine['wave_height'] ?? null);
+            if ($wave !== null) $waves[] = $wave;
+            $speed = nonNegativeNumber($weather['wind_speed_10m'] ?? null);
+            if ($speed !== null) $speeds[] = $speed;
+            $direction = nullableNumber($weather['wind_direction_10m'] ?? null);
+            if ($speed !== null && $direction !== null) $pairs[] = [$speed, $direction];
+        }
+
+        $waveComplete = count($waves) === $windowSize;
+        $windComplete = count($speeds) === $windowSize;
+        $directionDeg = count($pairs) === $windowSize ? vectorMeanDirection($pairs) : null;
+
+        $weatherHour = $byKey[$date . ' ' . sprintf('%02d', DAILY_WEATHER_HOUR)] ?? null;
+        $weatherRaw = is_array($weatherHour['weather_land'] ?? null) ? ($weatherHour['weather_land']['weather_code'] ?? null) : null;
+        $weatherCode = is_numeric($weatherRaw) && (float)$weatherRaw == (int)$weatherRaw ? (int)$weatherRaw : null;
+
+        $rows[] = [
+            'date' => $date,
+            'weekday' => (int)$day->format('w'),
+            'model_wave_height_min_m' => $waveComplete ? round(min($waves), 2) : null,
+            'model_wave_height_max_m' => $waveComplete ? round(max($waves), 2) : null,
+            'wind_speed_mean_ms' => $windComplete ? round(array_sum($speeds) / $windowSize, 2) : null,
+            'wind_direction_mean_deg' => $directionDeg,
+            'wind_direction_label' => $directionDeg === null ? null : directionLabel8($directionDeg),
+            'weather_code' => $weatherCode,
+            'weather_label' => $weatherCode === null ? null : weatherLabel($weatherCode),
+            'wave_samples' => count($waves),
+            'wind_samples' => count($speeds),
+            'judgment' => ['status' => 'pending', 'label' => '検証中'],
+        ];
+    }
+
+    return [
+        'days' => $days,
+        'timezone' => $tz->getName(),
+        'window_start_hour' => DAILY_WINDOW_START_HOUR,
+        'window_end_hour' => DAILY_WINDOW_END_HOUR,
+        'weather_hour' => DAILY_WEATHER_HOUR,
+        'source_generated_at' => $sourceGeneratedAt,
+        'rows' => $rows,
+    ];
+}
+
+/** Speed-weighted vector mean of meteorological "from" directions. Returns 0..359 integer or null. */
+function vectorMeanDirection(array $pairs): ?int
+{
+    $sumX = 0.0;
+    $sumY = 0.0;
+    $weight = 0.0;
+    foreach ($pairs as [$speed, $direction]) {
+        $rad = deg2rad($direction);
+        $sumX += sin($rad) * $speed;
+        $sumY += cos($rad) * $speed;
+        $weight += $speed;
+    }
+    if ($weight <= 0.0) return null;
+    if (sqrt($sumX * $sumX + $sumY * $sumY) < 0.01) return null;
+    $deg = fmod(rad2deg(atan2($sumX, $sumY)) + 360.0, 360.0);
+    return ((int)round($deg)) % 360;
+}
+
+function directionLabel8(int $degrees): string
+{
+    $labels = ['北','北東','東','南東','南','南西','西','北西'];
+    return $labels[((int)round($degrees / 45)) % 8];
+}
+
+function nonNegativeNumber($value): ?float
+{
+    if (!is_numeric($value)) return null;
+    $number = (float)$value;
+    return $number >= 0.0 ? $number : null;
 }
 
 function publicRow(array $hour, DateTimeImmutable $time, ?string $date = null): array

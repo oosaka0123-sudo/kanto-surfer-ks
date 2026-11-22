@@ -14,7 +14,31 @@
 - `timezone`: `Asia/Tokyo`
 - `hourly`: 直近48時間を2時間間隔で最大24列
 - `weekly`: 今日から8日、各日12:00 JSTに最も近い1時間を代表値として採用
+- `daily`: 今日(JST)から10日分の日別集計（下記）
 - フロント側では日平均・日最大などを再計算しない
+
+### `daily`
+
+`build_public_forecast.php` がバックエンドで集計する。取得は Open-Meteo Marine / Weather とも `forecast_days=10`。
+
+- `days`: 行数（既定10、`--daily-days=` で変更可、schema上限10）
+- `timezone`: `Asia/Tokyo`
+- `window_start_hour` / `window_end_hour`: `5` / `17`（両端含む、1日13サンプル）
+- `weather_hour`: `11`
+- `source_generated_at`: payload の `source_generated_at` と同じ値
+- `rows`: 今日(JST)から連続する日付。データが無い日も null 値で行を出す
+  - `date` (`YYYY-MM-DD`), `weekday` (0=日曜, JST)
+  - `model_wave_height_min_m` / `model_wave_height_max_m`: 05–17時の `marine.wave_height` の最小/最大（小数2桁）
+  - `wind_speed_mean_ms`: 05–17時の `weather_land.wind_speed_10m` の算術平均（小数2桁）
+  - `wind_direction_mean_deg`: 風速重み付きベクトル平均の風向（気象「吹いてくる方向」、0–359の整数）。重み合計0または合成ベクトル長 < 0.01 なら null
+  - `wind_direction_label`: 平均風向（整数化後）の8方位ラベル（北,北東,東,南東,南,南西,西,北西）
+  - `weather_code` / `weather_label`: 当日11:00ちょうどの `weather_land.weather_code` と既存の天気ラベル。無ければ null
+  - `wave_samples` / `wind_samples`: 窓内で数値だった時間サンプル数
+  - `judgment`: `{"status":"pending","label":"検証中"}` 固定。関東の較正が未検証のため、スコア・星・可否判定は出さない
+
+完全性ルール: 各指標は05:00–17:00の13サンプルすべてが数値（波高・風速は >= 0）の場合のみ算出し、1つでも欠ければその指標は null。
+風向は13組すべての風速＋風向が揃う場合のみ。補間・隣接日からの補完・モデル日別集計値の利用はしない。
+当日分は取得時点より前の時刻も Open-Meteo が返す範囲で集計対象となる（`hourly` と違い現在時刻で切らない）。
 
 ## 波高の意味
 
