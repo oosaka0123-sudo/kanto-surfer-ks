@@ -4,7 +4,7 @@
   "title": "Kanto Surfer Public Forecast v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "generated_at", "timezone", "spot", "status", "wave_metric_label", "model_notice", "hourly", "weekly", "verified_observations"],
+  "required": ["schema_version", "generated_at", "timezone", "spot", "status", "wave_metric_label", "model_notice", "hourly", "weekly", "daily", "verified_observations"],
   "properties": {
     "schema_version": {"const": "public-forecast/1.0"},
     "generated_at": {"type": "string", "format": "date-time"},
@@ -16,6 +16,7 @@
     "model_notice": {"type": "string", "minLength": 1},
     "hourly": {"type": "array", "maxItems": 24, "items": {"$ref": "#/$defs/row"}},
     "weekly": {"type": "array", "maxItems": 8, "items": {"$ref": "#/$defs/weeklyRow"}},
+    "daily": {"$ref": "#/$defs/daily"},
     "verified_observations": {"type": "array", "items": {"$ref": "#/$defs/observation"}}
   },
   "allOf": [
@@ -51,6 +52,50 @@
       "allOf": [
         {"$ref": "#/$defs/row"},
         {"type": "object", "required": ["date"]}
+      ]
+    },
+    "daily": {
+      "description": "Backend-aggregated daily summary over the inclusive JST window window_start_hour..window_end_hour. A metric is null unless every hourly sample in the window exists. The browser must not recompute it.",
+      "type": "object", "additionalProperties": false,
+      "required": ["days", "timezone", "window_start_hour", "window_end_hour", "weather_hour", "source_generated_at", "rows"],
+      "properties": {
+        "days": {"type": "integer", "minimum": 1, "maximum": 10},
+        "timezone": {"const": "Asia/Tokyo"},
+        "window_start_hour": {"const": 5},
+        "window_end_hour": {"const": 17},
+        "weather_hour": {"const": 11},
+        "source_generated_at": {"type": ["string", "null"], "format": "date-time"},
+        "rows": {"type": "array", "minItems": 1, "maxItems": 10, "items": {"$ref": "#/$defs/dailyRow"}}
+      }
+    },
+    "dailyRow": {
+      "type": "object", "additionalProperties": false,
+      "required": ["date", "weekday", "model_wave_height_min_m", "model_wave_height_max_m", "wind_speed_mean_ms", "wind_direction_mean_deg", "wind_direction_label", "weather_code", "weather_label", "wave_samples", "wind_samples", "judgment"],
+      "properties": {
+        "date": {"type": "string", "format": "date"},
+        "weekday": {"type": "integer", "minimum": 0, "maximum": 6, "description": "0=Sunday (JST)"},
+        "model_wave_height_min_m": {"type": ["number", "null"], "minimum": 0},
+        "model_wave_height_max_m": {"type": ["number", "null"], "minimum": 0},
+        "wind_speed_mean_ms": {"type": ["number", "null"], "minimum": 0},
+        "wind_direction_mean_deg": {"type": ["integer", "null"], "minimum": 0, "maximum": 359},
+        "wind_direction_label": {"enum": ["北", "北東", "東", "南東", "南", "南西", "西", "北西", null]},
+        "weather_code": {"type": ["integer", "null"], "minimum": 0},
+        "weather_label": {"type": ["string", "null"]},
+        "wave_samples": {"type": "integer", "minimum": 0, "maximum": 13},
+        "wind_samples": {"type": "integer", "minimum": 0, "maximum": 13},
+        "judgment": {"$ref": "#/$defs/dailyJudgment"}
+      }
+    },
+    "dailyJudgment": {
+      "description": "Placeholder until Kanto calibration is validated. Extend the status enum (with matching label rules) when a calibrated judgment exists.",
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "label"],
+      "properties": {
+        "status": {"enum": ["pending"]},
+        "label": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {"if": {"properties": {"status": {"const": "pending"}}}, "then": {"properties": {"label": {"const": "検証中"}}}}
       ]
     },
     "observation": {

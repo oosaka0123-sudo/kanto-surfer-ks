@@ -1,7 +1,7 @@
 (()=>{"use strict";
 const root=document.querySelector("[data-forecast]");if(!root)return;
 const title=document.querySelector("#forecast-title"),panel=root.querySelector("#panel-forecast");
-const tabs=[...root.querySelectorAll("[role=tab]")],grid=root.querySelector("[data-grid]");
+const grid=root.querySelector("[data-grid]");
 const scroll=root.querySelector("[data-scroll]"),chartScroll=root.querySelector("[data-chart-scroll]"),chartInner=root.querySelector("[data-chart-inner]"),chart=root.querySelector("[data-chart]");
 const chartEmpty=root.querySelector("[data-chart-empty]"),state=root.querySelector("[data-state]");
 const waveLabel=root.querySelector("[data-wave-label]"),notice=document.querySelector("[data-forecast-note]");
@@ -11,7 +11,7 @@ function setMenu(open){if(!menuButton||!siteMenu)return;menuButton.setAttribute(
 menuButton?.addEventListener("click",()=>setMenu(menuButton.getAttribute("aria-expanded")!=="true"));
 siteMenu?.querySelectorAll("a").forEach(link=>link.addEventListener("click",()=>setMenu(false)));
 document.addEventListener("keydown",event=>{if(event.key==="Escape")setMenu(false)});
-let source={},mode="hourly";
+let source={};
 const tzFmt=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Tokyo",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"});
 const getJst=d=>{const p={};for(const x of tzFmt.formatToParts(d))p[x.type]=x.value;return p;};
 const dateKey=d=>{const p=getJst(d);return`${p.year}-${p.month}-${p.day}`;};
@@ -51,23 +51,19 @@ async function loadSource(){
 }
 function hourlySlots(){const supplied=Array.isArray(source.hourly)?source.hourly:[];if(supplied.length)return supplied;
   const now=new Date(),start=Math.floor(now.getHours()/2)*2;return Array.from({length:10},(_,i)=>{const d=new Date(now);d.setHours(start+i*2,0,0,0);return{time:d.toISOString(),placeholder:true}})}
-function weeklySlots(){const supplied=Array.isArray(source.weekly)?source.weekly:[];if(supplied.length)return supplied;
-  const today=Date.now();return Array.from({length:8},(_,i)=>({date:dateKey(new Date(today+i*86400000)),placeholder:true}))}
-const getSlots=()=>mode==="hourly"?hourlySlots():weeklySlots();
+const getSlots=hourlySlots;
 function slotDate(slot){
-  let raw=mode==="hourly"?slot.time:slot.date;if(!raw)return null;
-  if(mode==="weekly"&&raw.length===10)raw+="T00:00:00+09:00";
+  const raw=slot.time;if(!raw)return null;
   const d=new Date(raw);return Number.isNaN(d.getTime())?null:d;
 }
 function currentIndex(slots){
-  if(mode==="weekly"){const today=dateKey(new Date());return slots.findIndex(s=>(s.date||"").slice(0,10)===today)}
   if(!slots.length)return-1;const now=Date.now();let best=-1,delta=Infinity;  slots.forEach((s,i)=>{const d=slotDate(s);if(!d)return;const diff=Math.abs(d.getTime()-now);if(diff<delta){delta=diff;best=i}});return best;
 }
 const fmt=(value,digits=1)=>Number.isFinite(numeric(value))?numeric(value).toFixed(digits):"--";
 function fmtTime(slot){
   const d=slotDate(slot);if(!d)return"--";
   const p=getJst(d);
-  return mode==="hourly"?`${p.hour}時`:`${parseInt(p.month,10)}/${parseInt(p.day,10)}`;
+  return `${p.hour}時`;
 }
 function weather(slot){
   const label=String(slot.weather_label||slot.weather||"--");
@@ -87,7 +83,7 @@ function period(slot){const v=slot.period_s??slot.swell?.period_s;return{main:fm
 function wind(slot){const v=slot.wind_speed_ms??slot.wind?.speed_ms;return{main:fmt(v),sub:Number.isFinite(numeric(v))?"m/s":"",direction:slot.wind_direction_label??slot.wind?.direction_label??""}}
 function addCell(fragment,className,html,current=false,ariaCurrent=false){
   const div=document.createElement("div");div.className=`cell ${className}${current?" current":""}`;div.innerHTML=html;
-  if(ariaCurrent)div.setAttribute("aria-current",mode==="hourly"?"time":"date");fragment.appendChild(div);
+  if(ariaCurrent)div.setAttribute("aria-current","time");fragment.appendChild(div);
 }
 function connectionLabel(){
   if(source.status==="model_plus_verified_observation")return"モデル＋検証済み実波";
@@ -97,7 +93,7 @@ function connectionLabel(){
 function renderGrid(){
   const slots=getSlots(),nowIndex=currentIndex(slots);grid.style.setProperty("--columns",slots.length);grid.replaceChildren();
   const waveName=source.wave_metric_label||"モデル波高";
-  const rows=[{label:mode==="hourly"?"時刻":"日付",unit:"",render:s=>({main:fmtTime(s),sub:""})},{label:"天気",unit:"",render:s=>{const w=weather(s);return{main:w.icon,sub:w.label,weather:true}}},{label:waveName,unit:"m",render:wave},{label:"周期",unit:"秒",render:period},{label:"風",unit:"m/s",render:wind}];
+  const rows=[{label:"時刻",unit:"",render:s=>({main:fmtTime(s),sub:""})},{label:"天気",unit:"",render:s=>{const w=weather(s);return{main:w.icon,sub:w.label,weather:true}}},{label:waveName,unit:"m",render:wave},{label:"周期",unit:"秒",render:period},{label:"風",unit:"m/s",render:wind}];
   const fragment=document.createDocumentFragment();  rows.forEach((row,rowIndex)=>{addCell(fragment,"label",`${escapeHtml(row.label)}${row.unit?`<small>${escapeHtml(row.unit)}</small>`:""}`);slots.forEach((slot,index)=>{const value=row.render(slot),direction=value.direction?`<span class="wind-arrow">${escapeHtml(value.direction)}</span>`:"";addCell(fragment,"value",`${direction}<span${value.weather?` class="weather-icon" aria-hidden="true"`:""}>${escapeHtml(value.main)}</span>${value.sub?`<span class="sub${value.weather?" weather-text":""}">${escapeHtml(value.sub)}</span>`:""}`,index===nowIndex,rowIndex===0&&index===nowIndex)})});
   grid.appendChild(fragment);
   requestAnimationFrame(()=>{if(nowIndex>=0){const col=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--col"))||96;scroll.scrollLeft=Math.max(0,(nowIndex-1)*col)}});
@@ -124,13 +120,50 @@ function renderObservation(){
   const detail=document.createElement("span");detail.textContent=`${when&&!Number.isNaN(when.getTime())?when.toLocaleString("ja-JP",{timeZone:"Asia/Tokyo",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"})+" / ":""}${parts.join(" / ")}`;
   observationBox.replaceChildren(heading,detail);observationBox.hidden=false;
 }
-function selectMode(next,focus=false){
-  mode=next;tabs.forEach(tab=>{const selected=tab.dataset.mode===mode;tab.classList.toggle("is-active",selected);tab.setAttribute("aria-selected",String(selected));tab.tabIndex=selected?0:-1;if(selected)panel.setAttribute("aria-labelledby",tab.id)});
-  title.textContent=mode==="hourly"?"時間別予報":"週間予報";renderGrid();if(focus)tabs.find(tab=>tab.dataset.mode===mode)?.focus();
+// 10日間の波・風予報。payload.daily（バックエンド集約済み）を描画するだけで、値の生成・補完はしない。
+const dailyRoot=document.querySelector("[data-daily]");
+const DAILY_DAYS=10,WEEKDAYS=["日","月","火","水","木","金","土"];
+const DIR_LABELS=["北","北東","東","南東","南","南西","西","北西"],DIR_ARROWS=["↑","↗","→","↘","↓","↙","←","↖"];
+const finiteOrNull=v=>typeof v==="number"&&Number.isFinite(v)?v:null;
+const fixed1=v=>(Math.round(v*10+1e-9)/10).toFixed(1);
+function dailyIcon(code){if(code===null)return"—";if(code<=1)return"☀️";if(code===2)return"🌤️";if(code===3)return"☁️";if(code<=48)return"🌫️";if(code<=57)return"🌦️";if(code<=67)return"🌧️";if(code<=77)return"🌨️";if(code<=82)return"🌧️";if(code<=86)return"🌨️";if(code>=95)return"⛈️";return"☁️";}
+function dailyTrack(kind,value,max,text){
+  if(value===null)return'<div class="daily-track"><span class="daily-val">—</span></div>';
+  const pct=max>0?Math.min(100,Math.max(0,100*value/max)):0;
+  return`<div class="daily-track"><span class="daily-fill daily-${kind}" style="--daily-fill:${pct.toFixed(1)}%"></span><span class="daily-val">${escapeHtml(text)}</span></div>`;
 }
-tabs.forEach(tab=>{tab.addEventListener("click",()=>selectMode(tab.dataset.mode));tab.addEventListener("keydown",event=>{if(!["ArrowLeft","ArrowRight"].includes(event.key))return;event.preventDefault();selectMode(event.key==="ArrowRight"?"weekly":"hourly",true)})});
+function renderDaily(){
+  if(!dailyRoot)return;
+  const body=dailyRoot.querySelector("[data-daily-body]"),updated=dailyRoot.querySelector("[data-daily-updated]");
+  const daily=source.daily&&typeof source.daily==="object"?source.daily:null;
+  const rows=daily&&Array.isArray(daily.rows)?daily.rows.slice(0,DAILY_DAYS):[];
+  if(!rows.length){body.innerHTML='<tr><td colspan="6" class="daily-empty">データ取得不可</td></tr>';updated.textContent="データ取得不可";return}
+  const today=dateKey(new Date());
+  const view=rows.map(r=>({date:String(r.date||""),weekday:Number.isInteger(r.weekday)&&r.weekday>=0&&r.weekday<=6?r.weekday:null,min:finiteOrNull(r.model_wave_height_min_m),max:finiteOrNull(r.model_wave_height_max_m),wind:finiteOrNull(r.wind_speed_mean_ms),label:typeof r.wind_direction_label==="string"?r.wind_direction_label:null,code:Number.isInteger(r.weather_code)?r.weather_code:null,weather:typeof r.weather_label==="string"?r.weather_label:"",judgment:r.judgment&&typeof r.judgment.label==="string"?r.judgment.label:"検証中"}));
+  const maxWave=Math.max(0,...view.map(r=>r.max??0)),maxWind=Math.max(0,...view.map(r=>r.wind??0));
+  body.innerHTML=view.map(r=>{
+    const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(r.date),dateText=m?`${parseInt(m[2],10)}/${parseInt(m[3],10)}`:"—";
+    const week=r.weekday===null?"":`(${WEEKDAYS[r.weekday]})`,weekCls=r.weekday===6?"daily-sat":r.weekday===0?"daily-sun":"";
+    const wave=r.min!==null&&r.max!==null?`${fixed1(r.min)}-${fixed1(r.max)}m`:"—";
+    const wind=r.wind!==null?`${fixed1(r.wind)}m/s`:"—",sector=r.label===null?-1:DIR_LABELS.indexOf(r.label);
+    const dir=sector<0?"—":`<span class="daily-arrow" aria-hidden="true">${DIR_ARROWS[sector]}</span>${escapeHtml(r.label)}`;
+    const isToday=r.date===today;
+    return`<tr${isToday?' class="is-today" aria-current="date"':""}><td class="daily-date">${dateText} <span class="${weekCls}">${week}</span></td>`+
+      `<td class="daily-weather"${r.weather?` title="${escapeHtml(r.weather)}" aria-label="${escapeHtml(r.weather)}"`:' aria-label="天気データなし"'}>${dailyIcon(r.code)}</td>`+
+      `<td>${dailyTrack("wave",r.max===null||r.min===null?null:r.max,maxWave,wave)}</td>`+
+      `<td>${dailyTrack("wind",r.wind,maxWind,wind)}</td>`+
+      `<td><span class="daily-dir">${dir}</span></td>`+
+      `<td><span class="daily-judgment">${escapeHtml(r.judgment)}</span></td></tr>`;
+  }).join("");
+  const stamp=daily.source_generated_at?new Date(daily.source_generated_at):null;
+  const stale=!view.some(r=>r.date===today);
+  updated.textContent=(stamp&&!Number.isNaN(stamp.getTime())?`更新：${stamp.toLocaleString("ja-JP",{timeZone:"Asia/Tokyo",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"})} JST`:"更新時刻不明")+(stale?"（データ更新が遅れています。今日の行が含まれていません）":"");
+  updated.classList.toggle("is-stale",stale);
+  if(source.spot?.name){const spotLabel=dailyRoot.querySelector("[data-daily-spot]");if(spotLabel)spotLabel.textContent=source.spot.name;dailyRoot.querySelector("table")?.setAttribute("aria-label",`${source.spot.name} 10日間の波と風の予報`)}
+}
+function selectMode(){title.textContent="時間別予報";renderGrid()}
 panel.setAttribute("aria-busy","true");
-selectMode("hourly");
+selectMode();
 state.textContent="読み込み中";
 loadSource().then(data=>{
   source=data&&typeof data==="object"?data:{};
@@ -140,6 +173,6 @@ loadSource().then(data=>{
   const spotName=document.querySelector("[data-spot-name]");if(spotName&&source.spot?.name)spotName.textContent=source.spot.name;
   document.querySelectorAll("[data-spot-link]").forEach(link=>link.toggleAttribute("aria-current",link.dataset.spotLink===source.spot?.id));
   panel.setAttribute("aria-busy","false");
-  selectMode("hourly");
+  selectMode();renderDaily();
 });
 })();

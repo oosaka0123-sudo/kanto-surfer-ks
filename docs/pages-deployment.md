@@ -19,7 +19,7 @@ raw Open-Meteoレスポンス、normalized中間データ、validation record、
 
 `.github/workflows/deploy-pages.yml` が次でビルドする。
 
-1. Open-Meteo 8日予報取得
+1. Open-Meteo 10日予報取得
 2. 正規化
 3. 公開payload生成
 4. Pages用静的サイト生成
