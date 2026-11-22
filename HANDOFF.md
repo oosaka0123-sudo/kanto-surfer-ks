@@ -448,3 +448,19 @@ Open-Meteo APIと波情報を合わせる際、次の3項目を必ず記録す�
 4. 公開URLをlive verification。
 5. SNS課題ならInstagram Insightsの非フォロワー配信データを先に確認。
 6. 実装変更はProject AGENTSに従いBranch → Test → PR → Review → Merge → Deploy → Live Verificationで完了判定。
+
+---
+
+# 2026-11-22 V2 最初の実装：10日間の波・風予報（未完了の再開ポイント）
+
+## 状態
+- branch `claude/practical-goodall-lnolfd` に実装・検証済みcommitあり。**GitHubへのpushはセッションの書込権限403で未完了、PR未作成**。mainマージ・本番反映はオーナー承認待ち。
+- 実装: `forecast_days` 8→10、`build_public_forecast.php` に `daily`（今日から10日、05–17時JST、波高min/max・風速平均・風速加重平均風向・11時天気、13サンプル全揃い以外はnull）、全9スポットに「05 10日間の波・風予報」6列表。判定列は `judgment.status=pending`（「検証中」）。旧「週間」タブは廃止、`weekly` データは互換のため生成継続。
+- 検証: Data Agent・QA Agent（独立）で生値からの再計算一致、スキーマ検証、390px/PC、時間別48時間グリッドのmain比バイト一致、Verify Pages artifactチェックPASS（ローカル）。
+
+## 別Issue候補（今回の実装とは切り分け、未対応）
+1. `kanto.rss7.net` はGitHub Pagesではなく 157.7.107.44 の Apache で配信され、`/data/*.json` の last-modified は 2026-10-02 のまま。Actionsのdeployは成功しているが本番ドメインに反映されていない。
+2. `deploy-pages.yml` の cron `17 * * * *`（毎時）に対し、実際のschedule実行は5〜9時間間隔。
+3. 片貝と一宮が Open-Meteo Marine の同一グリッド（35.375, 140.458）に解決され、波高系列が完全一致（現行本番も同様）。
+4. Open-Meteoの429（共有IPのレート制限）で1地点でも取得失敗すると normalize が停止し、その回のdeployは全体停止する。
+5. `deploy-pages.yml` のstep名が「Fetch 8-day」のまま（workflowは今回未変更）。
