@@ -42,3 +42,41 @@
 
 .weather-icon{font-size:22px;line-height:1}.weather-text{font-size:9px}
 @media(max-width:520px){.weather-icon{font-size:20px}.weather-text{display:none}}
+
+/* 10日間の波・風予報（関西サーファーKS「10日間の波・風予報」UIを基準に移植。全スポット共通） */
+.daily-section{padding-top:0;min-width:0}
+.daily-section .section-title{padding-bottom:18px}
+.daily-subtitle{margin:12px 2px 12px;color:#b4d5e4;font:11px/1.5 "Yu Gothic",sans-serif}
+.daily-table-wrap{border:.5px solid rgba(64,181,224,.55);border-radius:15px;overflow:hidden;background:#05263a}
+.daily-table{width:100%;min-width:0;border:0;border-collapse:separate;border-spacing:0;table-layout:fixed;margin:0;background:transparent;color:#f6fbff;font-family:"Yu Gothic",sans-serif;font-variant-numeric:tabular-nums}
+.daily-table .c-date{width:15%}.daily-table .c-weather{width:9%}.daily-table .c-wave{width:25%}.daily-table .c-wind{width:23%}.daily-table .c-dir{width:12%}.daily-table .c-judge{width:16%}
+.daily-table th,.daily-table td{padding:9px 3px;border-right:.5px solid rgba(90,170,207,.2);border-bottom:.5px solid rgba(90,170,207,.2);text-align:center;vertical-align:middle;overflow:hidden;white-space:nowrap}
+.daily-table th:last-child,.daily-table td:last-child{border-right:0}
+.daily-table tr:last-child td{border-bottom:0}
+.daily-table th{height:37px;font-size:10px;line-height:1.2;font-weight:700;letter-spacing:0;background:#083044}
+.daily-table th small{font-size:8px}
+.daily-table td{height:50px;font-size:10px;line-height:1.2;background:transparent}
+.daily-table tbody tr.is-today td{background:rgba(10,128,159,.19);box-shadow:inset 0 1px rgba(34,207,236,.23)}
+.daily-table td.daily-empty{color:#a5c7d8}
+.daily-date{font-size:9px;font-weight:700}
+.daily-sat{color:#3dd0fa}
+.daily-sun{color:#ff7487}
+.daily-weather{font-size:17px;line-height:1}
+.daily-track{height:30px;border-radius:7px;background:#183f54;display:flex;position:relative;align-items:center;justify-content:center;overflow:hidden}
+.daily-fill{position:absolute;top:0;bottom:0;left:0;border-radius:7px;width:var(--daily-fill,0%);max-width:100%;transition:width .35s ease}
+.daily-wave{background:linear-gradient(90deg,#058cb4,#19d1ed)}
+.daily-wind{background:linear-gradient(90deg,#b55b0a,#ffa826)}
+.daily-val{position:relative;z-index:1;font-size:9px;line-height:1;white-space:nowrap;font-weight:600;color:#f9fcff;text-shadow:0 1px 2px #031b28}
+.daily-dir{display:flex;align-items:center;justify-content:center;white-space:nowrap;font-size:9px;font-weight:600}
+.daily-arrow{font-size:13px;line-height:1}
+.daily-judgment{font-size:8.5px;font-weight:700;letter-spacing:-.03em;white-space:nowrap;color:#abb9c8}
+.daily-meta{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;margin:12px 2px 8px;color:#a5c7d8;font:11px/1.5 "Yu Gothic",sans-serif}
+.daily-note{margin:0 2px;color:#a5c7d8;font:11px/1.6 "Yu Gothic",sans-serif}
+@media(max-width:390px){
+  .daily-table th,.daily-table td{padding-left:2px;padding-right:2px}
+  .daily-table th{font-size:9px}
+  .daily-table td{height:48px}
+  .daily-dir{font-size:8px}
+  .daily-arrow{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){.daily-fill{transition:none}}

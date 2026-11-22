@@ -62,10 +62,14 @@ foreach ($spots as $index => $spot) {
 $publicIndex = rtrim($publicDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'index.json';
 if (is_file($publicIndex)) copyRequired($publicIndex, $outputDir . '/data/index.json');
 
+// 10日間の波・風予報を表示するスポット。null は全スポット。
+$dailySpotIds = ['kugenuma'];
+$showDailyFor = static fn(string $spotId): bool => $dailySpotIds === null || in_array($spotId, $dailySpotIds, true);
+
 $defaultSpot = $spots[0];
 atomicWrite(
     $outputDir . '/index.html',
-    buildForecastPage($spots, $defaultSpot, '', 'data/', './', true)
+    buildForecastPage($spots, $defaultSpot, '', 'data/', './', true, $dailySpotIds === null)
 );
 
 ensureDirectory($outputDir . '/spots');
@@ -74,7 +78,7 @@ foreach ($spots as $spot) {
     ensureDirectory($spotDir);
     atomicWrite(
         $spotDir . '/index.html',
-        buildForecastPage($spots, $spot, '../../', '../../data/', '../../', false)
+        buildForecastPage($spots, $spot, '../../', '../../data/', '../../', false, $showDailyFor((string)$spot['id']))
     );
 }
 
@@ -85,7 +89,7 @@ $infoPages = [
         'heading' => 'サイト概要・データについて',
         'body' => '<p>関東サーファーKSは、関東主要サーフスポットの海洋モデル予報を見やすく確認するための波予報サイトです。</p>
 <h2>現在の公開データ</h2>
-<p>Open-MeteoのMarine / Weatherデータを定期取得し、関東9地点の時間別・8日間予報として表示しています。公開値はモデル値であり、実際のブレイクサイズを直接示すものではありません。</p>
+<p>Open-MeteoのMarine / Weatherデータを定期取得し、関東9地点の時間別（48時間）予報と10日間の波・風予報として表示しています。公開値はモデル値であり、実際のブレイクサイズを直接示すものではありません。</p>
 <h2>検証方針</h2>
 <p>モデル値と実波の照合、地点ごとの海岸向き・遮蔽・風の影響を段階的に検証しています。検証が終わっていない実ブレイクサイズ、点数、ランキングは公開値として自動生成しません。</p>
 <h2>更新</h2>
@@ -147,7 +151,8 @@ function buildForecastPage(
     string $assetPrefix,
     string $dataBase,
     string $homeHref,
-    bool $homePage
+    bool $homePage,
+    bool $showDaily = true
 ): string {
     $id = (string)$activeSpot['id'];
     $name = (string)$activeSpot['display_name'];
@@ -156,14 +161,14 @@ function buildForecastPage(
     $detailLinks = $homePage ? buildPermanentLinks($spots) : '';
 
     $title = $homePage
-        ? '関東サーファーKS｜時間別・週間波予報'
+        ? '関東サーファーKS｜時間別・10日間波予報'
         : $name . 'の波予報｜関東サーファーKS';
     $description = $homePage
-        ? '関東サーファーKS。関東9地点の時間別・週間モデル波予報。'
-        : $name . '（' . $region . '）の時間別・8日間モデル波予報。Open-Meteo海洋モデルを使用しています。';
+        ? '関東サーファーKS。関東9地点の時間別・10日間モデル波予報。'
+        : $name . '（' . $region . '）の時間別・10日間モデル波予報。Open-Meteo海洋モデルを使用しています。';
     $heading = $homePage ? '関東9地点の波予報' : $name . 'の波予報';
     $intro = $homePage
-        ? 'Open-Meteoの海洋モデルを使った波予報です。スポットを選ぶと、時間別と8日間の週間予報を確認できます。'
+        ? 'Open-Meteoの海洋モデルを使った波予報です。スポットを選ぶと、時間別と10日間の波・風予報を確認できます。'
         : $name . '（' . $region . '）のモデル予報です。モデル波高は実際のブレイクサイズを直接示す値ではありません。';
 
     $context = '';
@@ -217,11 +222,7 @@ function buildForecastPage(
       <p class="current-spot">SPOT <strong data-spot-name>' . h($name) . '</strong></p>
       <div class="section-title"><span class="section-number">04</span><span class="section-icon" aria-hidden="true">⌁</span><h2 id="forecast-title">時間別予報</h2></div>
       <div class="forecast-shell" data-forecast data-data-base="' . h($dataBase) . '" data-default-spot="' . h($id) . '">
-        <div class="forecast-tabs" role="tablist" aria-label="予報期間">
-          <button id="tab-hourly" class="forecast-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-forecast" data-mode="hourly">時間別</button>
-          <button id="tab-weekly" class="forecast-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-forecast" data-mode="weekly">週間</button>
-        </div>
-        <div class="forecast-panel" id="panel-forecast" role="tabpanel" aria-labelledby="tab-hourly">
+        <div class="forecast-panel" id="panel-forecast" aria-labelledby="forecast-title">
           <div class="forecast-legend" aria-label="グラフ凡例"><span><i class="legend-wave"></i><span data-wave-label>モデル波高(m)</span></span><span><i class="legend-wind"></i>風(m/s)</span><span class="data-state" data-state>読み込み中</span></div>
           <div class="chart-wrap" aria-label="モデル波高と風速の推移"><div class="chart-scroll" data-chart-scroll><div class="chart-inner" data-chart-inner><svg class="forecast-chart" viewBox="0 0 800 240" preserveAspectRatio="none" data-chart aria-hidden="true"></svg></div></div><p class="chart-empty" data-chart-empty>予報データ未接続</p></div>
           <div class="scroll-hint" aria-hidden="true">← 横にスワイプ →</div>
@@ -231,11 +232,33 @@ function buildForecastPage(
       </div>
       <p class="forecast-note" id="forecast-note" data-forecast-note>Open-Meteoの海洋モデル波高です。実際のブレイクサイズを直接示す値ではありません。</p>
     </section>
+    ' . ($showDaily ? buildDailySection($name) : '') . '
   </main>
   <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="trust-links" aria-label="サイト情報"><a href="' . h($trustPrefix) . 'about/">サイト概要</a><a href="' . h($trustPrefix) . 'contact/">お問い合わせ</a><a href="' . h($trustPrefix) . 'privacy/">プライバシー</a></nav></footer>
 </body>
 </html>
 ';
+}
+
+/**
+ * 10日間の波・風予報（日別6列表）。値は build_public_forecast.php が生成する payload.daily を
+ * app.js が描画するだけで、ブラウザ側で集約・補完はしない。全スポット共通テンプレート。
+ */
+function buildDailySection(string $spotName): string
+{
+    return '<section class="forecast-section daily-section" id="daily-forecast" aria-labelledby="daily-title" data-daily>
+      <div class="section-title"><span class="section-number">05</span><span class="section-icon" aria-hidden="true">⌁</span><h2 id="daily-title">10日間の波・風予報</h2></div>
+      <p class="daily-subtitle"><span data-daily-spot>' . h($spotName) . '</span>｜5:00〜17:00</p>
+      <div class="daily-table-wrap">
+        <table class="daily-table" aria-label="' . h($spotName) . ' 10日間の波と風の予報">
+          <colgroup><col class="c-date"><col class="c-weather"><col class="c-wave"><col class="c-wind"><col class="c-dir"><col class="c-judge"></colgroup>
+          <thead><tr><th scope="col">日付</th><th scope="col">天気</th><th scope="col">モデル波高<small>(m)</small></th><th scope="col">風速<small>(m/s)</small></th><th scope="col">風向</th><th scope="col">判定</th></tr></thead>
+          <tbody data-daily-body><tr><td colspan="6" class="daily-empty">データ取得中...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="daily-meta"><span data-daily-updated>データ取得中...</span><span>提供：Open-Meteo</span></div>
+      <p class="daily-note">波高：Open-Meteo海洋モデル波高の5〜17時の最小〜最大（実際のブレイクサイズではありません）／風速：同時間帯の平均値／風向：同時間帯の風速加重平均／天気：11時／判定：関東版の実波照合・補正が完了するまで「検証中」。横棒はこの10日間での相対比較です。データ不足時は「—」と表示し、推測補完しません。</p>
+    </section>';
 }
 
 function buildSpotLinks(array $spots, bool $homePage, string $activeId): string
