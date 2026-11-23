@@ -87,15 +87,36 @@
       }
     },
     "dailyJudgment": {
-      "description": "Placeholder until Kanto calibration is validated. Extend the status enum (with matching label rules) when a calibrated judgment exists.",
+      "description": "Daily surfability judgment. Kugenuma may emit a provisional 1-5 star model judgment; uncalibrated spots remain pending.",
       "type": "object", "additionalProperties": false,
-      "required": ["status", "label"],
+      "required": ["status", "label", "emoji", "stars"],
       "properties": {
-        "status": {"enum": ["pending"]},
-        "label": {"type": "string", "minLength": 1}
+        "status": {"enum": ["pending", "provisional"]},
+        "label": {"type": "string", "minLength": 1},
+        "emoji": {"type": ["string", "null"]},
+        "stars": {"type": ["integer", "null"], "minimum": 1, "maximum": 5}
       },
       "allOf": [
-        {"if": {"properties": {"status": {"const": "pending"}}}, "then": {"properties": {"label": {"const": "検証中"}}}}
+        {
+          "if": {"properties": {"status": {"const": "pending"}}},
+          "then": {
+            "properties": {
+              "label": {"const": "検証中"},
+              "emoji": {"type": "null"},
+              "stars": {"type": "null"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"status": {"const": "provisional"}}},
+          "then": {
+            "properties": {
+              "label": {"enum": ["諦めよ", "微妙", "できそう", "良さそう", "かなり良い"]},
+              "emoji": {"enum": ["😴", "🤔", "🙂", "😄", "🔥"]},
+              "stars": {"type": "integer", "minimum": 1, "maximum": 5}
+            }
+          }
+        }
       ]
     },
     "observation": {
