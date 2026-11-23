@@ -4,6 +4,8 @@ const title=document.querySelector("#forecast-title"),panel=root.querySelector("
 const grid=root.querySelector("[data-grid]");
 const scroll=root.querySelector("[data-scroll]"),chartScroll=root.querySelector("[data-chart-scroll]"),chartInner=root.querySelector("[data-chart-inner]"),chart=root.querySelector("[data-chart]");
 const chartEmpty=root.querySelector("[data-chart-empty]"),state=root.querySelector("[data-state]");
+const compactTest=root.dataset.compactTest==="1";
+let compactDay=0,compactSelected=null;
 const waveLabel=root.querySelector("[data-wave-label]"),notice=document.querySelector("[data-forecast-note]");
 const observationBox=root.querySelector("[data-observation]");
 
@@ -14,7 +16,7 @@ const dateKey=d=>{const p=getJst(d);return`${p.year}-${p.month}-${p.day}`;};
 const pad=v=>String(v).padStart(2,"0");
 const numeric=v=>v===null||v===undefined||v===""?NaN:Number(v);
 const escapeHtml=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
-const cssPx=(name,fallback)=>{const v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));return Number.isFinite(v)&&v>0?v:fallback;};
+const cssPx=(name,fallback)=>{const v=parseFloat(getComputedStyle(root).getPropertyValue(name));return Number.isFinite(v)&&v>0?v:fallback;};
 const getColWidth=()=>cssPx("--col",96);
 const getLabelWidth=()=>cssPx("--label",96);
 let scrollOwner=null,scrollOwnerTimer=0;
@@ -86,7 +88,121 @@ function connectionLabel(){
   if(source.status==="model_only")return"モデル予報";
   return getSlots().some(s=>!s.placeholder)?"公開データ接続":"データ未接続";
 }
+
+// 鵠沼限定の時間別UI試験。元データのない時刻は生成しない。
+function compactSlots(){
+  const target=dateKey(new Date(Date.now()+compactDay*86400000));
+  return getSlots().filter(s=>{const d=slotDate(s);return d&&dateKey(d)===target&&!s.placeholder;});
+}
+const compass16=["北","北北東","北東","東北東","東","東南東","南東","南南東","南","南南西","南西","西南西","西","西北西","北西","北北西"];
+function compactArrow(dir){
+  const i=compass16.indexOf(String(dir||""));
+  if(i<0)return'<span class="compact-missing">—</span>';
+  return '<span class="compact-arrow" style="transform:rotate('+((i*22.5)-180)+'deg)" aria-hidden="true">↑</span><small class="compact-direction">'+escapeHtml(dir)+'</small>';
+}
+function compactWeather(slot){
+  const w=weather(slot),d=slotDate(slot),hour=d?Number(getJst(d).hour):12;
+  return w.icon==="☀️"&&(hour>=18||hour<6)?"🌙":w.icon;
+}
+function renderCompactGrid(){
+  const slots=compactSlots(),first=compactSelected===null;
+  const selected=slots.length?(first?(compactDay===0?Math.max(0,currentIndex(slots)):0):Math.min(Math.max(0,compactSelected),slots.length-1)):-1;
+  const prevLeft=scroll.scrollLeft,prevChart=chartScroll.scrollLeft;
+  grid.style.setProperty("--columns",slots.length||1);grid.replaceChildren();
+  root.querySelectorAll("[data-compact-day]").forEach(b=>{
+    const active=Number(b.dataset.compactDay)===compactDay;
+    b.classList.toggle("is-active",active);b.setAttribute("aria-pressed",String(active));
+  });
+  if(!slots.length){
+    grid.innerHTML='<div class="compact-no-data">この日の時間別予報は未取得です</div>';
+    chart.replaceChildren();chartEmpty.hidden=false;chartEmpty.textContent="この日のデータはありません";
+    if(chartInner)chartInner.style.width="100%";
+    state.textContent=connectionLabel();return;
+  }
+  const rows=[
+    {label:"時刻",unit:"",html:s=>escapeHtml(fmtTime(s))},
+    {label:"波高",unit:"m",html:s=>escapeHtml(wave(s).main)},
+    {label:"周期",unit:"秒",html:s=>escapeHtml(period(s).main)},
+    {label:"風速",unit:"m/s",html:s=>escapeHtml(wind(s).main)},
+    {label:"風向",unit:"",html:s=>compactArrow(s.wind_direction_label??s.wind?.direction_label)},
+    {label:"気温",unit:"℃",html:s=>escapeHtml(fmt(s.temperature_c,1))}
+  ];
+  const frag=document.createDocumentFragment();
+  rows.forEach((row,ri)=>{
+    addCell(frag,"label",escapeHtml(row.label)+(row.unit?'<small>'+escapeHtml(row.unit)+'</small>':""));
+    slots.forEach((slot,i)=>{
+      const div=document.createElement("div");
+      div.className="cell value compact-value"+(selected===i?" current":"");
+      div.dataset.compactIndex=String(i);div.innerHTML=row.html(slot);
+      if(ri===0&&selected===i)div.setAttribute("aria-current","time");frag.appendChild(div);
+    });
+  });
+  grid.appendChild(frag);
+  renderCompactChart(slots,selected);state.textContent=connectionLabel();
+  requestAnimationFrame(()=>{
+    if(first&&compactDay===0){
+      scroll.scrollLeft=Math.max(0,(selected-2)*getColWidth());chartScroll.scrollLeft=scroll.scrollLeft;
+    }else{scroll.scrollLeft=prevLeft;chartScroll.scrollLeft=prevChart;}
+  });
+}
+function renderCompactChart(slots,selected){
+  const ns="http://www.w3.org/2000/svg";chart.replaceChildren();
+  const waves=slots.map(s=>numeric(s.wave_height_m??s.model_wave_height_m??s.wave?.height_m));
+  const winds=slots.map(s=>numeric(s.wind_speed_ms??s.wind?.speed_ms));
+  const hasWave=waves.some(Number.isFinite),hasWind=winds.some(Number.isFinite);
+  chartEmpty.hidden=hasWave||hasWind;if(!hasWave&&!hasWind)return;
+  const col=getColWidth(),label=getLabelWidth(),width=Math.max(label+slots.length*col,(chartScroll?.clientWidth||320)),height=190,top=42,bottom=184,usable=bottom-top;
+  chart.setAttribute("viewBox","0 0 "+width+" "+height);
+  chart.setAttribute("width",String(width));chart.setAttribute("height",String(height));
+  if(chartInner)chartInner.style.width=width+"px";
+  const x=i=>label+i*col+col/2;
+  const add=(tag,attrs,content)=>{
+    const el=document.createElementNS(ns,tag);
+    for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));
+    if(content!==undefined)el.textContent=content;chart.appendChild(el);return el;
+  };
+  if(selected>=0){
+    add("rect",{x:label+selected*col,y:0,width:col,height:height,fill:"#f45d43",opacity:".12"});
+    add("line",{x1:x(selected),x2:x(selected),y1:35,y2:bottom,stroke:"#f4efe6","stroke-dasharray":"3 6",opacity:".7"});
+  }
+  for(let i=0;i<slots.length;i++){
+    add("line",{x1:x(i),x2:x(i),y1:top,y2:bottom,stroke:"#8fb5c4",opacity:".14"});
+    add("text",{x:x(i),y:24,"text-anchor":"middle","font-size":16},compactWeather(slots[i]));
+  }
+  for(let j=1;j<=3;j++)add("line",{x1:label,x2:width,y1:top+usable*j/4,y2:top+usable*j/4,stroke:"#8fb5c4",opacity:".16","stroke-dasharray":"3 5"});
+  const maxWave=Math.max(.5,...waves.filter(Number.isFinite)),maxWind=Math.max(6,...winds.filter(Number.isFinite));
+  waves.forEach((v,i)=>{
+    if(!Number.isFinite(v))return;const barW=Math.min(col-6,29);
+    const h=Math.max(v===0?0:2,Math.max(0,v)*usable/maxWave);
+    add("rect",{x:x(i)-barW/2,y:bottom-h,width:barW,height:h,rx:2,fill:i===selected?"#22bddd":"#0b8ca3",opacity:".92"});
+  });
+  let run=[];
+  const flush=()=>{if(run.length>1)add("polyline",{points:run.join(" "),fill:"none",stroke:"#f67a3a","stroke-width":3,"stroke-linejoin":"round","stroke-linecap":"round"});run=[];};
+  winds.forEach((v,i)=>{if(!Number.isFinite(v)){flush();return;}run.push(x(i)+","+(bottom-usable*v/maxWind));});flush();
+  if(selected>=0&&Number.isFinite(winds[selected])){
+    const y=bottom-usable*winds[selected]/maxWind;
+    add("circle",{cx:x(selected),cy:y,r:4.5,fill:"#f67a3a",stroke:"#fff","stroke-width":1.5});
+    add("text",{x:x(selected),y:Math.max(38,y-10),"text-anchor":"middle","font-size":11,"font-weight":"bold",fill:"#fcebcf"},fmt(winds[selected])+"m/s");
+  }
+}
+if(compactTest){
+  root.querySelectorAll("[data-compact-day]").forEach(b=>b.addEventListener("click",()=>{
+    compactDay=Number(b.dataset.compactDay);compactSelected=null;
+    scroll.scrollLeft=0;chartScroll.scrollLeft=0;renderGrid();
+  }));
+  grid.addEventListener("click",event=>{
+    const cell=event.target.closest("[data-compact-index]");if(!cell)return;
+    compactSelected=Number(cell.dataset.compactIndex);renderGrid();
+  });
+  chart.addEventListener("click",event=>{
+    const left=event.clientX-chart.getBoundingClientRect().left;
+    const index=Math.floor((left-getLabelWidth())/getColWidth());
+    if(index>=0&&index<compactSlots().length){compactSelected=index;renderGrid();}
+  });
+}
+
 function renderGrid(){
+  if(compactTest){renderCompactGrid();return;}
   const slots=getSlots(),nowIndex=currentIndex(slots);grid.style.setProperty("--columns",slots.length);grid.replaceChildren();
   const waveName=source.wave_metric_label||"モデル波高";
   const rows=[{label:"時刻",unit:"",render:s=>({main:fmtTime(s),sub:""})},{label:"天気",unit:"",render:s=>{const w=weather(s);return{main:w.icon,sub:w.label,weather:true}}},{label:waveName,unit:"m",render:wave},{label:"周期",unit:"秒",render:period},{label:"風",unit:"m/s",render:wind}];

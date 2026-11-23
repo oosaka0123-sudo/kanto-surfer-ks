@@ -179,6 +179,8 @@ function buildForecastPage(
             . '</dl>';
     }
 
+    $compactAttrs = (!$homePage && $id === 'kugenuma') ? ' data-compact-test="1"' : '';
+    $compactDays = (!$homePage && $id === 'kugenuma') ? '<nav class="compact-days" aria-label="日付切替"><button type="button" data-compact-day="0" class="is-active" aria-pressed="true">今日</button><button type="button" data-compact-day="1" aria-pressed="false">明日</button><button type="button" data-compact-day="2" aria-pressed="false">明後日</button></nav>' : '';
     $trustPrefix = $assetPrefix;
     $appVersion = substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/app.js'), 0, 12);
     $styleVersion = substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/styles.css'), 0, 12);
@@ -212,8 +214,8 @@ function buildForecastPage(
     <section class="forecast-section" aria-labelledby="forecast-title">
       <p class="current-spot">SPOT <strong data-spot-name>' . h($name) . '</strong></p>
       <div class="section-title"><span class="section-number">04</span><span class="section-icon" aria-hidden="true">⌁</span><h2 id="forecast-title">時間別予報</h2></div>
-      <div class="forecast-shell" data-forecast data-data-base="' . h($dataBase) . '" data-default-spot="' . h($id) . '">
-        <div class="forecast-panel" id="panel-forecast" aria-labelledby="forecast-title">
+      <div class="forecast-shell" data-forecast' . $compactAttrs . ' data-data-base="' . h($dataBase) . '" data-default-spot="' . h($id) . '">
+        <div class="forecast-panel" id="panel-forecast" aria-labelledby="forecast-title">' . $compactDays . '
           <div class="forecast-legend" aria-label="グラフ凡例"><span><i class="legend-wave"></i><span data-wave-label>モデル波高(m)</span></span><span><i class="legend-wind"></i>風(m/s)</span><span class="data-state" data-state>読み込み中</span></div>
           <div class="chart-wrap" aria-label="モデル波高と風速の推移"><div class="chart-scroll" data-chart-scroll><div class="chart-inner" data-chart-inner><svg class="forecast-chart" viewBox="0 0 800 240" preserveAspectRatio="none" data-chart aria-hidden="true"></svg></div></div><p class="chart-empty" data-chart-empty>予報データ未接続</p></div>
           <div class="scroll-hint" aria-hidden="true">← 横にスワイプ →</div>
