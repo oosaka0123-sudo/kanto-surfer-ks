@@ -81,3 +81,18 @@
   .daily-arrow{font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){.daily-fill{transition:none}}
+
+/* Shared nine-spot navigation */
+.site-menu{width:min(330px,calc(100vw - 16px));max-height:calc(100dvh - 112px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.site-menu .menu-spot-group{margin-top:8px;padding-top:10px;border-top:1px solid var(--line)}
+.site-menu .menu-group-label{margin:0 14px 5px;color:var(--muted);font:700 11px/1.5 "Yu Gothic",sans-serif;letter-spacing:.06em}
+.site-menu .menu-spot-group a{padding:10px 14px;font-size:12px}
+.site-menu a[aria-current="page"]{color:var(--wave);background:var(--soft)}
+.site-footer{flex-wrap:wrap}
+.footer-spot-nav{flex:0 0 100%;min-width:0;padding:16px 0 8px;border-top:1px solid var(--line);letter-spacing:0}
+.footer-spot-nav>strong{display:block;color:var(--text);font:700 13px/1.5 "Yu Gothic",sans-serif}
+.footer-spot-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 18px;margin-top:10px}
+.footer-spot-grid a{display:block;min-width:0;padding:8px 0;border-bottom:1px solid var(--line);color:var(--text);font:500 12px/1.5 "Yu Gothic",sans-serif;text-decoration:none}
+.footer-spot-grid a:hover,.footer-spot-grid a:focus-visible{color:var(--wave)}
+.footer-spot-grid a[aria-current="page"]{color:var(--wave)}
+@media(max-width:520px){.site-menu{top:68px;right:8px;max-height:calc(100dvh - 80px)}.footer-spot-grid{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px}.site-footer .footer-spot-nav{margin-top:16px}}
