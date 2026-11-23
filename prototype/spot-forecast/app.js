@@ -35,7 +35,7 @@ function bindScrollSync(from,to){
     scrollOwnerTimer=setTimeout(()=>{if(scrollOwner===from)scrollOwner=null;},180);
   },{passive:true});
 }
-bindScrollSync(scroll,chartScroll);bindScrollSync(chartScroll,scroll);
+if(!compactTest){bindScrollSync(scroll,chartScroll);bindScrollSync(chartScroll,scroll);}
 function requestedSpot(){
   const requested=new URLSearchParams(location.search).get("spot");
   return requested&&/^[a-z0-9_-]+$/.test(requested)?requested:(root.dataset.defaultSpot||"kugenuma");
@@ -107,7 +107,7 @@ function compactWeather(slot){
 function renderCompactGrid(){
   const slots=compactSlots(),first=compactSelected===null;
   const selected=slots.length?(first?(compactDay===0?Math.max(0,currentIndex(slots)):0):Math.min(Math.max(0,compactSelected),slots.length-1)):-1;
-  const prevLeft=scroll.scrollLeft,prevChart=chartScroll.scrollLeft;
+  const prevLeft=scroll.scrollLeft;
   grid.style.setProperty("--columns",slots.length||1);grid.replaceChildren();
   root.querySelectorAll("[data-compact-day]").forEach(b=>{
     const active=Number(b.dataset.compactDay)===compactDay;
@@ -139,11 +139,8 @@ function renderCompactGrid(){
   });
   grid.appendChild(frag);
   renderCompactChart(slots,selected);renderCompactExtras(slots,selected);state.textContent=connectionLabel();
-  requestAnimationFrame(()=>{
-    if(first&&compactDay===0){
-      scroll.scrollLeft=Math.max(0,(selected-2)*getColWidth());chartScroll.scrollLeft=scroll.scrollLeft;
-    }else{scroll.scrollLeft=prevLeft;chartScroll.scrollLeft=prevChart;}
-  });
+  const targetLeft=first ? (compactDay===0 ? Math.max(0,(selected-2)*getColWidth()) : 0) : prevLeft;
+  requestAnimationFrame(()=>syncCompactScroll(targetLeft));
 }
 function renderCompactChart(slots,selected){
   const ns="http://www.w3.org/2000/svg";chart.replaceChildren();
@@ -199,17 +196,18 @@ function renderCompactExtras(slots,selected){
   const rainInner=root.querySelector("[data-rain-inner]");
   if(!rainSvg||!tideSvg)return;
   rainSvg.replaceChildren();tideSvg.replaceChildren();
-  const label=getLabelWidth(),col=getColWidth(),width=Math.max(label+col*slots.length,root.clientWidth||320);
+  const label=getLabelWidth(),col=getColWidth(),width=Math.max(label+col*slots.length,chartScroll.clientWidth||320);
   if(rainInner)rainInner.style.width=width+"px";
   rainSvg.setAttribute("viewBox","0 0 "+width+" 120");
   rainSvg.setAttribute("width",String(width));rainSvg.setAttribute("height","120");
-  const values=slots.map(s=>numeric(s.precipitation_2h_mm));
+  const values=slots.map(s=>numeric(s.precipitation_1h_mm));
   const finite=values.filter(Number.isFinite),max=Math.max(1,...finite);
   if(!finite.length){
     rainInfo.textContent="降水量データは未取得です（推測値は表示しません）";
   }else{
     const total=finite.reduce((a,b)=>a+b,0);
-    rainInfo.textContent="直前2時間の合計（mm）／表示時間帯の雨量合計 "+total.toFixed(1)+"mm";
+    const thisHour=selected>=0&&Number.isFinite(values[selected])?values[selected].toFixed(1)+"mm":"—";
+    rainInfo.textContent="1時間ごとの降水量｜選択時刻 "+thisHour+"｜表示範囲合計 "+total.toFixed(1)+"mm";
     for(let g=0;g<3;g++){
       const y=16+g*31;
       compactSvgAdd(rainSvg,"line",{x1:label,x2:width,y1:y,y2:y,stroke:"#8fb5c4","stroke-dasharray":"3 5",opacity:".19"});
@@ -239,7 +237,7 @@ function renderCompactExtras(slots,selected){
   if(!levels.every(Number.isFinite)){tideInfo.textContent="潮位データに欠損があります";return;}
   const highs=Array.isArray(tide.high)?tide.high:[],lows=Array.isArray(tide.low)?tide.low:[];
   const formatEvent=(ev,mark)=>ev.map(e=>mark+e.time+" "+e.height_cm+"cm").join("　");
-  tideInfo.textContent="満潮 "+(formatEvent(highs,"▲")||"—")+"　干潮 "+(formatEvent(lows,"▼")||"—");
+  tideInfo.textContent=(Number(target.slice(5,7))+"月"+Number(target.slice(8,10))+"日")+"　満潮 "+(formatEvent(highs,"▲")||"—")+"　干潮 "+(formatEvent(lows,"▼")||"—");
   const all=[...levels,...highs.map(e=>e.height_cm),...lows.map(e=>e.height_cm)];
   const min=Math.min(...all)-8,maxLevel=Math.max(...all)+8,span=Math.max(1,maxLevel-min);
   const x=h=>31+(h/23)*326;
@@ -261,16 +259,34 @@ function renderCompactExtras(slots,selected){
   }
 }
 
+// Three views share precisely the same hour/column origin: wave, table, and rain.
+const rainScroll=compactTest?root.querySelector("[data-rain-scroll]"):null;
+let compactSyncInFlight=false;
+function syncCompactScroll(requested){
+  if(!compactTest)return;
+  const views=[scroll,chartScroll,rainScroll].filter(Boolean);
+  const maximum=Math.min(...views.map(el=>Math.max(0,el.scrollWidth-el.clientWidth)));
+  const safe=Math.max(0,Math.min(Number(requested)||0,maximum));
+  compactSyncInFlight=true;
+  for(const el of views)if(Math.abs(el.scrollLeft-safe)>.5)el.scrollLeft=safe;
+  requestAnimationFrame(()=>{compactSyncInFlight=false;});
+}
 if(compactTest){
-  const rainScroll=root.querySelector('[data-rain-scroll]');
-  if(rainScroll){bindScrollSync(scroll,rainScroll);bindScrollSync(chartScroll,rainScroll);bindScrollSync(rainScroll,scroll);bindScrollSync(rainScroll,chartScroll);}
+  for(const el of [scroll,chartScroll,rainScroll].filter(Boolean)){
+    el.addEventListener("scroll",()=>{if(!compactSyncInFlight)syncCompactScroll(el.scrollLeft);},{passive:true});
+  }
   root.querySelectorAll("[data-compact-day]").forEach(b=>b.addEventListener("click",()=>{
     compactDay=Number(b.dataset.compactDay);compactSelected=null;
-    scroll.scrollLeft=0;chartScroll.scrollLeft=0;renderGrid();
+    syncCompactScroll(0);renderGrid();
   }));
   grid.addEventListener("click",event=>{
     const cell=event.target.closest("[data-compact-index]");if(!cell)return;
     compactSelected=Number(cell.dataset.compactIndex);renderGrid();
+  });
+  if(rainScroll)rainScroll.addEventListener("click",event=>{
+    const bounds=rainScroll.querySelector("[data-rain-chart]").getBoundingClientRect();
+    const index=Math.floor((event.clientX-bounds.left-getLabelWidth())/getColWidth());
+    if(index>=0&&index<compactSlots().length){compactSelected=index;renderGrid();}
   });
   chart.addEventListener("click",event=>{
     const left=event.clientX-chart.getBoundingClientRect().left;

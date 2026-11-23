@@ -53,7 +53,9 @@ foreach ($spots as $spotId => $spotEntry) {
     }
 
     $spotMeta = is_array($spotEntry['spot'] ?? null) ? $spotEntry['spot'] : ['id' => (string)$spotId];
-    $hourly = buildHourly($hours, $now, $tz, $hourlyHours, $hourlyStep, (string)$spotId === 'kugenuma');
+    // Only Kugenuma uses 1-hour slots during the UI alignment trial; the other eight stay 2-hour.
+    $spotStep = (string)$spotId === 'kugenuma' ? 1 : $hourlyStep;
+    $hourly = buildHourly($hours, $now, $tz, $hourlyHours, $spotStep, (string)$spotId === 'kugenuma');
     $weekly = buildWeekly($hours, $now, $tz, $weeklyDays);
     $daily = buildDaily((string)$spotId, $hours, $now, $tz, $dailyDays, $normalized['source_generated_at'] ?? null);
     $observations = $verified[(string)$spotId] ?? [];
@@ -117,7 +119,11 @@ function buildHourly(array $hours, DateTimeImmutable $now, DateTimeZone $tz, int
                         if ($value===null) {$complete=false;break;}
                         $sum += $value;
                     }
-                    $row['precipitation_2h_mm'] = $complete && $step===2 ? round($sum,2) : null;
+                    if ($step === 1) {
+                        $row['precipitation_1h_mm'] = $complete ? round($sum,2) : null;
+                    } else {
+                        $row['precipitation_2h_mm'] = $complete ? round($sum,2) : null;
+                    }
                 }
                 $selected[] = $row;
             }
