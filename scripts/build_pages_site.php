@@ -188,6 +188,7 @@ function buildForecastPage(
 
     $trustPrefix = $assetPrefix;
     $appVersion = substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/app.js'), 0, 12);
+    $styleVersion = substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/styles.css'), 0, 12);
     $canonicalPath = $homePage ? '' : 'spots/' . rawurlencode((string)$activeSpot['slug']) . '/';
     $canonicalUrl = 'https://kanto.rss7.net/' . $canonicalPath;
 
@@ -201,7 +202,7 @@ function buildForecastPage(
   <meta name="description" content="' . h($description) . '">
   <link rel="canonical" href="' . h($canonicalUrl) . '">
   <title>' . h($title) . '</title>
-  <link rel="stylesheet" href="' . h($assetPrefix) . 'styles.css">
+  <link rel="stylesheet" href="' . h($assetPrefix) . 'styles.css?v=' . h($styleVersion) . '">
   <script defer src="' . h($assetPrefix) . 'app.js?v=' . h($appVersion) . '"></script>
 </head>
 <body>
