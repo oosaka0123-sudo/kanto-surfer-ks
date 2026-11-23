@@ -232,3 +232,53 @@
   .forecast-shell[data-compact-test] .tide-now-pulse,
   .forecast-shell[data-compact-test] .tide-now-dot{animation:none}
 }
+
+/* Shared accessible navigation: present on all 13 pages. */
+.site-header{position:relative;z-index:30}
+.menu-button{
+  flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;width:48px;height:46px;padding:0;cursor:pointer;color:var(--text);
+  border:1px solid var(--line2);border-radius:8px;background:rgba(5,29,40,.6)
+}
+.menu-button span{width:23px;height:2px;border-radius:2px;background:currentColor;transition:transform .18s ease,opacity .18s ease}
+.menu-button[aria-expanded="true"] span:nth-child(1){transform:translateY(8px) rotate(45deg)}
+.menu-button[aria-expanded="true"] span:nth-child(2){opacity:0}
+.menu-button[aria-expanded="true"] span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
+.menu-button:focus-visible{outline:2px solid var(--wave);outline-offset:3px}
+.site-menu{
+  position:absolute;top:calc(100% + 1px);right:18px;z-index:40;
+  width:min(340px,calc(100vw - 16px));max-height:calc(100dvh - 92px);
+  overflow-y:auto;overscroll-behavior:contain;padding:10px;
+  border:1px solid var(--line2);background:#082331;
+  box-shadow:0 16px 45px rgba(0,0,0,.38);
+  font-family:"Yu Gothic",sans-serif
+}
+.site-menu[hidden]{display:none}
+.site-menu a{display:block;padding:9px 12px;color:var(--text);text-decoration:none;border-bottom:1px solid var(--line);font:600 13px/1.45 "Yu Gothic",sans-serif}
+.site-menu a:focus-visible,.site-menu a:hover,.site-menu a[aria-current="page"]{color:var(--wave);background:var(--soft)}
+.site-menu .menu-spot-group,.site-menu .menu-info-group{margin-top:9px;padding-top:7px;border-top:1px solid var(--line2)}
+.site-menu .menu-group-label{margin:4px 12px 7px;color:var(--muted);font:700 11px/1.5 "Yu Gothic",sans-serif}
+@media(max-width:520px){
+ .menu-button{width:42px;height:40px}
+ .site-menu{right:8px;max-height:calc(100dvh - 76px)}
+}
+
+/* Kugenuma only: increase red row labels WITHOUT changing 48px label columns. */
+.forecast-shell[data-compact-test] .cell.label{font-size:13px}
+.forecast-shell[data-compact-test] .tide-rain-label{font-size:13px}
+@media(max-width:520px){.forecast-shell[data-compact-test] .tide-rain-label{font-size:13px}}
+
+/* One line: [tide line rainfall square] + [displayed range total]. */
+.forecast-shell[data-compact-test] .compact-tide-rain-header{
+  display:flex;align-items:center;justify-content:space-between;gap:4px;
+  flex-wrap:nowrap;min-width:0;max-width:100%;white-space:nowrap
+}
+.forecast-shell[data-compact-test] .compact-tide-rain-panel .compact-tide-rain-header .compact-tide-rain-title{
+  margin:0;flex:0 0 auto;flex-wrap:nowrap;gap:4px;
+  font-size:clamp(12px,3.4vw,15px);white-space:nowrap;line-height:1.35
+}
+.forecast-shell[data-compact-test] .compact-tide-rain-panel .compact-tide-rain-header .compact-extra-meta{
+  margin:0;flex:1 1 auto;min-width:0;max-width:none;
+  font-size:clamp(8px,2.55vw,10px);text-align:right;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
