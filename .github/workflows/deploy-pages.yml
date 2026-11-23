@@ -10,6 +10,9 @@ on:
       - 'scripts/fetch_open_meteo.php'
       - 'scripts/normalize_open_meteo.php'
       - 'scripts/build_public_forecast.php'
+      - 'scripts/tide_jma.php'
+      - 'tests/tide_jma_smoke.php'
+      - 'data/tide-jma/**'
       - 'scripts/build_pages_site.php'
       - '.github/workflows/deploy-pages.yml'
   pull_request:
@@ -20,6 +23,9 @@ on:
       - 'scripts/fetch_open_meteo.php'
       - 'scripts/normalize_open_meteo.php'
       - 'scripts/build_public_forecast.php'
+      - 'scripts/tide_jma.php'
+      - 'tests/tide_jma_smoke.php'
+      - 'data/tide-jma/**'
       - 'scripts/build_pages_site.php'
       - '.github/workflows/deploy-pages.yml'
   schedule:
@@ -52,6 +58,8 @@ jobs:
           php -l scripts/fetch_open_meteo.php
           php -l scripts/normalize_open_meteo.php
           php -l scripts/build_public_forecast.php
+          php -l scripts/tide_jma.php
+          php tests/tide_jma_smoke.php
           php -l scripts/build_pages_site.php
           node --check prototype/spot-forecast/app.js
 
@@ -70,6 +78,7 @@ jobs:
       - name: Verify Pages artifact
         run: |
           test -f "$RUNNER_TEMP/site/index.html"
+          jq -e '.spot.id=="kugenuma" and .tide.station_id=="D8" and (.tide.days | length)>=3 and any(.hourly[]; .precipitation_2h_mm != null)' "$RUNNER_TEMP/site/data/kugenuma.json" >/dev/null
           test -f "$RUNNER_TEMP/site/app.js"
           test -f "$RUNNER_TEMP/site/styles.css"
           test "$(find "$RUNNER_TEMP/site/data" -maxdepth 1 -name '*.json' | wc -l)" -eq 10

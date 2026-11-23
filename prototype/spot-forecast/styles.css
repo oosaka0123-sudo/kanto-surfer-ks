@@ -121,3 +121,21 @@
 .forecast-shell[data-compact-test] .compact-missing{color:#8fb5c4}
 .forecast-shell[data-compact-test] .compact-no-data{width:100%;padding:14px;color:#8fb5c4;font:12px "Yu Gothic",sans-serif}
 @media(max-width:520px){.forecast-shell[data-compact-test] .data-state{font-size:9px;padding:3px 5px}}
+
+/* Kugenuma-only extras: rainfall and astronomical tide plots. */
+.forecast-shell[data-compact-test] .compact-extras{padding:14px 2px 4px;font-family:"Yu Gothic",sans-serif}
+.forecast-shell[data-compact-test] .compact-extra-panel{padding:12px 0 10px;border-top:1px solid rgba(172,207,222,.22)}
+.forecast-shell[data-compact-test] .compact-extra-panel h3{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin:0 0 5px;color:#f5eee5;font-size:15px;font-weight:700}
+.forecast-shell[data-compact-test] .compact-extra-panel h3 small{font-size:10px;color:#a1c2ce;font-weight:400}
+.forecast-shell[data-compact-test] .compact-extra-meta{font-size:10px;line-height:1.6;color:#c4d3db;margin:0 0 8px;min-height:1.6em}
+.forecast-shell[data-compact-test] .compact-rain-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-inline:contain}
+.forecast-shell[data-compact-test] .compact-rain-scroll::-webkit-scrollbar{display:none}
+.forecast-shell[data-compact-test] [data-rain-inner]{min-width:100%;height:120px}
+.forecast-shell[data-compact-test] [data-rain-chart]{display:block;height:120px;max-width:none}
+.forecast-shell[data-compact-test] .compact-tide-chart{display:block;width:100%;height:146px;max-width:100%}
+.forecast-shell[data-compact-test] .compact-tide-note{font-size:10px;color:#8fb5c4;line-height:1.55;margin:4px 0}
+.forecast-shell[data-compact-test] .compact-tide-note a{color:#9eddec;text-underline-offset:2px}
+@media(max-width:520px){
+  .forecast-shell[data-compact-test] .compact-extras{padding:12px 1px 3px}
+  .forecast-shell[data-compact-test] .compact-extra-panel h3{font-size:14px}
+}

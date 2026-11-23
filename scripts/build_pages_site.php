@@ -181,6 +181,19 @@ function buildForecastPage(
 
     $compactAttrs = (!$homePage && $id === 'kugenuma') ? ' data-compact-test="1"' : '';
     $compactDays = (!$homePage && $id === 'kugenuma') ? '<nav class="compact-days" aria-label="日付切替"><button type="button" data-compact-day="0" class="is-active" aria-pressed="true">今日</button><button type="button" data-compact-day="1" aria-pressed="false">明日</button><button type="button" data-compact-day="2" aria-pressed="false">明後日</button></nav>' : '';
+    $compactExtras = (!$homePage && $id === 'kugenuma') ? '<div class="compact-extras" data-compact-extras>
+  <section class="compact-extra-panel" aria-labelledby="kugenuma-rain-title">
+    <h3 id="kugenuma-rain-title">降水量グラフ <small>直前2時間の合計（mm）</small></h3>
+    <p class="compact-extra-meta" data-rain-info aria-live="polite">データ読み込み中</p>
+    <div class="compact-rain-scroll" data-rain-scroll><div data-rain-inner><svg data-rain-chart role="img" aria-label="時刻別の2時間降水量を棒グラフで表示"></svg></div></div>
+  </section>
+  <section class="compact-extra-panel" aria-labelledby="kugenuma-tide-title">
+    <h3 id="kugenuma-tide-title">潮見表 <small>湘南港の予測潮位（cm）</small></h3>
+    <p class="compact-extra-meta" data-tide-info aria-live="polite">潮位データ読み込み中</p>
+    <svg class="compact-tide-chart" data-tide-chart role="img" aria-label="湘南港の毎時天文潮位。線は潮位、丸は満潮と干潮"></svg>
+    <p class="compact-tide-note">出典：<a href="https://www.data.jma.go.jp/kaiyou/db/tide/suisan/suisan.php?stn=D8" target="_blank" rel="noopener noreferrer">気象庁 潮位表・湘南港</a>（天文潮位予測・潮位表基準面上）。鵠沼の実測潮位ではありません。</p>
+  </section>
+</div>' : '';
     $trustPrefix = $assetPrefix;
     $appVersion = substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/app.js'), 0, 12);
     $styleVersion = substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/styles.css'), 0, 12);
@@ -220,6 +233,7 @@ function buildForecastPage(
           <div class="chart-wrap" aria-label="モデル波高と風速の推移"><div class="chart-scroll" data-chart-scroll><div class="chart-inner" data-chart-inner><svg class="forecast-chart" viewBox="0 0 800 240" preserveAspectRatio="none" data-chart aria-hidden="true"></svg></div></div><p class="chart-empty" data-chart-empty>予報データ未接続</p></div>
           <div class="scroll-hint" aria-hidden="true">← 横にスワイプ →</div>
           <div class="forecast-scroll" tabindex="0" aria-label="予報表。左右にスクロールできます" data-scroll><div class="forecast-grid" data-grid></div></div>
+          ' . $compactExtras . '
           <aside class="verified-observation" data-observation hidden aria-live="polite"></aside>
         </div>
       </div>
