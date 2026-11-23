@@ -123,6 +123,8 @@ function buildHourly(array $hours, DateTimeImmutable $now, DateTimeZone $tz, int
                     }
                     if ($step === 1) {
                         $row['precipitation_1h_mm'] = $complete ? round($sum,2) : null;
+                        $chance = is_array($hour['weather_land'] ?? null) ? nullableNumber($hour['weather_land']['precipitation_probability'] ?? null) : null;
+                        $row['precipitation_probability_pct'] = $chance !== null && $chance >= 0 && $chance <= 100 ? round($chance, 0) : null;
                     } else {
                         $row['precipitation_2h_mm'] = $complete ? round($sum,2) : null;
                     }

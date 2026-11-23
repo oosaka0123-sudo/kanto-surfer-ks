@@ -196,72 +196,117 @@ function compactSvgAdd(svg,tag,attributes,content){
   svg.appendChild(el);
   return el;
 }
+// One shared time axis for JMA tide (cm) and Open-Meteo rain (mm) / rain probability (%).
+// JMA hourly astronomical levels and meteorological rain have DIFFERENT vertical scales.
 function renderCompactExtras(slots,selected){
-  const rainSvg=root.querySelector("[data-rain-chart]"),tideSvg=root.querySelector("[data-tide-chart]");
-  const rainInfo=root.querySelector("[data-rain-info]"),tideInfo=root.querySelector("[data-tide-info]");
-  const rainInner=root.querySelector("[data-rain-inner]");
-  if(!rainSvg||!tideSvg)return;
-  rainSvg.replaceChildren();tideSvg.replaceChildren();
-  const label=getLabelWidth(),col=getColWidth(),width=Math.max(label+col*slots.length,chartScroll.clientWidth||320);
-  if(rainInner)rainInner.style.width=width+"px";
-  rainSvg.setAttribute("viewBox","0 0 "+width+" 120");
-  rainSvg.setAttribute("width",String(width));rainSvg.setAttribute("height","120");
-  const values=slots.map(s=>numeric(s.precipitation_1h_mm));
-  const finite=values.filter(Number.isFinite),max=Math.max(1,...finite);
-  if(!finite.length){
-    rainInfo.textContent="降水量データは未取得です（推測値は表示しません）";
-  }else{
-    const total=finite.reduce((a,b)=>a+b,0);
-    const thisHour=selected>=0&&Number.isFinite(values[selected])?values[selected].toFixed(1)+"mm":"—";
-    rainInfo.textContent="1時間ごとの降水量｜選択時刻 "+thisHour+"｜表示範囲合計 "+total.toFixed(1)+"mm";
-    for(let g=0;g<3;g++){
-      const y=16+g*31;
-      compactSvgAdd(rainSvg,"line",{x1:label,x2:width,y1:y,y2:y,stroke:"#8fb5c4","stroke-dasharray":"3 5",opacity:".19"});
-    }
-    values.forEach((v,i)=>{
-      const x=label+col*i+col/2;
-      if(selected===i)compactSvgAdd(rainSvg,"rect",{x:label+i*col,y:0,width:col,height:120,fill:"#f45d43",opacity:".10"});
-      if(!Number.isFinite(v))return;
-      const h=76*v/max;
-      compactSvgAdd(rainSvg,"rect",{x:x-Math.min(24,col-8)/2,y:94-h,width:Math.min(24,col-8),height:h,rx:2,fill:"#58b7e4"});
-      if(v>0)compactSvgAdd(rainSvg,"text",{x,y:Math.max(12,87-h),"text-anchor":"middle","font-size":"9",fill:"#e4f8ff"},v.toFixed(1));
-    });
-  }
-  for(let i=0;i<slots.length;i++){
-    compactSvgAdd(rainSvg,"text",{x:label+i*col+col/2,y:113,"text-anchor":"middle","font-size":"9",fill:"#a9c6d2"},fmtTime(slots[i]));
-  }
+  const svg=root.querySelector("[data-rain-chart]");
+  const info=root.querySelector("[data-rain-info]");
+  const tideInfo=root.querySelector("[data-tide-info]");
+  const inner=root.querySelector("[data-rain-inner]");
+  const table=root.querySelector("[data-tide-rain-grid]");
+  if(!svg||!info||!tideInfo||!inner||!table)return;
   const target=dateKey(new Date(Date.now()+compactDay*86400000));
-  const tide=Array.isArray(source.tide?.days)?source.tide.days.find(r=>r.date===target):null;
-  tideSvg.setAttribute("viewBox","0 0 370 146");
-  tideSvg.setAttribute("width","100%");tideSvg.setAttribute("height","146");
-  if(!tide||!Array.isArray(tide.hourly_cm)||tide.hourly_cm.length!==24){
-    tideInfo.textContent="湘南港の天文潮位データは未取得です";
-    compactSvgAdd(tideSvg,"text",{x:185,y:74,"text-anchor":"middle","font-size":"13",fill:"#8fb5c4"},"潮位データなし");
-    return;
-  }
-  const levels=tide.hourly_cm.map(numeric);
-  if(!levels.every(Number.isFinite)){tideInfo.textContent="潮位データに欠損があります";return;}
-  const highs=Array.isArray(tide.high)?tide.high:[],lows=Array.isArray(tide.low)?tide.low:[];
-  const formatEvent=(ev,mark)=>ev.map(e=>mark+e.time+" "+e.height_cm+"cm").join("　");
-  tideInfo.textContent=(Number(target.slice(5,7))+"月"+Number(target.slice(8,10))+"日")+"　満潮 "+(formatEvent(highs,"▲")||"—")+"　干潮 "+(formatEvent(lows,"▼")||"—");
-  const all=[...levels,...highs.map(e=>e.height_cm),...lows.map(e=>e.height_cm)];
-  const min=Math.min(...all)-8,maxLevel=Math.max(...all)+8,span=Math.max(1,maxLevel-min);
-  const x=h=>31+(h/23)*326;
-  const y=v=>119-(v-min)/span*92;
-  for(let line=0;line<3;line++){
-    const val=min+span*(line/2);
-    const yy=y(val);
-    compactSvgAdd(tideSvg,"line",{x1:31,x2:357,y1:yy,y2:yy,stroke:"#8fb5c4",opacity:".22","stroke-dasharray":"3 5"});
-    compactSvgAdd(tideSvg,"text",{x:27,y:yy+3,"text-anchor":"end","font-size":"9",fill:"#9bbcc9"},Math.round(val));
-  }
-  for(let hour=0;hour<24;hour+=4)compactSvgAdd(tideSvg,"text",{x:x(hour),y:138,"text-anchor":"middle","font-size":"10",fill:"#afc9d0"},hour+"時");
-  compactSvgAdd(tideSvg,"polyline",{points:levels.map((v,i)=>x(i)+","+y(v)).join(" "),fill:"none",stroke:"#4fc4dc","stroke-width":2.5,"stroke-linejoin":"round","stroke-linecap":"round"});
-  for(const [type,events] of [["high",highs],["low",lows]]){
-    for(const e of events){
-      const h=Number(e.time.split(":")[0])+Number(e.time.split(":")[1])/60;
-      if(!Number.isFinite(h)||h<0||h>23.99||!Number.isFinite(numeric(e.height_cm)))continue;
-      compactSvgAdd(tideSvg,"circle",{cx:x(h),cy:y(e.height_cm),r:4,stroke:"#082331","stroke-width":1.5,fill:type==="high"?"#f8a65c":"#f5e0a5"});
+  const tide=Array.isArray(source.tide?.days)?source.tide.days.find(item=>item.date===target):null;
+  const hours=slots.map(slot=>{const d=slotDate(slot);return d?Number(getJst(d).hour):-1;});
+  const rain=slots.map(slot=>numeric(slot.precipitation_1h_mm));
+  const chance=slots.map(slot=>numeric(slot.precipitation_probability_pct));
+  const levels=hours.map(h=>h>=0&&h<=23&&Array.isArray(tide?.hourly_cm)?numeric(tide.hourly_cm[h]):NaN);
+  const completeDay=Array.isArray(tide?.hourly_cm)&&tide.hourly_cm.length===24&&tide.hourly_cm.every(v=>Number.isFinite(numeric(v)));
+  const highs=Array.isArray(tide?.high)?tide.high:[];
+  const lows=Array.isArray(tide?.low)?tide.low:[];
+  const events=items=>items.map(e=>e.time+" "+e.height_cm+"cm").join("・");
+  tideInfo.textContent=(Number(target.slice(5,7))+"月"+Number(target.slice(8,10))+"日")+"　満潮 "+(events(highs)||"—")+"　干潮 "+(events(lows)||"—")+
+    (!completeDay?"　潮位データ未取得":"");
+  const numericRain=rain.filter(Number.isFinite);
+  const availableRain=numericRain.length===slots.length&&slots.length>0;
+  const total=numericRain.reduce((a,b)=>a+b,0);
+  info.textContent=availableRain?"1時間ごとの降水量｜表示範囲合計 "+total.toFixed(1)+"mm":"降水量は欠測時に「—」表示";
+  const col=getColWidth(),label=getLabelWidth();
+  const width=Math.max(label+slots.length*col,chartScroll.clientWidth||320);
+  inner.style.width=width+"px";
+  svg.replaceChildren();svg.setAttribute("viewBox","0 0 "+width+" 260");
+  svg.setAttribute("width",String(width));svg.setAttribute("height","260");
+  table.replaceChildren();table.style.setProperty("--columns",slots.length||1);
+  table.style.width=width+"px";
+  const fmtNumber=(v,digits)=>Number.isFinite(v)?v.toFixed(digits):"—";
+  const rows=[
+    {title:"時刻",unit:"",render:(_,i)=>fmtTime(slots[i])},
+    {title:"潮位",unit:"cm",render:(_,i)=>fmtNumber(levels[i],0)},
+    {title:"降水",unit:"mm",render:(_,i)=>fmtNumber(rain[i],1)},
+    {title:"確率",unit:"%",render:(_,i)=>Number.isFinite(chance[i])&&chance[i]>=0&&chance[i]<=100?Math.round(chance[i]).toString():"—"}
+  ];
+  for(const row of rows){
+    const tag=document.createElement("div");tag.className="tide-rain-cell tide-rain-label";
+    tag.textContent=row.title;
+    if(row.unit){const u=document.createElement("small");u.textContent=row.unit;tag.appendChild(u);}
+    table.appendChild(tag);
+    for(let i=0;i<slots.length;i++){
+      const cell=document.createElement("div");
+      cell.className="tide-rain-cell tide-rain-value"+(selected===i?" current":"");
+      cell.dataset.compactIndex=String(i);cell.textContent=row.render(slots[i],i);
+      table.appendChild(cell);
     }
+  }
+  const x=i=>label+col*i+col/2;
+  // Highlight an identical hour column in all three views.
+  if(selected>=0&&selected<slots.length){
+    compactSvgAdd(svg,"rect",{x:label+selected*col,y:0,width:col,height:260,fill:"#f45d43",opacity:".12"});
+    compactSvgAdd(svg,"line",{x1:x(selected),x2:x(selected),y1:68,y2:244,stroke:"#f4efe6","stroke-dasharray":"3 6",opacity:".73"});
+  }
+  compactSvgAdd(svg,"text",{x:4,y:36,"font-size":"11","font-weight":"bold",fill:"#f45d43"},"天気");
+  for(let i=0;i<slots.length;i++){
+    compactSvgAdd(svg,"line",{x1:x(i),x2:x(i),y1:83,y2:244,stroke:"#8fb5c4",opacity:".11"});
+    compactSvgAdd(svg,"text",{x:x(i),y:21,"text-anchor":"middle","font-size":"10",fill:"#a9c6d2"},hours[i]+"時");
+    compactSvgAdd(svg,"text",{x:x(i),y:47,"text-anchor":"middle","font-size":"18"},compactWeather(slots[i]));
+  }
+  const bottom=240,top=103,height=bottom-top;
+  const dayLevels=completeDay?tide.hourly_cm.map(numeric):[];
+  const allTideLevels=dayLevels.concat(highs.map(e=>numeric(e.height_cm)),lows.map(e=>numeric(e.height_cm))).filter(Number.isFinite);
+  const minTide=allTideLevels.length?Math.min(...allTideLevels)-8:0;
+  const maxTide=allTideLevels.length?Math.max(...allTideLevels)+8:150;
+  const range=Math.max(10,maxTide-minTide);
+  const yTide=v=>bottom-(v-minTide)/range*height;
+  for(let i=0;i<3;i++){
+    const value=minTide+range*i/2,y=yTide(value);
+    compactSvgAdd(svg,"line",{x1:label,x2:width,y1:y,y2:y,stroke:"#8fb5c4",opacity:".18","stroke-dasharray":"3 5"});
+    compactSvgAdd(svg,"text",{x:label-4,y:y+3,"text-anchor":"end","font-size":"9",fill:"#89b7c6"},Math.round(value));
+  }
+  const hasTide=levels.every(Number.isFinite)&&levels.length>0;
+  if(hasTide){
+    const points=levels.map((value,i)=>x(i)+","+yTide(value));
+    compactSvgAdd(svg,"path",{d:"M"+x(0)+" "+bottom+" L"+points.join(" L")+" L"+x(levels.length-1)+" "+bottom+" Z",fill:"#37b6cc",opacity:".10"});
+  }
+  // Bars use an independent rainfall-mm scale; they do not share the tide-cm y-axis.
+  const maxRain=Math.max(1,...numericRain);
+  rain.forEach((value,i)=>{
+    if(!Number.isFinite(value)||value<0)return;
+    const bh=Math.max(0,(value/maxRain)*86);
+    if(bh<=0)return;
+    const bw=Math.min(col-10,28);
+    compactSvgAdd(svg,"rect",{x:x(i)-bw/2,y:bottom-bh,width:bw,height:bh,rx:2,fill:"#479be4",opacity:".86"});
+  });
+  if(hasTide){
+    compactSvgAdd(svg,"polyline",{points:levels.map((v,i)=>x(i)+","+yTide(v)).join(" "),fill:"none",stroke:"#53d0df","stroke-width":"3","stroke-linejoin":"round","stroke-linecap":"round"});
+    for(const [kind,items] of [["満潮",highs],["干潮",lows]]){
+      for(const event of items){
+        const hh=String(event.time||"").split(":").map(Number),eventHour=hh[0]+hh[1]/60;
+        const first=hours[0],last=hours[hours.length-1],value=numeric(event.height_cm);
+        if(!Number.isFinite(eventHour)||!Number.isFinite(value)||eventHour<first||eventHour>last)continue;
+        const eventX=label+(eventHour-first+.5)*col,y=yTide(value);
+        compactSvgAdd(svg,"circle",{cx:eventX,cy:y,r:3.8,fill:kind==="満潮"?"#f6aa65":"#f4dc9d",stroke:"#082331","stroke-width":1});
+        compactSvgAdd(svg,"text",{x:eventX,y:Math.max(90,y-9),"text-anchor":"middle","font-size":"9",fill:kind==="満潮"?"#f7bb86":"#f4dc9d"},kind);
+      }
+    }
+  }
+  if(selected>=0&&selected<slots.length){
+    const tx=Math.max(label+2,Math.min(width-125,x(selected)-62));
+    const tideText=fmtNumber(levels[selected],0)+"cm";
+    const rainText=fmtNumber(rain[selected],1)+"mm";
+    compactSvgAdd(svg,"rect",{x:tx,y:59,width:58,height:24,rx:5,fill:"#5bd0e1"});
+    compactSvgAdd(svg,"text",{x:tx+29,y:75,"text-anchor":"middle","font-size":"11","font-weight":"700",fill:"#062a37"},tideText);
+    compactSvgAdd(svg,"rect",{x:tx+62,y:59,width:62,height:24,rx:5,fill:"#77b8f3"});
+    compactSvgAdd(svg,"text",{x:tx+93,y:75,"text-anchor":"middle","font-size":"11","font-weight":"700",fill:"#062a37"},rainText);
+    if(hasTide)compactSvgAdd(svg,"circle",{cx:x(selected),cy:yTide(levels[selected]),r:4.3,fill:"#36d0e5",stroke:"#fff","stroke-width":1.6});
   }
 }
 
