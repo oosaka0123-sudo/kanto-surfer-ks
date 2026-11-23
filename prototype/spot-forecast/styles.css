@@ -90,4 +90,4 @@
 .footer-spot-grid a{display:block;min-width:0;padding:8px 0;border-bottom:1px solid var(--line);color:var(--text);font:500 12px/1.5 "Yu Gothic",sans-serif;text-decoration:none}
 .footer-spot-grid a:hover,.footer-spot-grid a:focus-visible{color:var(--wave)}
 .footer-spot-grid a[aria-current="page"]{color:var(--wave)}
-@media(max-width:520px){
+@media(max-width:520px){.footer-spot-grid{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px}.site-footer .footer-spot-nav{margin-top:16px}}
