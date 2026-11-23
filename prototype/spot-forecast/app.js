@@ -201,7 +201,8 @@ function renderCompactChart(slots,selected){
   waves.forEach((v,i)=>{
     if(!Number.isFinite(v))return;const barW=Math.min(col-6,29);
     const h=Math.max(v===0?0:2,Math.max(0,v)*usable/maxWave);
-    add("rect",{x:x(i)-barW/2,y:bottom-h,width:barW,height:h,rx:2,fill:i===selected?"#22bddd":"#0b8ca3",opacity:".92"});
+    const past=compactDay===0&&slotDate(slots[i])?.getTime()<Date.now();
+    add("rect",{x:x(i)-barW/2,y:bottom-h,width:barW,height:h,rx:2,fill:i===selected?"#22bddd":"#0b8ca3",opacity:past?".46":".92"});
   });
   let run=[];
   const flush=()=>{if(run.length>1)add("polyline",{points:run.join(" "),fill:"none",stroke:"#f67a3a","stroke-width":3,"stroke-linejoin":"round","stroke-linecap":"round"});run=[];};
