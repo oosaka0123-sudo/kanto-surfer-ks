@@ -342,6 +342,7 @@ function publicRow(array $hour, DateTimeImmutable $time, ?string $date = null): 
         'model_wave_height_m' => nullableNumber($marine['wave_height'] ?? null),
         'period_s' => $period,
         'wind_speed_ms' => nullableNumber($weather['wind_speed_10m'] ?? null),
+        'temperature_c' => nullableNumber($weather['temperature_2m'] ?? null),
         'wind_gust_ms' => nullableNumber($weather['wind_gusts_10m'] ?? null),
         'wind_direction_label' => $windDir === null ? null : directionLabel($windDir),
         'validation_status' => 'provisional',
