@@ -55,7 +55,9 @@ foreach ($spots as $spotId => $spotEntry) {
     $spotMeta = is_array($spotEntry['spot'] ?? null) ? $spotEntry['spot'] : ['id' => (string)$spotId];
     // Only Kugenuma uses 1-hour slots during the UI alignment trial; the other eight stay 2-hour.
     $spotStep = (string)$spotId === 'kugenuma' ? 1 : $hourlyStep;
-    $hourly = buildHourly($hours, $now, $tz, $hourlyHours, $spotStep, (string)$spotId === 'kugenuma');
+    // 72h covers 04:00-20:00 of the day after tomorrow, even just after midnight.
+    $spotHours = (string)$spotId === 'kugenuma' ? max(72, $hourlyHours) : $hourlyHours;
+    $hourly = buildHourly($hours, $now, $tz, $spotHours, $spotStep, (string)$spotId === 'kugenuma');
     $weekly = buildWeekly($hours, $now, $tz, $weeklyDays);
     $daily = buildDaily((string)$spotId, $hours, $now, $tz, $dailyDays, $normalized['source_generated_at'] ?? null);
     $observations = $verified[(string)$spotId] ?? [];

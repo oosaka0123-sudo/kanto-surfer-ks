@@ -92,7 +92,13 @@ function connectionLabel(){
 // 鵠沼限定の時間別UI試験。元データのない時刻は生成しない。
 function compactSlots(){
   const target=dateKey(new Date(Date.now()+compactDay*86400000));
-  return getSlots().filter(s=>{const d=slotDate(s);return d&&dateKey(d)===target&&!s.placeholder;});
+  // Surf-useful hours only: 04:00 through 20:00 JST, inclusive (17 hourly columns).
+  return getSlots().filter(s=>{
+    const d=slotDate(s);
+    if(!d||s.placeholder||dateKey(d)!==target)return false;
+    const hour=Number(getJst(d).hour);
+    return hour>=4&&hour<=20;
+  });
 }
 const compass16=["北","北北東","北東","東北東","東","東南東","南東","南南東","南","南南西","南西","西南西","西","西北西","北西","北北西"];
 function compactArrow(dir){
