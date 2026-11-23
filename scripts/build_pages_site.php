@@ -191,8 +191,9 @@ function buildForecastPage(
         <div class="compact-tide-rain-grid" data-tide-rain-grid></div>
       </div>
     </div>
+    <p class="compact-tide-phase" data-tide-phase aria-live="polite">潮回り： —</p>
     <p class="compact-extrema" data-tide-info aria-live="polite">満潮・干潮データ読み込み中</p>
-    <p class="compact-tide-note">潮位は<a href="https://www.data.jma.go.jp/kaiyou/db/tide/suisan/suisan.php?stn=D8" target="_blank" rel="noopener noreferrer">気象庁・湘南港の天文潮位</a>（潮位表基準面上）。鵠沼の実測値ではありません。降水量・確率はOpen-Meteoのモデル予報。二つの量は別の目盛りです。</p>
+    <p class="compact-tide-note">潮位は<a href="https://www.data.jma.go.jp/kaiyou/db/tide/suisan/suisan.php?stn=D8" target="_blank" rel="noopener noreferrer">気象庁・湘南港の天文潮位</a>（潮位表基準面上）。鵠沼の実測値ではありません。降水量・確率はOpen-Meteoのモデル予報。二つの量は別の目盛りです。過去の潮位線も推算値です。潮回りは旧暦換算による目安で、気象庁の公表値ではありません。</p>
   </section>
 </div>' : '';
     $trustPrefix = $assetPrefix;
