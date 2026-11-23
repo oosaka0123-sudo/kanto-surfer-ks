@@ -214,9 +214,10 @@ function buildForecastPage(
       <div class="section-title"><span class="section-number">04</span><span class="section-icon" aria-hidden="true">⌁</span><h2 id="forecast-title">時間別予報</h2></div>
       <div class="forecast-shell" data-forecast data-data-base="' . h($dataBase) . '" data-default-spot="' . h($id) . '">
         <div class="forecast-panel" id="panel-forecast" aria-labelledby="forecast-title">
-          <div class="forecast-legend" aria-label="グラフ凡例"><span><i class="legend-wave"></i><span data-wave-label>モデル波高(m)</span></span><span><i class="legend-wind"></i>風(m/s)</span><span class="data-state" data-state>読み込み中</span></div>
-          <div class="chart-wrap" aria-label="モデル波高と風速の推移"><div class="chart-scroll" data-chart-scroll><div class="chart-inner" data-chart-inner><svg class="forecast-chart" viewBox="0 0 800 240" preserveAspectRatio="none" data-chart aria-hidden="true"></svg></div></div><p class="chart-empty" data-chart-empty>予報データ未接続</p></div>
-          <div class="scroll-hint" aria-hidden="true">← 横にスワイプ →</div>
+          <nav class="forecast-day-nav" aria-label="予報日切替"><button type="button" data-day-offset="0" class="is-active" aria-pressed="true">今日</button><button type="button" data-day-offset="1" aria-pressed="false">明日</button><button type="button" data-day-offset="2" aria-pressed="false">明後日</button></nav>
+          <div class="forecast-legend" aria-label="グラフ凡例"><span><i class="legend-wave"></i><span data-wave-label>モデル波高(m)</span></span><span><i class="legend-wind"></i>風速(m/s)</span><span class="data-state" data-state>読み込み中</span></div>
+          <div class="chart-wrap" aria-label="モデル波高と風速の推移"><div class="chart-scroll" data-chart-scroll><div class="chart-inner" data-chart-inner><div class="chart-weather" data-chart-weather aria-label="時間別天気、時刻タップで選択"></div><svg class="forecast-chart" viewBox="0 0 800 240" preserveAspectRatio="none" data-chart aria-hidden="true"></svg></div></div><p class="chart-empty" data-chart-empty>予報データ未接続</p></div>
+          <div class="scroll-hint" aria-hidden="true">時刻をタップ・横にスワイプ →</div>
           <div class="forecast-scroll" tabindex="0" aria-label="予報表。左右にスクロールできます" data-scroll><div class="forecast-grid" data-grid></div></div>
           <aside class="verified-observation" data-observation hidden aria-live="polite"></aside>
         </div>
