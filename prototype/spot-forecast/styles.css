@@ -69,7 +69,7 @@
 .daily-val{position:relative;z-index:1;font-size:9px;line-height:1;white-space:nowrap;font-weight:600;color:#f9fcff;text-shadow:0 1px 2px #031b28}
 .daily-dir{display:flex;align-items:center;justify-content:center;white-space:nowrap;font-size:9px;font-weight:600}
 .daily-arrow{font-size:13px;line-height:1}
-.daily-judgment{font-size:8.5px;font-weight:700;letter-spacing:-.03em;white-space:nowrap;color:#abb9c8}
+.daily-judgment{display:flex;min-width:0;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:8.5px;font-weight:700;letter-spacing:-.03em;white-space:nowrap;color:#abb9c8}.daily-judge-label{display:block;max-width:100%;overflow:hidden;text-overflow:clip;white-space:nowrap}.daily-stars{display:block;color:#f6c84a;font-size:8px;line-height:1;letter-spacing:-.08em;text-shadow:0 1px 2px #031b28}
 .daily-meta{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;margin:12px 2px 8px;color:#a5c7d8;font:11px/1.5 "Yu Gothic",sans-serif}
 .daily-meta .is-stale{color:#ffb4a8}
 .daily-note{margin:0 2px;color:#a5c7d8;font:11px/1.6 "Yu Gothic",sans-serif}
