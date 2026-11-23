@@ -117,7 +117,7 @@ function renderCompactGrid(){
     grid.innerHTML='<div class="compact-no-data">この日の時間別予報は未取得です</div>';
     chart.replaceChildren();chartEmpty.hidden=false;chartEmpty.textContent="この日のデータはありません";
     if(chartInner)chartInner.style.width="100%";
-    state.textContent=connectionLabel();return;
+    state.textContent=connectionLabel();renderCompactExtras([],selected);return;
   }
   const rows=[
     {label:"時刻",unit:"",html:s=>escapeHtml(fmtTime(s))},
@@ -138,7 +138,7 @@ function renderCompactGrid(){
     });
   });
   grid.appendChild(frag);
-  renderCompactChart(slots,selected);state.textContent=connectionLabel();
+  renderCompactChart(slots,selected);renderCompactExtras(slots,selected);state.textContent=connectionLabel();
   requestAnimationFrame(()=>{
     if(first&&compactDay===0){
       scroll.scrollLeft=Math.max(0,(selected-2)*getColWidth());chartScroll.scrollLeft=scroll.scrollLeft;
@@ -185,7 +185,85 @@ function renderCompactChart(slots,selected){
     add("text",{x:x(selected),y:Math.max(38,y-10),"text-anchor":"middle","font-size":11,"font-weight":"bold",fill:"#fcebcf"},fmt(winds[selected])+"m/s");
   }
 }
+
+function compactSvgAdd(svg,tag,attributes,content){
+  const el=document.createElementNS("http://www.w3.org/2000/svg",tag);
+  Object.entries(attributes).forEach(([key,value])=>el.setAttribute(key,String(value)));
+  if(content!==undefined)el.textContent=content;
+  svg.appendChild(el);
+  return el;
+}
+function renderCompactExtras(slots,selected){
+  const rainSvg=root.querySelector("[data-rain-chart]"),tideSvg=root.querySelector("[data-tide-chart]");
+  const rainInfo=root.querySelector("[data-rain-info]"),tideInfo=root.querySelector("[data-tide-info]");
+  const rainInner=root.querySelector("[data-rain-inner]");
+  if(!rainSvg||!tideSvg)return;
+  rainSvg.replaceChildren();tideSvg.replaceChildren();
+  const label=getLabelWidth(),col=getColWidth(),width=Math.max(label+col*slots.length,root.clientWidth||320);
+  if(rainInner)rainInner.style.width=width+"px";
+  rainSvg.setAttribute("viewBox","0 0 "+width+" 120");
+  rainSvg.setAttribute("width",String(width));rainSvg.setAttribute("height","120");
+  const values=slots.map(s=>numeric(s.precipitation_2h_mm));
+  const finite=values.filter(Number.isFinite),max=Math.max(1,...finite);
+  if(!finite.length){
+    rainInfo.textContent="降水量データは未取得です（推測値は表示しません）";
+  }else{
+    const total=finite.reduce((a,b)=>a+b,0);
+    rainInfo.textContent="直前2時間の合計（mm）／表示時間帯の雨量合計 "+total.toFixed(1)+"mm";
+    for(let g=0;g<3;g++){
+      const y=16+g*31;
+      compactSvgAdd(rainSvg,"line",{x1:label,x2:width,y1:y,y2:y,stroke:"#8fb5c4","stroke-dasharray":"3 5",opacity:".19"});
+    }
+    values.forEach((v,i)=>{
+      const x=label+col*i+col/2;
+      if(selected===i)compactSvgAdd(rainSvg,"rect",{x:label+i*col,y:0,width:col,height:120,fill:"#f45d43",opacity:".10"});
+      if(!Number.isFinite(v))return;
+      const h=76*v/max;
+      compactSvgAdd(rainSvg,"rect",{x:x-Math.min(24,col-8)/2,y:94-h,width:Math.min(24,col-8),height:h,rx:2,fill:"#58b7e4"});
+      if(v>0)compactSvgAdd(rainSvg,"text",{x,y:Math.max(12,87-h),"text-anchor":"middle","font-size":"9",fill:"#e4f8ff"},v.toFixed(1));
+    });
+  }
+  for(let i=0;i<slots.length;i++){
+    compactSvgAdd(rainSvg,"text",{x:label+i*col+col/2,y:113,"text-anchor":"middle","font-size":"9",fill:"#a9c6d2"},fmtTime(slots[i]));
+  }
+  const target=dateKey(new Date(Date.now()+compactDay*86400000));
+  const tide=Array.isArray(source.tide?.days)?source.tide.days.find(r=>r.date===target):null;
+  tideSvg.setAttribute("viewBox","0 0 370 146");
+  tideSvg.setAttribute("width","100%");tideSvg.setAttribute("height","146");
+  if(!tide||!Array.isArray(tide.hourly_cm)||tide.hourly_cm.length!==24){
+    tideInfo.textContent="湘南港の天文潮位データは未取得です";
+    compactSvgAdd(tideSvg,"text",{x:185,y:74,"text-anchor":"middle","font-size":"13",fill:"#8fb5c4"},"潮位データなし");
+    return;
+  }
+  const levels=tide.hourly_cm.map(numeric);
+  if(!levels.every(Number.isFinite)){tideInfo.textContent="潮位データに欠損があります";return;}
+  const highs=Array.isArray(tide.high)?tide.high:[],lows=Array.isArray(tide.low)?tide.low:[];
+  const formatEvent=(ev,mark)=>ev.map(e=>mark+e.time+" "+e.height_cm+"cm").join("　");
+  tideInfo.textContent="満潮 "+(formatEvent(highs,"▲")||"—")+"　干潮 "+(formatEvent(lows,"▼")||"—");
+  const all=[...levels,...highs.map(e=>e.height_cm),...lows.map(e=>e.height_cm)];
+  const min=Math.min(...all)-8,maxLevel=Math.max(...all)+8,span=Math.max(1,maxLevel-min);
+  const x=h=>31+(h/23)*326;
+  const y=v=>119-(v-min)/span*92;
+  for(let line=0;line<3;line++){
+    const val=min+span*(line/2);
+    const yy=y(val);
+    compactSvgAdd(tideSvg,"line",{x1:31,x2:357,y1:yy,y2:yy,stroke:"#8fb5c4",opacity:".22","stroke-dasharray":"3 5"});
+    compactSvgAdd(tideSvg,"text",{x:27,y:yy+3,"text-anchor":"end","font-size":"9",fill:"#9bbcc9"},Math.round(val));
+  }
+  for(let hour=0;hour<24;hour+=4)compactSvgAdd(tideSvg,"text",{x:x(hour),y:138,"text-anchor":"middle","font-size":"10",fill:"#afc9d0"},hour+"時");
+  compactSvgAdd(tideSvg,"polyline",{points:levels.map((v,i)=>x(i)+","+y(v)).join(" "),fill:"none",stroke:"#4fc4dc","stroke-width":2.5,"stroke-linejoin":"round","stroke-linecap":"round"});
+  for(const [type,events] of [["high",highs],["low",lows]]){
+    for(const e of events){
+      const h=Number(e.time.split(":")[0])+Number(e.time.split(":")[1])/60;
+      if(!Number.isFinite(h)||h<0||h>23.99||!Number.isFinite(numeric(e.height_cm)))continue;
+      compactSvgAdd(tideSvg,"circle",{cx:x(h),cy:y(e.height_cm),r:4,stroke:"#082331","stroke-width":1.5,fill:type==="high"?"#f8a65c":"#f5e0a5"});
+    }
+  }
+}
+
 if(compactTest){
+  const rainScroll=root.querySelector('[data-rain-scroll]');
+  if(rainScroll){bindScrollSync(scroll,rainScroll);bindScrollSync(chartScroll,rainScroll);bindScrollSync(rainScroll,scroll);bindScrollSync(rainScroll,chartScroll);}
   root.querySelectorAll("[data-compact-day]").forEach(b=>b.addEventListener("click",()=>{
     compactDay=Number(b.dataset.compactDay);compactSelected=null;
     scroll.scrollLeft=0;chartScroll.scrollLeft=0;renderGrid();

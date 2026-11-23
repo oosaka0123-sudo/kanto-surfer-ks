@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/tide_jma.php';
 
 const DAILY_WINDOW_START_HOUR = 5;
 const DAILY_WINDOW_END_HOUR = 17; // inclusive
@@ -52,7 +53,7 @@ foreach ($spots as $spotId => $spotEntry) {
     }
 
     $spotMeta = is_array($spotEntry['spot'] ?? null) ? $spotEntry['spot'] : ['id' => (string)$spotId];
-    $hourly = buildHourly($hours, $now, $tz, $hourlyHours, $hourlyStep);
+    $hourly = buildHourly($hours, $now, $tz, $hourlyHours, $hourlyStep, (string)$spotId === 'kugenuma');
     $weekly = buildWeekly($hours, $now, $tz, $weeklyDays);
     $daily = buildDaily((string)$spotId, $hours, $now, $tz, $dailyDays, $normalized['source_generated_at'] ?? null);
     $observations = $verified[(string)$spotId] ?? [];
@@ -75,6 +76,9 @@ foreach ($spots as $spotId => $spotEntry) {
         'daily' => $daily,
         'verified_observations' => $observations,
     ];
+    if ((string)$spotId === 'kugenuma') {
+        $payload['tide'] = buildShonanTides($projectRoot . '/data/tide-jma', $now, 42);
+    }
 
     $path = rtrim($outputDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $spotId . '.json';
     atomicWrite($path, encodeJson($payload));
@@ -90,17 +94,36 @@ foreach ($spots as $spotId => $spotEntry) {
 atomicWrite(rtrim($outputDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'index.json', encodeJson($index));
 fwrite(STDOUT, sprintf("Built public forecast payloads for %d spots in %s\n", count($index['spots']), $outputDir));
 
-function buildHourly(array $hours, DateTimeImmutable $now, DateTimeZone $tz, int $horizonHours, int $step): array
+function buildHourly(array $hours, DateTimeImmutable $now, DateTimeZone $tz, int $horizonHours, int $step, bool $includeRain=false): array
 {
     $selected = [];
     $limit = $now->modify('+' . $horizonHours . ' hours');
     $futureIndex = 0;
+    $previous = [];
     foreach ($hours as $hour) {
         if (!is_array($hour) || !is_string($hour['time'] ?? null)) continue;
         $time = parseLocalTime($hour['time'], $tz);
-        if ($time < $now || $time > $limit) continue;
-        if ($futureIndex % $step === 0) $selected[] = publicRow($hour, $time);
-        $futureIndex++;
+        if ($time > $limit) break;
+        if ($time >= $now) {
+            if ($futureIndex % $step === 0) {
+                $row = publicRow($hour, $time);
+                if ($includeRain) {
+                    $sum = 0.0;
+                    $complete = true;
+                    // Open-Meteo precipitation is the sum during the preceding hour.
+                    for ($back=0; $back<$step; $back++) {
+                        $entry = $back===0 ? $hour : ($previous[$time->getTimestamp()-3600*$back] ?? null);
+                        $value = is_array($entry) && is_array($entry['weather_land'] ?? null) ? nonNegativeNumber($entry['weather_land']['precipitation'] ?? null) : null;
+                        if ($value===null) {$complete=false;break;}
+                        $sum += $value;
+                    }
+                    $row['precipitation_2h_mm'] = $complete && $step===2 ? round($sum,2) : null;
+                }
+                $selected[] = $row;
+            }
+            $futureIndex++;
+        }
+        $previous[$time->getTimestamp()] = $hour;
     }
     return $selected;
 }
