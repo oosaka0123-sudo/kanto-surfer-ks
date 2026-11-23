@@ -183,9 +183,9 @@ function buildForecastPage(
     $compactDays = (!$homePage && $id === 'kugenuma') ? '<nav class="compact-days" aria-label="日付切替"><button type="button" data-compact-day="0" class="is-active" aria-pressed="true">今日</button><button type="button" data-compact-day="1" aria-pressed="false">明日</button><button type="button" data-compact-day="2" aria-pressed="false">明後日</button></nav>' : '';
     $compactExtras = (!$homePage && $id === 'kugenuma') ? '<div class="compact-extras" data-compact-extras>
   <section class="compact-extra-panel" aria-labelledby="kugenuma-rain-title">
-    <h3 id="kugenuma-rain-title">降水量グラフ <small>直前2時間の合計（mm）</small></h3>
+    <h3 id="kugenuma-rain-title">降水量グラフ <small>1時間ごと（mm）</small></h3>
     <p class="compact-extra-meta" data-rain-info aria-live="polite">データ読み込み中</p>
-    <div class="compact-rain-scroll" data-rain-scroll><div data-rain-inner><svg data-rain-chart role="img" aria-label="時刻別の2時間降水量を棒グラフで表示"></svg></div></div>
+    <div class="compact-rain-scroll" data-rain-scroll><div data-rain-inner><svg data-rain-chart role="img" aria-label="時刻別の1時間降水量を棒グラフで表示"></svg></div></div>
   </section>
   <section class="compact-extra-panel" aria-labelledby="kugenuma-tide-title">
     <h3 id="kugenuma-tide-title">潮見表 <small>湘南港の予測潮位（cm）</small></h3>
