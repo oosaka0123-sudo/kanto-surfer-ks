@@ -139,3 +139,40 @@
   .forecast-shell[data-compact-test] .compact-extras{padding:12px 1px 3px}
   .forecast-shell[data-compact-test] .compact-extra-panel h3{font-size:14px}
 }
+
+
+/* Kugenuma: combined tide + precipitation chart on the SAME 04–20 hourly axis. */
+.forecast-shell[data-compact-test] .compact-tide-rain-panel{padding-bottom:8px}
+.forecast-shell[data-compact-test] .compact-tide-rain-legend{
+ display:flex;flex-wrap:wrap;gap:9px;align-items:center;padding:5px 1px 6px;
+ font:500 11px/1.4 "Yu Gothic",sans-serif;color:#a6c7d2
+}
+.forecast-shell[data-compact-test] .compact-tide-rain-legend span{display:inline-flex;align-items:center;gap:4px}
+.forecast-shell[data-compact-test] .compact-tide-rain-legend .compact-swipe{margin-left:auto;color:#8fb5c4;font-size:9px}
+.forecast-shell[data-compact-test] .tide-line-chip{display:inline-block;width:17px;height:3px;background:#53d0df;border-radius:2px}
+.forecast-shell[data-compact-test] .rain-bar-chip{display:inline-block;width:10px;height:13px;background:#479be4;border-radius:2px}
+.forecast-shell[data-compact-test] [data-rain-inner]{height:auto;min-height:0}
+.forecast-shell[data-compact-test] [data-rain-chart]{height:260px;max-width:none;display:block}
+.forecast-shell[data-compact-test] .compact-tide-rain-grid{
+ display:grid;grid-template-columns:var(--label) repeat(var(--columns),var(--col));
+ min-width:100%;width:max-content;font-family:"Yu Gothic",sans-serif
+}
+.forecast-shell[data-compact-test] .tide-rain-cell{
+ display:grid;place-items:center;min-height:38px;padding:2px 1px;
+ border-top:1px solid rgba(172,207,222,.23);border-right:1px solid rgba(172,207,222,.18);
+ text-align:center;white-space:nowrap;font:500 12px/1.15 "Yu Gothic",sans-serif
+}
+.forecast-shell[data-compact-test] .tide-rain-label{
+ position:sticky;left:0;z-index:4;display:flex;justify-content:center;align-items:flex-start;
+ flex-direction:column;padding-left:3px;color:#f45d43;background:#082331;
+ font-size:10px;font-weight:700;letter-spacing:-.03em
+}
+.forecast-shell[data-compact-test] .tide-rain-label small{display:block;color:#8fb5c4;font-size:8px;line-height:1.15}
+.forecast-shell[data-compact-test] .tide-rain-value.current{background:rgba(244,93,67,.17);box-shadow:inset 2px 0 0 #f45d43}
+.forecast-shell[data-compact-test] .compact-extrema{margin:9px 0 3px;font:500 10px/1.7 "Yu Gothic",sans-serif;color:#a9d9e5}
+.forecast-shell[data-compact-test] .compact-tide-note{margin-top:5px;font-size:10px;line-height:1.6}
+@media(max-width:520px){
+ .forecast-shell[data-compact-test] .compact-tide-rain-legend{font-size:10px;gap:6px}
+ .forecast-shell[data-compact-test] .tide-rain-cell{min-height:34px;font-size:11px}
+ .forecast-shell[data-compact-test] .tide-rain-label{font-size:10px}
+}

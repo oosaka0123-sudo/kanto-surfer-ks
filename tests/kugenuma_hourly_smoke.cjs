@@ -13,6 +13,8 @@ for(const id of all){
     assert.equal(j.tide.station_id,"D8");
     assert(rows.some(r=>r.precipitation_1h_mm!==null&&Number.isFinite(r.precipitation_1h_mm)),"no hourly precipitation");
     assert(rows.every(r=>Object.hasOwn(r,"precipitation_1h_mm")),"missing hourly precipitation key");
+    assert(rows.every(r=>Object.hasOwn(r,"precipitation_probability_pct")),"missing hourly precipitation probability key");
+    for(const r of rows)assert(r.precipitation_probability_pct===null||(Number.isFinite(r.precipitation_probability_pct)&&r.precipitation_probability_pct>=0&&r.precipitation_probability_pct<=100),"invalid rainfall probability");
     assert(rows.every(r=>!Object.hasOwn(r,"precipitation_2h_mm")),"stale two-hour precipitation key");
     for(const row of rows)assert(row.precipitation_1h_mm===null||row.precipitation_1h_mm>=0,"negative precipitation");
     // Future day and day after tomorrow must each cover 04:00-20:00 JST.

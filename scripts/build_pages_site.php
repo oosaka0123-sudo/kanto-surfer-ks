@@ -182,16 +182,18 @@ function buildForecastPage(
     $compactAttrs = (!$homePage && $id === 'kugenuma') ? ' data-compact-test="1"' : '';
     $compactDays = (!$homePage && $id === 'kugenuma') ? '<nav class="compact-days" aria-label="日付切替"><button type="button" data-compact-day="0" class="is-active" aria-pressed="true">今日</button><button type="button" data-compact-day="1" aria-pressed="false">明日</button><button type="button" data-compact-day="2" aria-pressed="false">明後日</button></nav>' : '';
     $compactExtras = (!$homePage && $id === 'kugenuma') ? '<div class="compact-extras" data-compact-extras>
-  <section class="compact-extra-panel" aria-labelledby="kugenuma-rain-title">
-    <h3 id="kugenuma-rain-title">降水量グラフ <small>1時間ごと（mm）</small></h3>
-    <p class="compact-extra-meta" data-rain-info aria-live="polite">データ読み込み中</p>
-    <div class="compact-rain-scroll" data-rain-scroll><div data-rain-inner><svg data-rain-chart role="img" aria-label="時刻別の1時間降水量を棒グラフで表示"></svg></div></div>
-  </section>
-  <section class="compact-extra-panel" aria-labelledby="kugenuma-tide-title">
-    <h3 id="kugenuma-tide-title">潮見表 <small>湘南港の予測潮位（cm）</small></h3>
-    <p class="compact-extra-meta" data-tide-info aria-live="polite">潮位データ読み込み中</p>
-    <svg class="compact-tide-chart" data-tide-chart role="img" aria-label="湘南港の毎時天文潮位。線は潮位、丸は満潮と干潮"></svg>
-    <p class="compact-tide-note">出典：<a href="https://www.data.jma.go.jp/kaiyou/db/tide/suisan/suisan.php?stn=D8" target="_blank" rel="noopener noreferrer">気象庁 潮位表・湘南港</a>（天文潮位予測・潮位表基準面上）。鵠沼の実測潮位ではありません。</p>
+  <section class="compact-extra-panel compact-tide-rain-panel" aria-labelledby="kugenuma-tide-rain-title">
+    <h3 id="kugenuma-tide-rain-title">潮位・降水量 <small>1時間刻み 4時〜20時</small></h3>
+    <div class="compact-tide-rain-legend" aria-hidden="true"><span><i class="tide-line-chip"></i> 潮位 (cm)</span><span><i class="rain-bar-chip"></i> 降水量 (mm)</span><span class="compact-swipe">↔ 横にスワイプ</span></div>
+    <p class="compact-extra-meta" data-rain-info aria-live="polite">予報データ読み込み中</p>
+    <div class="compact-rain-scroll" data-rain-scroll tabindex="0" aria-label="潮位・降水量・降水確率の時間別グラフと表。左右にスクロールできます">
+      <div data-rain-inner>
+        <svg data-rain-chart role="img" aria-label="湘南港の潮位は水色の曲線、降水量は青色の棒。時間別天気を上部に表示"></svg>
+        <div class="compact-tide-rain-grid" data-tide-rain-grid></div>
+      </div>
+    </div>
+    <p class="compact-extrema" data-tide-info aria-live="polite">満潮・干潮データ読み込み中</p>
+    <p class="compact-tide-note">潮位は<a href="https://www.data.jma.go.jp/kaiyou/db/tide/suisan/suisan.php?stn=D8" target="_blank" rel="noopener noreferrer">気象庁・湘南港の天文潮位</a>（潮位表基準面上）。鵠沼の実測値ではありません。降水量・確率はOpen-Meteoのモデル予報。二つの量は別の目盛りです。</p>
   </section>
 </div>' : '';
     $trustPrefix = $assetPrefix;
