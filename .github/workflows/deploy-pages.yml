@@ -82,6 +82,9 @@ jobs:
           test -f "$RUNNER_TEMP/site/index.html"
           jq -e '.spot.id=="kugenuma" and .tide.station_id=="D8" and (.tide.days | length)>=3 and any(.hourly[]; .precipitation_1h_mm != null)' "$RUNNER_TEMP/site/data/kugenuma.json" >/dev/null
           node tests/kugenuma_hourly_smoke.cjs "$RUNNER_TEMP/site/data"
+          grep -q 'data-tide-rain-grid' "$RUNNER_TEMP/site/spots/kugenuma/index.html"
+          ! grep -q 'data-tide-rain-grid' "$RUNNER_TEMP/site/spots/katakai/index.html"
+          jq -e 'all(.hourly[]; has("precipitation_probability_pct"))' "$RUNNER_TEMP/site/data/kugenuma.json" >/dev/null
           test -f "$RUNNER_TEMP/site/app.js"
           test -f "$RUNNER_TEMP/site/styles.css"
           test "$(find "$RUNNER_TEMP/site/data" -maxdepth 1 -name '*.json' | wc -l)" -eq 10
