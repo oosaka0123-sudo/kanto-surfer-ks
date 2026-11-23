@@ -1,11 +1,5 @@
 (()=>{"use strict";
-const root=document.querySelector("[data-forecast]");
-const menuButton=document.querySelector(".menu-button"),siteMenu=document.querySelector("#site-menu");
-function setMenu(open){if(!menuButton||!siteMenu)return;menuButton.setAttribute("aria-expanded",String(open));siteMenu.hidden=!open;document.body.classList.toggle("menu-open",open)}
-menuButton?.addEventListener("click",()=>setMenu(menuButton.getAttribute("aria-expanded")!=="true"));
-siteMenu?.querySelectorAll("a").forEach(link=>link.addEventListener("click",()=>setMenu(false)));
-document.addEventListener("keydown",event=>{if(event.key==="Escape")setMenu(false)});
-if(!root)return;
+const root=document.querySelector("[data-forecast]");if(!root)return;
 const title=document.querySelector("#forecast-title"),panel=root.querySelector("#panel-forecast");
 const grid=root.querySelector("[data-grid]");
 const scroll=root.querySelector("[data-scroll]"),chartScroll=root.querySelector("[data-chart-scroll]"),chartInner=root.querySelector("[data-chart-inner]"),chart=root.querySelector("[data-chart]");
@@ -182,7 +176,6 @@ loadSource().then(data=>{
   if(notice&&source.model_notice)notice.textContent=source.model_notice;
   renderObservation();
   const spotName=document.querySelector("[data-spot-name]");if(spotName&&source.spot?.name)spotName.textContent=source.spot.name;
-  document.querySelectorAll("[data-spot-link]").forEach(link=>link.toggleAttribute("aria-current",link.dataset.spotLink===source.spot?.id));
   panel.setAttribute("aria-busy","false");
   selectMode();renderDaily();
 });
