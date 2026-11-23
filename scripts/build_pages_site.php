@@ -183,12 +183,11 @@ function buildForecastPage(
     $compactDays = (!$homePage && $id === 'kugenuma') ? '<nav class="compact-days" aria-label="日付切替"><button type="button" data-compact-day="0" class="is-active" aria-pressed="true">今日</button><button type="button" data-compact-day="1" aria-pressed="false">明日</button><button type="button" data-compact-day="2" aria-pressed="false">明後日</button></nav>' : '';
     $compactExtras = (!$homePage && $id === 'kugenuma') ? '<div class="compact-extras" data-compact-extras>
   <section class="compact-extra-panel compact-tide-rain-panel" aria-labelledby="kugenuma-tide-rain-title">
-    <h3 id="kugenuma-tide-rain-title">潮位・降水量 <small>1時間刻み 4時〜20時</small></h3>
-    <div class="compact-tide-rain-legend" aria-hidden="true"><span><i class="tide-line-chip"></i> 潮位 (cm)</span><span><i class="rain-bar-chip"></i> 降水量 (mm)</span><span class="compact-swipe">↔ 横にスワイプ</span></div>
+    <h3 id="kugenuma-tide-rain-title" class="compact-tide-rain-title"><span>潮位</span><i class="tide-line-chip" aria-hidden="true"></i><span class="compact-title-divider">−</span><span>降水量</span><i class="rain-bar-chip" aria-hidden="true"></i></h3>
     <p class="compact-extra-meta" data-rain-info aria-live="polite">予報データ読み込み中</p>
     <div class="compact-rain-scroll" data-rain-scroll tabindex="0" aria-label="潮位・降水量・降水確率の時間別グラフと表。左右にスクロールできます">
       <div data-rain-inner>
-        <svg data-rain-chart role="img" aria-label="湘南港の潮位は水色の曲線、降水量は青色の棒。時間別天気を上部に表示"></svg>
+        <svg data-rain-chart role="img" aria-label="湘南港の潮位は水色の曲線、降水量は青色の棒。時間別天気をグラフ下の時刻の下に表示"></svg>
         <div class="compact-tide-rain-grid" data-tide-rain-grid></div>
       </div>
     </div>
