@@ -74,7 +74,8 @@ foreach ($spots as $spotId => $spotEntry) {
         ],
         'status' => $observations === [] ? 'model_only' : 'model_plus_verified_observation',
         'wave_metric_label' => 'モデル波高',
-        'model_notice' => 'Open-Meteoの海洋モデル波高です。実際のブレイクサイズを直接示す値ではありません。',
+        'model_notice' => 'Open-Meteoの海洋モデル波高です。実際のブレイクサイズを直接示す値ではありません。' .
+            ((string)$spotId === 'kugenuma' ? ' 過去の時間も取得時点のモデル値で、実測記録や当時配信された予報の保存値ではありません。' : ''),
         'hourly' => $hourly,
         'weekly' => $weekly,
         'daily' => $daily,
@@ -102,13 +103,18 @@ function buildHourly(array $hours, DateTimeImmutable $now, DateTimeZone $tz, int
 {
     $selected = [];
     $limit = $now->modify('+' . $horizonHours . ' hours');
+    // Kugenuma's 1-hour graph shows today 04:00–20:00, including elapsed hours.
+    // The forecast API returns today's model time series from midnight JST.
+    // Do not synthesize past values; include only samples actually supplied by Open-Meteo.
+    // The other eight spots continue to publish future-only model forecasts.
+    $start = $includeRain ? $now->setTime(0, 0, 0) : $now;
     $futureIndex = 0;
     $previous = [];
     foreach ($hours as $hour) {
         if (!is_array($hour) || !is_string($hour['time'] ?? null)) continue;
         $time = parseLocalTime($hour['time'], $tz);
         if ($time > $limit) break;
-        if ($time >= $now) {
+        if ($time >= $start) {
             if ($futureIndex % $step === 0) {
                 $row = publicRow($hour, $time);
                 if ($includeRain) {
