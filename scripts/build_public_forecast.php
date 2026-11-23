@@ -54,7 +54,7 @@ foreach ($spots as $spotId => $spotEntry) {
     $spotMeta = is_array($spotEntry['spot'] ?? null) ? $spotEntry['spot'] : ['id' => (string)$spotId];
     $hourly = buildHourly($hours, $now, $tz, $hourlyHours, $hourlyStep);
     $weekly = buildWeekly($hours, $now, $tz, $weeklyDays);
-    $daily = buildDaily($hours, $now, $tz, $dailyDays, $normalized['source_generated_at'] ?? null);
+    $daily = buildDaily((string)$spotId, $hours, $now, $tz, $dailyDays, $normalized['source_generated_at'] ?? null);
     $observations = $verified[(string)$spotId] ?? [];
 
     $payload = [
@@ -127,7 +127,7 @@ function buildWeekly(array $hours, DateTimeImmutable $now, DateTimeZone $tz, int
  * A metric is emitted only when every hourly sample in the window is present and numeric;
  * otherwise it is null. No interpolation, no neighbour-day fill, no model daily aggregates.
  */
-function buildDaily(array $hours, DateTimeImmutable $now, DateTimeZone $tz, int $days, $sourceGeneratedAt): array
+function buildDaily(string $spotId, array $hours, DateTimeImmutable $now, DateTimeZone $tz, int $days, $sourceGeneratedAt): array
 {
     $byKey = [];
     foreach ($hours as $hour) {
@@ -166,19 +166,25 @@ function buildDaily(array $hours, DateTimeImmutable $now, DateTimeZone $tz, int 
         $weatherRaw = is_array($weatherHour['weather_land'] ?? null) ? ($weatherHour['weather_land']['weather_code'] ?? null) : null;
         $weatherCode = is_numeric($weatherRaw) && (float)$weatherRaw == (int)$weatherRaw ? (int)$weatherRaw : null;
 
+        $waveMin = $waveComplete ? round(min($waves), 2) : null;
+        $waveMax = $waveComplete ? round(max($waves), 2) : null;
+        $windMean = $windComplete ? round(array_sum($speeds) / $windowSize, 2) : null;
+        $directionLabel = $directionDeg === null ? null : directionLabel8($directionDeg);
+        $judgment = buildDailyJudgment($spotId, $waveMin, $waveMax, $windMean, $directionLabel);
+
         $rows[] = [
             'date' => $date,
             'weekday' => (int)$day->format('w'),
-            'model_wave_height_min_m' => $waveComplete ? round(min($waves), 2) : null,
-            'model_wave_height_max_m' => $waveComplete ? round(max($waves), 2) : null,
-            'wind_speed_mean_ms' => $windComplete ? round(array_sum($speeds) / $windowSize, 2) : null,
+            'model_wave_height_min_m' => $waveMin,
+            'model_wave_height_max_m' => $waveMax,
+            'wind_speed_mean_ms' => $windMean,
             'wind_direction_mean_deg' => $directionDeg,
-            'wind_direction_label' => $directionDeg === null ? null : directionLabel8($directionDeg),
+            'wind_direction_label' => $directionLabel,
             'weather_code' => $weatherCode,
             'weather_label' => $weatherCode === null ? null : weatherLabel($weatherCode),
             'wave_samples' => count($waves),
             'wind_samples' => count($speeds),
-            'judgment' => ['status' => 'pending', 'label' => '検証中'],
+            'judgment' => $judgment,
         ];
     }
 
@@ -190,6 +196,64 @@ function buildDaily(array $hours, DateTimeImmutable $now, DateTimeZone $tz, int 
         'weather_hour' => DAILY_WEATHER_HOUR,
         'source_generated_at' => $sourceGeneratedAt,
         'rows' => $rows,
+    ];
+}
+
+/**
+ * Kugenuma pilot judgment.
+ *
+ * The judgment is intentionally conservative and model-only: it uses the already aggregated
+ * 05:00-17:00 model wave-height maximum plus mean wind and mean wind direction. It does not
+ * claim an actual break size. Other Kanto spots stay pending until their own calibration is
+ * reviewed against observations.
+ */
+function buildDailyJudgment(string $spotId, ?float $waveMin, ?float $waveMax, ?float $windMean, ?string $windDirectionLabel): array
+{
+    $pending = ['status' => 'pending', 'label' => '検証中', 'emoji' => null, 'stars' => null];
+    if ($spotId !== 'kugenuma' || $waveMin === null || $waveMax === null || $windMean === null || $windDirectionLabel === null) {
+        return $pending;
+    }
+
+    if ($waveMax < 0.20) {
+        $baseStars = 1.0;
+    } elseif ($waveMax < 0.40) {
+        $baseStars = 2.0;
+    } elseif ($waveMax < 0.70) {
+        $baseStars = 3.0;
+    } elseif ($waveMax < 1.20) {
+        $baseStars = 4.0;
+    } elseif ($waveMax < 1.80) {
+        $baseStars = 5.0;
+    } elseif ($waveMax < 2.50) {
+        $baseStars = 4.0;
+    } else {
+        $baseStars = 3.0;
+    }
+
+    $offshore = in_array($windDirectionLabel, ['北', '北東'], true);
+    $onshore = in_array($windDirectionLabel, ['南東', '南', '南西'], true);
+
+    if ($windMean < 1.5) {
+        $windMultiplier = 1.0;
+    } elseif ($offshore) {
+        $windMultiplier = $windMean < 4.0 ? 1.0 : ($windMean < 7.0 ? 0.9 : ($windMean < 10.0 ? 0.75 : 0.6));
+    } elseif ($onshore) {
+        $windMultiplier = $windMean < 3.0 ? 0.8 : ($windMean < 5.0 ? 0.55 : ($windMean < 8.0 ? 0.30 : 0.15));
+    } else {
+        $windMultiplier = $windMean < 3.0 ? 0.9 : ($windMean < 6.0 ? 0.75 : ($windMean < 9.0 ? 0.60 : 0.40));
+    }
+
+    $stars = (int)round($baseStars * $windMultiplier);
+    $stars = max(1, min(5, $stars));
+
+    $labels = [1 => '諦めよ', 2 => '微妙', 3 => 'できそう', 4 => '良さそう', 5 => 'かなり良い'];
+    $emojis = [1 => '😴', 2 => '🤔', 3 => '🙂', 4 => '😄', 5 => '🔥'];
+
+    return [
+        'status' => 'provisional',
+        'label' => $labels[$stars],
+        'emoji' => $emojis[$stars],
+        'stars' => $stars,
     ];
 }
 

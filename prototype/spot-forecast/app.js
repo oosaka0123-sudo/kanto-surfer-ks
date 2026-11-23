@@ -132,6 +132,15 @@ function dailyTrack(kind,value,max,text){
   const pct=max>0?Math.min(100,Math.max(0,100*value/max)):0;
   return`<div class="daily-track"><span class="daily-fill daily-${kind}" style="--daily-fill:${pct.toFixed(1)}%"></span><span class="daily-val">${escapeHtml(text)}</span></div>`;
 }
+function dailyJudgmentHtml(judgment){
+  const status=judgment&&typeof judgment.status==="string"?judgment.status:"pending";
+  const label=judgment&&typeof judgment.label==="string"?judgment.label:"検証中";
+  const emoji=judgment&&typeof judgment.emoji==="string"?judgment.emoji:"";
+  const stars=judgment&&Number.isInteger(judgment.stars)&&judgment.stars>=1&&judgment.stars<=5?judgment.stars:null;
+  if(status!=="provisional"||stars===null)return '<span class="daily-judge-label">検証中</span>';
+  const starText="★".repeat(stars)+"☆".repeat(5-stars);
+  return '<span class="daily-judge-label">'+(emoji?escapeHtml(emoji)+" ":"")+escapeHtml(label)+'</span><span class="daily-stars" aria-label="'+stars+'つ星">'+starText+'</span>';
+}
 function renderDaily(){
   if(!dailyRoot)return;
   const body=dailyRoot.querySelector("[data-daily-body]"),updated=dailyRoot.querySelector("[data-daily-updated]");
@@ -139,7 +148,7 @@ function renderDaily(){
   const rows=daily&&Array.isArray(daily.rows)?daily.rows.slice(0,DAILY_DAYS):[];
   if(!rows.length){body.innerHTML='<tr><td colspan="6" class="daily-empty">データ取得不可</td></tr>';updated.textContent="データ取得不可";return}
   const today=dateKey(new Date());
-  const view=rows.map(r=>({date:String(r.date||""),weekday:Number.isInteger(r.weekday)&&r.weekday>=0&&r.weekday<=6?r.weekday:null,min:finiteOrNull(r.model_wave_height_min_m),max:finiteOrNull(r.model_wave_height_max_m),wind:finiteOrNull(r.wind_speed_mean_ms),label:typeof r.wind_direction_label==="string"?r.wind_direction_label:null,code:Number.isInteger(r.weather_code)?r.weather_code:null,weather:typeof r.weather_label==="string"?r.weather_label:"",judgment:r.judgment&&typeof r.judgment.label==="string"?r.judgment.label:"検証中"}));
+  const view=rows.map(r=>({date:String(r.date||""),weekday:Number.isInteger(r.weekday)&&r.weekday>=0&&r.weekday<=6?r.weekday:null,min:finiteOrNull(r.model_wave_height_min_m),max:finiteOrNull(r.model_wave_height_max_m),wind:finiteOrNull(r.wind_speed_mean_ms),label:typeof r.wind_direction_label==="string"?r.wind_direction_label:null,code:Number.isInteger(r.weather_code)?r.weather_code:null,weather:typeof r.weather_label==="string"?r.weather_label:"",judgment:r.judgment&&typeof r.judgment==="object"?r.judgment:{status:"pending",label:"検証中",emoji:null,stars:null}}));
   const maxWave=Math.max(0,...view.map(r=>r.max??0)),maxWind=Math.max(0,...view.map(r=>r.wind??0));
   body.innerHTML=view.map(r=>{
     const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(r.date),dateText=m?`${parseInt(m[2],10)}/${parseInt(m[3],10)}`:"—";
@@ -153,7 +162,7 @@ function renderDaily(){
       `<td>${dailyTrack("wave",r.max===null||r.min===null?null:r.max,maxWave,wave)}</td>`+
       `<td>${dailyTrack("wind",r.wind,maxWind,wind)}</td>`+
       `<td><span class="daily-dir">${dir}</span></td>`+
-      `<td><span class="daily-judgment">${escapeHtml(r.judgment)}</span></td></tr>`;
+      `<td><span class="daily-judgment">${dailyJudgmentHtml(r.judgment)}</span></td></tr>`;
   }).join("");
   const stamp=daily.source_generated_at?new Date(daily.source_generated_at):null;
   const stale=!view.some(r=>r.date===today);
