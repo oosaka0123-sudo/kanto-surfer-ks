@@ -11,8 +11,8 @@ $options = parseOptions($argv);
 $inputPath = $options['input'] ?? ($projectRoot . '/data/normalized/latest.json');
 $outputDir = $options['output-dir'] ?? ($projectRoot . '/data/public');
 $validationDir = $options['validation-dir'] ?? ($projectRoot . '/data/validation');
-$hourlyHours = isset($options['hourly-hours']) ? (int)$options['hourly-hours'] : 48;
-$hourlyStep = isset($options['hourly-step']) ? (int)$options['hourly-step'] : 2;
+$hourlyHours = isset($options['hourly-hours']) ? (int)$options['hourly-hours'] : 72;
+$hourlyStep = isset($options['hourly-step']) ? (int)$options['hourly-step'] : 1;
 $weeklyDays = isset($options['weekly-days']) ? (int)$options['weekly-days'] : 8;
 $dailyDays = isset($options['daily-days']) ? (int)$options['daily-days'] : 10;
 
@@ -342,6 +342,7 @@ function publicRow(array $hour, DateTimeImmutable $time, ?string $date = null): 
         'model_wave_height_m' => nullableNumber($marine['wave_height'] ?? null),
         'period_s' => $period,
         'wind_speed_ms' => nullableNumber($weather['wind_speed_10m'] ?? null),
+        'temperature_c' => nullableNumber($weather['temperature_2m'] ?? null),
         'wind_gust_ms' => nullableNumber($weather['wind_gusts_10m'] ?? null),
         'wind_direction_label' => $windDir === null ? null : directionLabel($windDir),
         'validation_status' => 'provisional',
