@@ -92,12 +92,19 @@ function connectionLabel(){
 // 鵠沼限定の時間別UI試験。元データのない時刻は生成しない。
 function compactSlots(){
   const target=dateKey(new Date(Date.now()+compactDay*86400000));
-  // Surf-useful hours only: 04:00 through 20:00 JST, inclusive (17 hourly columns).
-  return getSlots().filter(s=>{
+  // A fixed 04:00–20:00 axis is needed to show today's historical tide.
+  // Missing past meteorological forecasts are explicit blanks, never fabricated data.
+  const available=getSlots().filter(s=>{
     const d=slotDate(s);
     if(!d||s.placeholder||dateKey(d)!==target)return false;
     const hour=Number(getJst(d).hour);
     return hour>=4&&hour<=20;
+  });
+  if(compactDay!==0)return available;
+  const byHour=new Map(available.map(s=>[Number(getJst(slotDate(s)).hour),s]));
+  return Array.from({length:17},(_,i)=>{
+    const hour=i+4;
+    return byHour.get(hour)||{time:target+"T"+pad(hour)+":00:00+09:00",tide_only:true};
   });
 }
 const compass16=["北","北北東","北東","東北東","東","東南東","南東","南南東","南","南南西","南西","西南西","西","西北西","北西","北北西"];
@@ -107,8 +114,25 @@ function compactArrow(dir){
   return '<span class="compact-arrow" style="transform:rotate('+((i*22.5)-180)+'deg)" aria-hidden="true">↑</span><small class="compact-direction">'+escapeHtml(dir)+'</small>';
 }
 function compactWeather(slot){
+  if(slot.tide_only)return "";
   const w=weather(slot),d=slotDate(slot),hour=d?Number(getJst(d).hour):12;
   return w.icon==="☀️"&&(hour>=18||hour<6)?"🌙":w.icon;
+}
+// Conventional tide names follow the lunisolar day, not the measured tide range.
+// Chinese lunisolar Intl calendar is used as a locally calculated approximation;
+// unsupported calendars show no name instead of guessing.
+function tideCycleForDate(target){
+  try{
+    const lunar=new Intl.DateTimeFormat("en-US-u-ca-chinese",{timeZone:"Asia/Tokyo",day:"numeric"})
+      .formatToParts(new Date(target+"T12:00:00+09:00"));
+    const day=Number(lunar.find(p=>p.type==="day")?.value);
+    if(!Number.isInteger(day)||day<1||day>30)return "—";
+    if([29,30,1,2,14,15,16,17].includes(day))return "大潮";
+    if([7,8,9,22,23,24].includes(day))return "小潮";
+    if([10,25].includes(day))return "長潮";
+    if([11,26].includes(day))return "若潮";
+    return "中潮";
+  }catch{return "—";}
 }
 function renderCompactGrid(){
   const slots=compactSlots(),first=compactSelected===null;
@@ -202,6 +226,7 @@ function renderCompactExtras(slots,selected){
   const svg=root.querySelector("[data-rain-chart]");
   const info=root.querySelector("[data-rain-info]");
   const tideInfo=root.querySelector("[data-tide-info]");
+  const tidePhase=root.querySelector("[data-tide-phase]");
   const inner=root.querySelector("[data-rain-inner]");
   const table=root.querySelector("[data-tide-rain-grid]");
   if(!svg||!info||!tideInfo||!inner||!table)return;
@@ -212,6 +237,7 @@ function renderCompactExtras(slots,selected){
   const chance=slots.map(slot=>numeric(slot.precipitation_probability_pct));
   const levels=hours.map(h=>h>=0&&h<=23&&Array.isArray(tide?.hourly_cm)?numeric(tide.hourly_cm[h]):NaN);
   const completeDay=Array.isArray(tide?.hourly_cm)&&tide.hourly_cm.length===24&&tide.hourly_cm.every(v=>Number.isFinite(numeric(v)));
+  if(tidePhase)tidePhase.textContent="潮回り： "+tideCycleForDate(target);
   const highs=Array.isArray(tide?.high)?tide.high:[];
   const lows=Array.isArray(tide?.low)?tide.low:[];
   const events=items=>items.map(e=>e.time+" "+e.height_cm+"cm").join("・");
@@ -220,7 +246,8 @@ function renderCompactExtras(slots,selected){
   const numericRain=rain.filter(Number.isFinite);
   const availableRain=numericRain.length===slots.length&&slots.length>0;
   const total=numericRain.reduce((a,b)=>a+b,0);
-  info.textContent=availableRain?"表示範囲合計 "+total.toFixed(1)+"mm":"表示範囲合計 —";
+  info.textContent=availableRain?"表示範囲合計 "+total.toFixed(1)+"mm":
+    (numericRain.length?"取得済み分合計 "+total.toFixed(1)+"mm（"+numericRain.length+"/"+slots.length+"時間）":"降水データ未取得");
   const col=getColWidth(),label=getLabelWidth();
   const width=Math.max(label+slots.length*col,chartScroll.clientWidth||320);
   inner.style.width=width+"px";
@@ -250,7 +277,7 @@ function renderCompactExtras(slots,selected){
         hour.className="tide-rain-time";hour.textContent=row.render(slots[i],i);
         const icon=document.createElement("span");
         icon.className="tide-rain-weather";icon.textContent=compactWeather(slots[i]);
-        icon.setAttribute("aria-label",weather(slots[i]).label||"天気");
+        icon.setAttribute("aria-label",slots[i].tide_only?"天気予報データなし":(weather(slots[i]).label||"天気"));
         cell.classList.add("tide-rain-time-cell");
         cell.append(hour,icon);
       }else{
@@ -296,22 +323,59 @@ function renderCompactExtras(slots,selected){
     compactSvgAdd(svg,"rect",{x:x(i)-bw/2,y:bottom-bh,width:bw,height:bh,rx:2,fill:"#479be4",opacity:".86"});
   });
   if(hasTide){
-    compactSvgAdd(svg,"polyline",{points:levels.map((v,i)=>x(i)+","+yTide(v)).join(" "),fill:"none",stroke:"#53d0df","stroke-width":"3","stroke-linejoin":"round","stroke-linecap":"round"});
+    const points=levels.map((v,i)=>[x(i),yTide(v)]);
+    const now=new Date(),jstNow=getJst(now);
+    const nowHour=Number(jstNow.hour)+now.getUTCMinutes()/60+now.getUTCSeconds()/3600;
+    const todayOnAxis=dateKey(now)===target;
+    const first=hours[0],last=hours[hours.length-1];
+    const drawLine=(coords,past)=>{
+      if(coords.length<2)return;
+      compactSvgAdd(svg,"polyline",{
+        points:coords.map(p=>p.join(",")).join(" "),fill:"none",stroke:"#53d0df",
+        "stroke-width":"3","stroke-linejoin":"round","stroke-linecap":"round",
+        opacity:past?".38":"1"
+      });
+    };
+    if(!todayOnAxis||nowHour<=first)drawLine(points,false);
+    else if(nowHour>=last)drawLine(points,true);
+    else{
+      const index=Math.floor(nowHour-first),fraction=nowHour-hours[index];
+      const middle=[x(index)+fraction*col,yTide(levels[index]+(levels[index+1]-levels[index])*fraction)];
+      drawLine(points.slice(0,index+1).concat([middle]),true);
+      drawLine([middle].concat(points.slice(index+1)),false);
+    }
     for(const [kind,items] of [["満潮",highs],["干潮",lows]]){
       for(const event of items){
         const hh=String(event.time||"").split(":").map(Number),eventHour=hh[0]+hh[1]/60;
-        const first=hours[0],last=hours[hours.length-1],value=numeric(event.height_cm);
+        const value=numeric(event.height_cm);
         if(!Number.isFinite(eventHour)||!Number.isFinite(value)||eventHour<first||eventHour>last)continue;
         const eventX=label+(eventHour-first+.5)*col,y=yTide(value);
+        const labelY=y<76?y+15:y-18;
+        const fill=kind==="満潮"?"#f7bb86":"#f4dc9d";
         compactSvgAdd(svg,"circle",{cx:eventX,cy:y,r:3.8,fill:kind==="満潮"?"#f6aa65":"#f4dc9d",stroke:"#082331","stroke-width":1});
-        compactSvgAdd(svg,"text",{x:eventX,y:Math.max(40,y-9),"text-anchor":"middle","font-size":"9",fill:kind==="満潮"?"#f7bb86":"#f4dc9d"},kind);
+        compactSvgAdd(svg,"text",{x:eventX,y:labelY,"text-anchor":"middle","font-size":"10",fill:fill},kind);
+        compactSvgAdd(svg,"text",{x:eventX,y:labelY+10,"text-anchor":"middle","font-size":"8.5",fill:fill},String(event.time));
       }
+    }
+    // Pulse follows current JST time, interpolated from JMA's hourly astronomical tide.
+    // No current marker is plotted outside the 04:00–20:00 displayed interval.
+    if(todayOnAxis&&nowHour>=first&&nowHour<=last){
+      const index=Math.min(levels.length-2,Math.max(0,Math.floor(nowHour-first)));
+      const fraction=nowHour-hours[index],eventX=x(index)+fraction*col;
+      const levelNow=levels[index]+(levels[index+1]-levels[index])*fraction;
+      const eventY=yTide(levelNow),pillX=Math.max(label+1,Math.min(width-84,eventX-42));
+      const pillY=eventY<=80?eventY+13:eventY-36;
+      compactSvgAdd(svg,"line",{x1:eventX,x2:eventX,y1:38,y2:bottom,stroke:"#ff6951",opacity:".36","stroke-dasharray":"3 5"});
+      compactSvgAdd(svg,"circle",{cx:eventX,cy:eventY,r:11,fill:"#ff4937",class:"tide-now-pulse"});
+      compactSvgAdd(svg,"circle",{cx:eventX,cy:eventY,r:5.5,fill:"#f43827",stroke:"#fff","stroke-width":"2.6",class:"tide-now-dot"});
+      compactSvgAdd(svg,"rect",{x:pillX,y:pillY,width:84,height:22,rx:4,fill:"#ffdf97"});
+      compactSvgAdd(svg,"text",{x:pillX+42,y:pillY+14,"text-anchor":"middle","font-size":"10","font-weight":"700",fill:"#0a2937"},"現在 "+pad(jstNow.hour)+":"+pad(now.getUTCMinutes()));
     }
   }
   if(selected>=0&&selected<slots.length){
     const tx=Math.max(label+2,Math.min(width-125,x(selected)-62));
-    const tideText=fmtNumber(levels[selected],0)+"cm";
-    const rainText=fmtNumber(rain[selected],1)+"mm";
+    const tideText=Number.isFinite(levels[selected])?fmtNumber(levels[selected],0)+"cm":"—";
+    const rainText=Number.isFinite(rain[selected])?fmtNumber(rain[selected],1)+"mm":"—";
     compactSvgAdd(svg,"rect",{x:tx,y:5,width:58,height:24,rx:5,fill:"#5bd0e1"});
     compactSvgAdd(svg,"text",{x:tx+29,y:21,"text-anchor":"middle","font-size":"11","font-weight":"700",fill:"#062a37"},tideText);
     compactSvgAdd(svg,"rect",{x:tx+62,y:5,width:62,height:24,rx:5,fill:"#77b8f3"});
@@ -449,5 +513,14 @@ loadSource().then(data=>{
   const spotName=document.querySelector("[data-spot-name]");if(spotName&&source.spot?.name)spotName.textContent=source.spot.name;
   panel.setAttribute("aria-busy","false");
   selectMode();renderDaily();
+  // Keep the pulsing current-time marker aligned to the clock without a page reload.
+  if(compactTest)setInterval(()=>{
+    if(compactDay!==0)return;
+    const slots=compactSlots();
+    if(!slots.length)return;
+    const selected=compactSelected===null?Math.max(0,currentIndex(slots)):
+      Math.min(slots.length-1,Math.max(0,compactSelected));
+    renderCompactExtras(slots,selected);
+  },60000);
 });
 })();
