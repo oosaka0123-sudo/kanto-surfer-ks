@@ -200,19 +200,61 @@ function buildDaily(string $spotId, array $hours, DateTimeImmutable $now, DateTi
 }
 
 /**
- * Kugenuma pilot judgment.
+ * Provisional daily judgment for all 9 Kanto spots.
  *
- * The judgment is intentionally conservative and model-only: it uses the already aggregated
- * 05:00-17:00 model wave-height maximum plus mean wind and mean wind direction. It does not
- * claim an actual break size. Other Kanto spots stay pending until their own calibration is
- * reviewed against observations.
+ * The judgment is intentionally model-only and conservative. It uses the backend-aggregated
+ * 05:00-17:00 model wave-height maximum plus mean wind speed/direction. Wind classification is
+ * spot-specific, based on representative-spots.json. It does not claim actual break size and
+ * remains provisional until observation-based calibration is completed.
  */
 function buildDailyJudgment(string $spotId, ?float $waveMin, ?float $waveMax, ?float $windMean, ?string $windDirectionLabel): array
 {
     $pending = ['status' => 'pending', 'label' => '検証中', 'emoji' => null, 'stars' => null];
-    if ($spotId !== 'kugenuma' || $waveMin === null || $waveMax === null || $windMean === null || $windDirectionLabel === null) {
+    if ($waveMin === null || $waveMax === null || $windMean === null || $windDirectionLabel === null) {
         return $pending;
     }
+
+    $windConfig = [
+        'kugenuma' => [
+            'offshore' => ['北', '北東'],
+            'onshore' => ['南東', '南', '南西'],
+        ],
+        'yuigahama' => [
+            'offshore' => ['北', '北東'],
+            'onshore' => ['南東', '南', '南西'],
+        ],
+        'oarai_onuki' => [
+            'offshore' => ['北西'],
+            'onshore' => ['東', '南東', '南'],
+        ],
+        'kashima_hirai' => [
+            'offshore' => ['南西'],
+            'onshore' => ['北', '北東', '東'],
+        ],
+        'katakai' => [
+            'offshore' => ['北', '北西'],
+            'onshore' => ['東', '南東', '南'],
+        ],
+        'ichinomiya' => [
+            'offshore' => ['西'],
+            'onshore' => ['北東', '東', '南東'],
+        ],
+        'taito' => [
+            'offshore' => ['南', '南西', '西'],
+            'onshore' => ['北', '北東', '東'],
+        ],
+        'onjuku' => [
+            'offshore' => ['北', '北西', '西'],
+            'onshore' => ['東', '南東', '南'],
+        ],
+        'kamogawa_maruki' => [
+            'offshore' => ['北', '北西'],
+            'onshore' => ['東', '南東', '南'],
+        ],
+    ];
+
+    $cfg = $windConfig[$spotId] ?? null;
+    if ($cfg === null) return $pending;
 
     if ($waveMax < 0.20) {
         $baseStars = 1.0;
@@ -230,8 +272,8 @@ function buildDailyJudgment(string $spotId, ?float $waveMin, ?float $waveMax, ?f
         $baseStars = 3.0;
     }
 
-    $offshore = in_array($windDirectionLabel, ['北', '北東'], true);
-    $onshore = in_array($windDirectionLabel, ['南東', '南', '南西'], true);
+    $offshore = in_array($windDirectionLabel, $cfg['offshore'], true);
+    $onshore = in_array($windDirectionLabel, $cfg['onshore'], true);
 
     if ($windMean < 1.5) {
         $windMultiplier = 1.0;
