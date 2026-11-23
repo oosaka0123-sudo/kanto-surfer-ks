@@ -117,7 +117,7 @@ foreach ($infoPages as $slug => $page) {
     ensureDirectory($dir);
     atomicWrite(
         $dir . '/index.html',
-        buildInfoPage($slug, $page['title'], $page['description'], $page['heading'], $page['body'])
+        buildInfoPage($spots, $slug, $page['title'], $page['description'], $page['heading'], $page['body'])
     );
 }
 
@@ -159,6 +159,7 @@ function buildForecastPage(
     $region = (string)($activeSpot['region'] ?? '');
     $navLinks = buildSpotLinks($spots, $homePage, $id);
     $detailLinks = $homePage ? buildPermanentLinks($spots) : '';
+    $spotNavLinks = buildSpotNavigationLinks($spots, $assetPrefix, $homePage ? null : $id);
 
     $title = $homePage
         ? '関東サーファーKS｜時間別・10日間波予報'
@@ -209,7 +210,7 @@ function buildForecastPage(
   <header class="site-header">
     <a class="brand" href="' . h($homeHref) . '" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a>
     <button class="menu-button" type="button" aria-label="メニュー" aria-expanded="false" aria-controls="site-menu"><span></span><span></span><span></span></button>
-    <nav class="site-menu" id="site-menu" aria-label="ページメニュー" hidden><a href="' . h($homeHref) . '">ホーム</a><a href="#forecast-title">予報</a>' . ($showDaily ? '<a href="#daily-forecast">10日間予報</a>' : '') . '<a href="' . h($trustPrefix) . 'about/">データについて</a></nav>
+    <nav class="site-menu" id="site-menu" aria-label="ページメニュー" hidden><a href="' . h($homeHref) . '">ホーム</a><a href="#forecast-title">予報</a>' . ($showDaily ? '<a href="#daily-forecast">10日間予報</a>' : '') . '<a href="' . h($trustPrefix) . 'about/">データについて</a><div class="menu-spot-group" role="group" aria-label="サーフスポット別予報"><p class="menu-group-label">サーフスポット（9地点）</p>' . $spotNavLinks . '</div></nav>
   </header>
   <main>
     <section class="beta-intro" id="spots">
@@ -236,7 +237,7 @@ function buildForecastPage(
     </section>
     ' . ($showDaily ? buildDailySection($name) : '') . '
   </main>
-  <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="trust-links" aria-label="サイト情報"><a href="' . h($trustPrefix) . 'about/">サイト概要</a><a href="' . h($trustPrefix) . 'contact/">お問い合わせ</a><a href="' . h($trustPrefix) . 'privacy/">プライバシー</a></nav></footer>
+  <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="' . h($trustPrefix) . 'about/">サイト概要</a><a href="' . h($trustPrefix) . 'contact/">お問い合わせ</a><a href="' . h($trustPrefix) . 'privacy/">プライバシー</a></nav></footer>
 </body>
 </html>
 ';
@@ -289,13 +290,26 @@ function buildPermanentLinks(array $spots): string
     return implode(PHP_EOL, $links);
 }
 
+function buildSpotNavigationLinks(array $spots, string $prefix, ?string $activeId = null): string
+{
+    $links = [];
+    foreach ($spots as $spot) {
+        $current = $activeId !== null && $activeId === (string)$spot['id'] ? ' aria-current="page"' : '';
+        $links[] = '<a href="' . h($prefix . 'spots/' . rawurlencode((string)$spot['slug']) . '/') . '"' . $current . '>' . h((string)$spot['display_name']) . '</a>';
+    }
+    return implode(PHP_EOL, $links);
+}
+
 function contextItem(string $label, string $value): string
 {
     return '<div><dt>' . h($label) . '</dt><dd>' . h($value) . '</dd></div>';
 }
 
-function buildInfoPage(string $slug, string $title, string $description, string $heading, string $body): string
+function buildInfoPage(array $spots, string $slug, string $title, string $description, string $heading, string $body): string
 {
+    $spotNavLinks = buildSpotNavigationLinks($spots, '../');
+    $appVersion = substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/app.js'), 0, 12);
+    $styleVersion = substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/styles.css'), 0, 12);
     $canonicalUrl = 'https://kanto.rss7.net/' . rawurlencode($slug) . '/';
     return '<!doctype html>
 <html lang="ja">
@@ -307,12 +321,13 @@ function buildInfoPage(string $slug, string $title, string $description, string 
   <meta name="description" content="' . h($description) . '">
   <link rel="canonical" href="' . h($canonicalUrl) . '">
   <title>' . h($title) . '</title>
-  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="../styles.css?v=' . h($styleVersion) . '">
+  <script defer src="../app.js?v=' . h($appVersion) . '"></script>
 </head>
 <body>
-  <header class="site-header"><a class="brand" href="../" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a></header>
+  <header class="site-header"><a class="brand" href="../" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a><button class="menu-button" type="button" aria-label="メニュー" aria-expanded="false" aria-controls="site-menu"><span></span><span></span><span></span></button><nav class="site-menu" id="site-menu" aria-label="ページメニュー" hidden><a href="../">ホーム</a><a href="../#forecast-title">予報</a><a href="../#daily-forecast">10日間予報</a><a href="../about/">データについて</a><div class="menu-spot-group" role="group" aria-label="サーフスポット別予報"><p class="menu-group-label">サーフスポット（9地点）</p>' . $spotNavLinks . '</div></nav></header>
   <main class="info-page"><a class="back-home" href="../">← ホームへ</a><p class="beta-label">KANTO SURFER KS / SITE INFO</p><h1>' . h($heading) . '</h1>' . $body . '</main>
-  <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="trust-links" aria-label="サイト情報"><a href="../about/">サイト概要</a><a href="../contact/">お問い合わせ</a><a href="../privacy/">プライバシー</a></nav></footer>
+  <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="../about/">サイト概要</a><a href="../contact/">お問い合わせ</a><a href="../privacy/">プライバシー</a></nav></footer>
 </body>
 </html>
 ';

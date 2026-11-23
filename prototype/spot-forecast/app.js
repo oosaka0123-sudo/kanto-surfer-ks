@@ -1,16 +1,18 @@
 (()=>{"use strict";
-const root=document.querySelector("[data-forecast]");if(!root)return;
+const root=document.querySelector("[data-forecast]");
+const menuButton=document.querySelector(".menu-button"),siteMenu=document.querySelector("#site-menu");
+function setMenu(open){if(!menuButton||!siteMenu)return;menuButton.setAttribute("aria-expanded",String(open));siteMenu.hidden=!open;document.body.classList.toggle("menu-open",open)}
+menuButton?.addEventListener("click",()=>setMenu(menuButton.getAttribute("aria-expanded")!=="true"));
+siteMenu?.querySelectorAll("a").forEach(link=>link.addEventListener("click",()=>setMenu(false)));
+document.addEventListener("keydown",event=>{if(event.key==="Escape")setMenu(false)});
+if(!root)return;
 const title=document.querySelector("#forecast-title"),panel=root.querySelector("#panel-forecast");
 const grid=root.querySelector("[data-grid]");
 const scroll=root.querySelector("[data-scroll]"),chartScroll=root.querySelector("[data-chart-scroll]"),chartInner=root.querySelector("[data-chart-inner]"),chart=root.querySelector("[data-chart]");
 const chartEmpty=root.querySelector("[data-chart-empty]"),state=root.querySelector("[data-state]");
 const waveLabel=root.querySelector("[data-wave-label]"),notice=document.querySelector("[data-forecast-note]");
 const observationBox=root.querySelector("[data-observation]");
-const menuButton=document.querySelector(".menu-button"),siteMenu=document.querySelector("#site-menu");
-function setMenu(open){if(!menuButton||!siteMenu)return;menuButton.setAttribute("aria-expanded",String(open));siteMenu.hidden=!open;document.body.classList.toggle("menu-open",open)}
-menuButton?.addEventListener("click",()=>setMenu(menuButton.getAttribute("aria-expanded")!=="true"));
-siteMenu?.querySelectorAll("a").forEach(link=>link.addEventListener("click",()=>setMenu(false)));
-document.addEventListener("keydown",event=>{if(event.key==="Escape")setMenu(false)});
+
 let source={};
 const tzFmt=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Tokyo",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"});
 const getJst=d=>{const p={};for(const x of tzFmt.formatToParts(d))p[x.type]=x.value;return p;};
