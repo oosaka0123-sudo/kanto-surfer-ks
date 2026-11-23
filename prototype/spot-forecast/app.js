@@ -131,7 +131,7 @@ function renderCompactGrid(){
     {label:"周期",unit:"秒",html:s=>escapeHtml(period(s).main)},
     {label:"風速",unit:"m/s",html:s=>escapeHtml(wind(s).main)},
     {label:"風向",unit:"",html:s=>compactArrow(s.wind_direction_label??s.wind?.direction_label)},
-    {label:"気温",unit:"℃",html:s=>escapeHtml(fmt(s.temperature_c,1))}
+
   ];
   const frag=document.createDocumentFragment();
   rows.forEach((row,ri)=>{
@@ -220,12 +220,12 @@ function renderCompactExtras(slots,selected){
   const numericRain=rain.filter(Number.isFinite);
   const availableRain=numericRain.length===slots.length&&slots.length>0;
   const total=numericRain.reduce((a,b)=>a+b,0);
-  info.textContent=availableRain?"1時間ごとの降水量｜表示範囲合計 "+total.toFixed(1)+"mm":"降水量は欠測時に「—」表示";
+  info.textContent=availableRain?"表示範囲合計 "+total.toFixed(1)+"mm":"表示範囲合計 —";
   const col=getColWidth(),label=getLabelWidth();
   const width=Math.max(label+slots.length*col,chartScroll.clientWidth||320);
   inner.style.width=width+"px";
-  svg.replaceChildren();svg.setAttribute("viewBox","0 0 "+width+" 260");
-  svg.setAttribute("width",String(width));svg.setAttribute("height","260");
+  svg.replaceChildren();svg.setAttribute("viewBox","0 0 "+width+" 200");
+  svg.setAttribute("width",String(width));svg.setAttribute("height","200");
   table.replaceChildren();table.style.setProperty("--columns",slots.length||1);
   table.style.width=width+"px";
   const fmtNumber=(v,digits)=>Number.isFinite(v)?v.toFixed(digits):"—";
@@ -233,7 +233,8 @@ function renderCompactExtras(slots,selected){
     {title:"時刻",unit:"",render:(_,i)=>fmtTime(slots[i])},
     {title:"潮位",unit:"cm",render:(_,i)=>fmtNumber(levels[i],0)},
     {title:"降水",unit:"mm",render:(_,i)=>fmtNumber(rain[i],1)},
-    {title:"確率",unit:"%",render:(_,i)=>Number.isFinite(chance[i])&&chance[i]>=0&&chance[i]<=100?Math.round(chance[i]).toString():"—"}
+    {title:"確率",unit:"%",render:(_,i)=>Number.isFinite(chance[i])&&chance[i]>=0&&chance[i]<=100?Math.round(chance[i]).toString():"—"},
+    {title:"気温",unit:"℃",render:(_,i)=>fmtNumber(numeric(slots[i].temperature_c),1)}
   ];
   for(const row of rows){
     const tag=document.createElement("div");tag.className="tide-rain-cell tide-rain-label";
@@ -243,23 +244,32 @@ function renderCompactExtras(slots,selected){
     for(let i=0;i<slots.length;i++){
       const cell=document.createElement("div");
       cell.className="tide-rain-cell tide-rain-value"+(selected===i?" current":"");
-      cell.dataset.compactIndex=String(i);cell.textContent=row.render(slots[i],i);
+      cell.dataset.compactIndex=String(i);
+      if(row.title==="時刻"){
+        const hour=document.createElement("span");
+        hour.className="tide-rain-time";hour.textContent=row.render(slots[i],i);
+        const icon=document.createElement("span");
+        icon.className="tide-rain-weather";icon.textContent=compactWeather(slots[i]);
+        icon.setAttribute("aria-label",weather(slots[i]).label||"天気");
+        cell.classList.add("tide-rain-time-cell");
+        cell.append(hour,icon);
+      }else{
+        cell.textContent=row.render(slots[i],i);
+      }
       table.appendChild(cell);
     }
   }
   const x=i=>label+col*i+col/2;
   // Highlight an identical hour column in all three views.
   if(selected>=0&&selected<slots.length){
-    compactSvgAdd(svg,"rect",{x:label+selected*col,y:0,width:col,height:260,fill:"#f45d43",opacity:".12"});
-    compactSvgAdd(svg,"line",{x1:x(selected),x2:x(selected),y1:68,y2:244,stroke:"#f4efe6","stroke-dasharray":"3 6",opacity:".73"});
+    compactSvgAdd(svg,"rect",{x:label+selected*col,y:0,width:col,height:200,fill:"#f45d43",opacity:".12"});
+    compactSvgAdd(svg,"line",{x1:x(selected),x2:x(selected),y1:32,y2:184,stroke:"#f4efe6","stroke-dasharray":"3 6",opacity:".73"});
   }
-  compactSvgAdd(svg,"text",{x:4,y:36,"font-size":"11","font-weight":"bold",fill:"#f45d43"},"天気");
+  // Weather icons now sit below the hour in the table directly beneath this graph.
   for(let i=0;i<slots.length;i++){
-    compactSvgAdd(svg,"line",{x1:x(i),x2:x(i),y1:83,y2:244,stroke:"#8fb5c4",opacity:".11"});
-    compactSvgAdd(svg,"text",{x:x(i),y:21,"text-anchor":"middle","font-size":"10",fill:"#a9c6d2"},hours[i]+"時");
-    compactSvgAdd(svg,"text",{x:x(i),y:47,"text-anchor":"middle","font-size":"18"},compactWeather(slots[i]));
+    compactSvgAdd(svg,"line",{x1:x(i),x2:x(i),y1:42,y2:184,stroke:"#8fb5c4",opacity:".11"});
   }
-  const bottom=240,top=103,height=bottom-top;
+  const bottom=182,top=45,height=bottom-top;
   const dayLevels=completeDay?tide.hourly_cm.map(numeric):[];
   const allTideLevels=dayLevels.concat(highs.map(e=>numeric(e.height_cm)),lows.map(e=>numeric(e.height_cm))).filter(Number.isFinite);
   const minTide=allTideLevels.length?Math.min(...allTideLevels)-8:0;
@@ -294,7 +304,7 @@ function renderCompactExtras(slots,selected){
         if(!Number.isFinite(eventHour)||!Number.isFinite(value)||eventHour<first||eventHour>last)continue;
         const eventX=label+(eventHour-first+.5)*col,y=yTide(value);
         compactSvgAdd(svg,"circle",{cx:eventX,cy:y,r:3.8,fill:kind==="満潮"?"#f6aa65":"#f4dc9d",stroke:"#082331","stroke-width":1});
-        compactSvgAdd(svg,"text",{x:eventX,y:Math.max(90,y-9),"text-anchor":"middle","font-size":"9",fill:kind==="満潮"?"#f7bb86":"#f4dc9d"},kind);
+        compactSvgAdd(svg,"text",{x:eventX,y:Math.max(40,y-9),"text-anchor":"middle","font-size":"9",fill:kind==="満潮"?"#f7bb86":"#f4dc9d"},kind);
       }
     }
   }
@@ -302,10 +312,10 @@ function renderCompactExtras(slots,selected){
     const tx=Math.max(label+2,Math.min(width-125,x(selected)-62));
     const tideText=fmtNumber(levels[selected],0)+"cm";
     const rainText=fmtNumber(rain[selected],1)+"mm";
-    compactSvgAdd(svg,"rect",{x:tx,y:59,width:58,height:24,rx:5,fill:"#5bd0e1"});
-    compactSvgAdd(svg,"text",{x:tx+29,y:75,"text-anchor":"middle","font-size":"11","font-weight":"700",fill:"#062a37"},tideText);
-    compactSvgAdd(svg,"rect",{x:tx+62,y:59,width:62,height:24,rx:5,fill:"#77b8f3"});
-    compactSvgAdd(svg,"text",{x:tx+93,y:75,"text-anchor":"middle","font-size":"11","font-weight":"700",fill:"#062a37"},rainText);
+    compactSvgAdd(svg,"rect",{x:tx,y:5,width:58,height:24,rx:5,fill:"#5bd0e1"});
+    compactSvgAdd(svg,"text",{x:tx+29,y:21,"text-anchor":"middle","font-size":"11","font-weight":"700",fill:"#062a37"},tideText);
+    compactSvgAdd(svg,"rect",{x:tx+62,y:5,width:62,height:24,rx:5,fill:"#77b8f3"});
+    compactSvgAdd(svg,"text",{x:tx+93,y:21,"text-anchor":"middle","font-size":"11","font-weight":"700",fill:"#062a37"},rainText);
     if(hasTide)compactSvgAdd(svg,"circle",{cx:x(selected),cy:yTide(levels[selected]),r:4.3,fill:"#36d0e5",stroke:"#fff","stroke-width":1.6});
   }
 }

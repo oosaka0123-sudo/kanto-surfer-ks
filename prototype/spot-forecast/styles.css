@@ -176,3 +176,36 @@
  .forecast-shell[data-compact-test] .tide-rain-cell{min-height:34px;font-size:11px}
  .forecast-shell[data-compact-test] .tide-rain-label{font-size:10px}
 }
+
+
+/* Kugenuma-only compact header and weather beneath the tide-rain hour row */
+.forecast-shell[data-compact-test] .compact-tide-rain-panel .compact-tide-rain-title{
+  display:flex;align-items:center;flex-wrap:nowrap;gap:5px;
+  margin:0 0 3px;color:rgba(245,238,229,.86);
+  font-size:15px;font-weight:600;line-height:1.35;white-space:nowrap
+}
+.forecast-shell[data-compact-test] .compact-tide-rain-title .tide-line-chip{
+  display:inline-block;width:18px;height:3px;border-radius:2px;background:#53d0df;
+  flex:none;margin-left:1px
+}
+.forecast-shell[data-compact-test] .compact-tide-rain-title .rain-bar-chip{
+  display:inline-block;width:11px;height:12px;border-radius:2px;background:#479be4;
+  flex:none;margin-left:1px
+}
+.forecast-shell[data-compact-test] .compact-title-divider{color:#a7b9c3;margin:0 2px}
+.forecast-shell[data-compact-test] .compact-tide-rain-panel .compact-extra-meta{
+  text-align:right;white-space:nowrap;font-size:10px;line-height:1.25;
+  min-height:0;margin:2px 1px 4px;color:rgba(172,207,222,.78)
+}
+.forecast-shell[data-compact-test] .compact-tide-rain-panel [data-rain-chart]{
+  height:200px;max-width:none
+}
+.forecast-shell[data-compact-test] .tide-rain-time-cell{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;min-height:51px
+}
+.forecast-shell[data-compact-test] .tide-rain-time{font-size:11px;line-height:1.1}
+.forecast-shell[data-compact-test] .tide-rain-weather{
+  font-family:"Segoe UI Emoji","Apple Color Emoji",sans-serif;
+  font-size:17px;line-height:1.3
+}
