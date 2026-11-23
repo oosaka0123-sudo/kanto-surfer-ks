@@ -1,4 +1,18 @@
 (()=>{"use strict";
+const menuButton=document.querySelector(".menu-button");
+const siteMenu=document.querySelector("#site-menu");
+function setMenu(open){
+  if(!menuButton||!siteMenu)return;
+  menuButton.setAttribute("aria-expanded",String(open));
+  menuButton.setAttribute("aria-label",open?"メニューを閉じる":"メニューを開く");
+  siteMenu.hidden=!open;
+}
+menuButton?.addEventListener("click",()=>setMenu(menuButton.getAttribute("aria-expanded")!=="true"));
+siteMenu?.querySelectorAll("a").forEach(link=>link.addEventListener("click",()=>setMenu(false)));
+document.addEventListener("keydown",event=>{if(event.key==="Escape")setMenu(false)});
+document.addEventListener("click",event=>{
+  if(siteMenu&&!siteMenu.hidden&&!siteMenu.contains(event.target)&&!menuButton?.contains(event.target))setMenu(false);
+});
 const root=document.querySelector("[data-forecast]");if(!root)return;
 const title=document.querySelector("#forecast-title"),panel=root.querySelector("#panel-forecast");
 const grid=root.querySelector("[data-grid]");
@@ -502,7 +516,7 @@ function renderDaily(){
   updated.classList.toggle("is-stale",stale);
   if(source.spot?.name){const spotLabel=dailyRoot.querySelector("[data-daily-spot]");if(spotLabel)spotLabel.textContent=source.spot.name;dailyRoot.querySelector("table")?.setAttribute("aria-label",`${source.spot.name} 10日間の波と風の予報`)}
 }
-function selectMode(){title.textContent="時間別予報";renderGrid()}
+function selectMode(){title.textContent="波・風";renderGrid()}
 panel.setAttribute("aria-busy","true");
 selectMode();
 state.textContent="読み込み中";

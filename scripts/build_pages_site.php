@@ -183,8 +183,10 @@ function buildForecastPage(
     $compactDays = (!$homePage && $id === 'kugenuma') ? '<nav class="compact-days" aria-label="日付切替"><button type="button" data-compact-day="0" class="is-active" aria-pressed="true">今日</button><button type="button" data-compact-day="1" aria-pressed="false">明日</button><button type="button" data-compact-day="2" aria-pressed="false">明後日</button></nav>' : '';
     $compactExtras = (!$homePage && $id === 'kugenuma') ? '<div class="compact-extras" data-compact-extras>
   <section class="compact-extra-panel compact-tide-rain-panel" aria-labelledby="kugenuma-tide-rain-title">
-    <h3 id="kugenuma-tide-rain-title" class="compact-tide-rain-title"><span>潮位</span><i class="tide-line-chip" aria-hidden="true"></i><span class="compact-title-divider">−</span><span>降水量</span><i class="rain-bar-chip" aria-hidden="true"></i></h3>
-    <p class="compact-extra-meta" data-rain-info aria-live="polite">予報データ読み込み中</p>
+    <div class="compact-tide-rain-header">
+      <h3 id="kugenuma-tide-rain-title" class="compact-tide-rain-title"><span>潮位</span><i class="tide-line-chip" aria-hidden="true"></i><span class="compact-title-divider">−</span><span>降水量</span><i class="rain-bar-chip" aria-hidden="true"></i></h3>
+      <p class="compact-extra-meta" data-rain-info aria-live="polite">予報データ読み込み中</p>
+    </div>
     <div class="compact-rain-scroll" data-rain-scroll tabindex="0" aria-label="潮位・降水量・降水確率の時間別グラフと表。左右にスクロールできます">
       <div data-rain-inner>
         <svg data-rain-chart role="img" aria-label="湘南港の潮位は水色の曲線、降水量は青色の棒。時間別天気をグラフ下の時刻の下に表示"></svg>
@@ -218,6 +220,7 @@ function buildForecastPage(
 <body>
   <header class="site-header">
     <a class="brand" href="' . h($homeHref) . '" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a>
+    ' . buildHeaderMenu($spotNavLinks, $assetPrefix) . '
   </header>
   <main>
     <section class="beta-intro" id="spots">
@@ -228,7 +231,7 @@ function buildForecastPage(
     </section>
     <section class="forecast-section" aria-labelledby="forecast-title">
       <p class="current-spot">SPOT <strong data-spot-name>' . h($name) . '</strong></p>
-      <div class="section-title"><span class="section-number">04</span><span class="section-icon" aria-hidden="true">⌁</span><h2 id="forecast-title">時間別予報</h2></div>
+      <div class="section-title"><span class="section-number">04</span><span class="section-icon" aria-hidden="true">⌁</span><h2 id="forecast-title">波・風</h2></div>
       <div class="forecast-shell" data-forecast' . $compactAttrs . ' data-data-base="' . h($dataBase) . '" data-default-spot="' . h($id) . '">
         <div class="forecast-panel" id="panel-forecast" aria-labelledby="forecast-title">' . $compactDays . '
           <div class="forecast-legend" aria-label="グラフ凡例"><span><i class="legend-wave"></i><span data-wave-label>モデル波高(m)</span></span><span><i class="legend-wind"></i>風(m/s)</span><span class="data-state" data-state>読み込み中</span></div>
@@ -270,6 +273,25 @@ function buildDailySection(string $spotName): string
     </section>';
 }
 
+/**
+ * Shared collapsible navigation for all 13 public pages.
+ * Reuses the existing nine internal spot URLs; the footer remains unchanged.
+ */
+function buildHeaderMenu(string $spotLinks, string $basePrefix): string
+{
+    $base = $basePrefix === '' ? './' : $basePrefix;
+    return '<button class="menu-button" type="button" aria-label="メニューを開く" aria-expanded="false" aria-controls="site-menu"><span></span><span></span><span></span></button>'
+        . '<nav class="site-menu" id="site-menu" aria-label="サイトメニュー" hidden>'
+        . '<a href="' . h($base) . '">ホーム</a>'
+        . '<div class="menu-spot-group" role="group" aria-label="サーフスポット別予報">'
+        . '<p class="menu-group-label">サーフスポット（9地点）</p>' . $spotLinks . '</div>'
+        . '<div class="menu-info-group" role="group" aria-label="サイト情報">'
+        . '<a href="' . h($basePrefix . 'about/') . '">サイト概要</a>'
+        . '<a href="' . h($basePrefix . 'contact/') . '">お問い合わせ</a>'
+        . '<a href="' . h($basePrefix . 'privacy/') . '">プライバシー</a></div>'
+        . '</nav>';
+}
+
 function buildSpotNavigationLinks(array $spots, string $prefix, ?string $activeId = null): string
 {
     $links = [];
@@ -301,9 +323,10 @@ function buildInfoPage(array $spots, string $slug, string $title, string $descri
   <link rel="canonical" href="' . h($canonicalUrl) . '">
   <title>' . h($title) . '</title>
   <link rel="stylesheet" href="../styles.css?v=' . h($styleVersion) . '">
+  <script defer src="../app.js?v=' . h(substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/app.js'), 0, 12)) . '"></script>
 </head>
 <body>
-  <header class="site-header"><a class="brand" href="../" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a></header>
+  <header class="site-header"><a class="brand" href="../" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a>' . buildHeaderMenu($spotNavLinks, '../') . '</header>
   <main class="info-page"><a class="back-home" href="../">← ホームへ</a><p class="beta-label">KANTO SURFER KS / SITE INFO</p><h1>' . h($heading) . '</h1>' . $body . '</main>
   <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="../about/">サイト概要</a><a href="../contact/">お問い合わせ</a><a href="../privacy/">プライバシー</a></nav></footer>
 </body>
