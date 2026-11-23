@@ -91,3 +91,33 @@
 .footer-spot-grid a:hover,.footer-spot-grid a:focus-visible{color:var(--wave)}
 .footer-spot-grid a[aria-current="page"]{color:var(--wave)}
 @media(max-width:520px){.footer-spot-grid{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px}.site-footer .footer-spot-nav{margin-top:16px}}
+
+
+/* Isolated compact hourly UI trial: /spots/kugenuma/ only */
+.forecast-shell[data-compact-test]{
+  --label:48px;--col:40px;border:0;background:transparent;margin-top:14px
+}
+.forecast-shell[data-compact-test] .compact-days{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0 0 10px}
+.forecast-shell[data-compact-test] .compact-days button{border:1px solid rgba(172,207,222,.3);border-radius:20px;padding:6px 1px;color:var(--text);background:transparent;cursor:pointer;font:600 12px/1.2 "Yu Gothic",sans-serif}
+.forecast-shell[data-compact-test] .compact-days button.is-active{background:#13758a;border-color:#25b1cc}
+.forecast-shell[data-compact-test] .forecast-panel{padding-top:0}
+.forecast-shell[data-compact-test] .forecast-legend{padding:0 2px 5px;gap:9px;font-size:10px}
+.forecast-shell[data-compact-test] .forecast-legend i{width:9px;height:11px;border-radius:2px}
+.forecast-shell[data-compact-test] .legend-wave{background:#0b9ab2}
+.forecast-shell[data-compact-test] .legend-wind{background:#f67a3a}
+.forecast-shell[data-compact-test] .chart-wrap{height:190px;margin:0;background:none}
+.forecast-shell[data-compact-test] .chart-scroll{height:190px}
+.forecast-shell[data-compact-test] .scroll-hint{padding:2px 1px 4px;font-size:9px}
+.forecast-shell[data-compact-test] .forecast-scroll{overflow-x:auto}
+.forecast-shell[data-compact-test] .forecast-grid{font-family:"Yu Gothic",sans-serif}
+.forecast-shell[data-compact-test] .cell{min-height:39px;padding:2px 1px}
+.forecast-shell[data-compact-test] .cell.label{padding-left:3px;font-size:10px;letter-spacing:-.04em;line-height:1.1}
+.forecast-shell[data-compact-test] .cell.label small{font-size:8px;margin:1px 0 0}
+.forecast-shell[data-compact-test] .cell.value{font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer}
+.forecast-shell[data-compact-test] .cell.value.current{background:rgba(244,93,67,.15)}
+.forecast-shell[data-compact-test] .cell.value.current:before{width:2px}
+.forecast-shell[data-compact-test] .compact-arrow{display:block;font:700 17px/1 "Yu Gothic",sans-serif;color:#fff;width:18px;margin:0 auto;transform-origin:center}
+.forecast-shell[data-compact-test] .compact-direction{display:block;font:500 8px/1.2 "Yu Gothic",sans-serif;color:#f67a3a;white-space:nowrap}
+.forecast-shell[data-compact-test] .compact-missing{color:#8fb5c4}
+.forecast-shell[data-compact-test] .compact-no-data{width:100%;padding:14px;color:#8fb5c4;font:12px "Yu Gothic",sans-serif}
+@media(max-width:520px){.forecast-shell[data-compact-test] .data-state{font-size:9px;padding:3px 5px}}
