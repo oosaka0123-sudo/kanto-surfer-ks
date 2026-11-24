@@ -182,7 +182,7 @@ function buildForecastPage(
     }
 
     $kugenumaPilot = !$homePage && $id === 'kugenuma';
-    $pilotTop = $kugenumaPilot ? buildKugenumaTop() . buildApprovedKugenumaArticle(dirname(__DIR__)) : '';
+    $pilotTop = $kugenumaPilot ? buildApprovedKugenumaArticle(dirname(__DIR__)) : '';
     $hero = $kugenumaPilot ? buildKugenumaVideoHero() : '';
     $pilotBottom = $kugenumaPilot ? buildKugenumaBottom($context) : '';
     if ($kugenumaPilot) $context = '';
@@ -329,6 +329,15 @@ function buildKugenumaVideoHero(): string
         .kugenuma-video-hero__advice-details h3{margin:0 0 8px;color:#fff;font-size:clamp(19px,4vw,26px);font-weight:600;line-height:1.35}
         .kugenuma-video-hero__advice-details p{margin:0;color:rgba(255,255,255,.95);font:400 clamp(12px,2.7vw,15px)/1.65 "Yu Gothic",sans-serif}
         .kugenuma-video-hero__advice-details .forecast-note{margin-top:10px;color:rgba(225,240,245,.8);font-size:11px;line-height:1.65}
+        .kugenuma-video-hero .forecast-section{width:100%;min-width:0;margin:clamp(26px,5svh,52px) 0 0;padding:0}
+        .kugenuma-video-hero .section-title{gap:10px;padding:0 0 6px;border:0}
+        .kugenuma-video-hero .section-title .section-number{color:#ff8b7e;font-size:clamp(24px,5vw,36px)}
+        .kugenuma-video-hero .section-title h2{margin:0;color:#fff;font-size:clamp(25px,5.8vw,42px);font-weight:600;line-height:1.35}
+        .kugenuma-video-hero .forecast-panel{padding:0!important;border:0;background:none}
+        .kugenuma-video-hero .forecast-panel p{margin:6px 0;color:#fff;font:400 clamp(12px,2.7vw,15px)/1.55 "Yu Gothic",sans-serif}
+        .kugenuma-video-hero .forecast-panel a{color:#fff;text-decoration:underline;text-underline-offset:3px}
+        .kugenuma-video-hero .forecast-panel a:focus-visible{outline:2px solid #fff;outline-offset:3px}
+        .kugenuma-video-hero .forecast-panel .forecast-note{margin:2px 0 8px;color:rgba(225,240,245,.82);font-size:11px;line-height:1.45}
         @media(max-width:520px){
           .kugenuma-landing .site-header{height:76px;padding:0 16px}
           .kugenuma-video-hero{padding:110px 16px 24px}
@@ -347,6 +356,7 @@ function buildKugenumaVideoHero(): string
         <p class="kugenuma-video-hero__lead">鵠沼（湘南）のモデル予報です。モデル波高は実際のブレイクサイズを直接示す値ではありません。</p>
         <div class="kugenuma-video-hero__advice"><span class="section-number" aria-hidden="true">01</span><h2 id="advice-title">今日のアドバイス</h2></div>
         <div class="kugenuma-video-hero__advice-details" aria-labelledby="advice-title"><h3>今日の狙い方</h3><p data-kugenuma-advice aria-live="polite">最新の予報データを確認中です。</p><p class="forecast-note">モデル予報による目安です。入水の可否は現地の波・流れ・注意報等を確認して判断してください。</p></div>
+        ' . buildKugenumaTop() . '
       </div>
     </section>
     <script>
