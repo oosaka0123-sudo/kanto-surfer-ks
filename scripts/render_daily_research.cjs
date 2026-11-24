@@ -126,7 +126,7 @@ const sharedStyle = String.raw`<style id="ks-research-css">
   .ks-report details{font-size:12px;line-height:1.8;margin:12px 0}
   .ks-report li{margin:5px 0;overflow-wrap:anywhere}
   @media(max-width:600px){.ks-research{width:calc(100% - 16px);margin:14px 8px;padding:14px}.ks-rank-list a{gap:5px}.ks-rank-name{font-size:15px}}
-  </style>`.replaceAll('@', '');
+  </style>`;
 const notes = '<p class="ks-r-note">※ 海上の予報波高と実際のブレイクサイズは異なります。現地状況・流れ・最新の注意報を確認してください。予測順位は実測の保証ではありません。</p>';
 const ordered = [...daily.rankings].sort((a, b) => a.rank - b.rank);
 const rankMarkup = ordered.map((r) => {
