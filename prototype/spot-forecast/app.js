@@ -516,6 +516,32 @@ function renderDaily(){
   updated.classList.toggle("is-stale",stale);
   if(source.spot?.name){const spotLabel=dailyRoot.querySelector("[data-daily-spot]");if(spotLabel)spotLabel.textContent=source.spot.name;dailyRoot.querySelector("table")?.setAttribute("aria-label",`${source.spot.name} 10日間の波と風の予報`)}
 }
+// 鵠沼限定。既存の時間別予報を用い、現地サイズや安全性は推測しない。
+function renderKugenumaAdvice(){
+  const box=document.querySelector("[data-kugenuma-advice]");
+  if(!box)return;
+  const stamp=Date.parse(source.source_generated_at||"");
+  const now=Date.now();
+  if(requestedSpot()!=="kugenuma"||!Number.isFinite(stamp)||now-stamp>3*3600000||stamp>now+300000){
+    box.textContent="予報の更新時刻を確認できないか、更新が遅れています。最新の現地情報を確認してください。";
+    return;
+  }
+  const today=dateKey(new Date(now));
+  const rows=(Array.isArray(source.hourly)?source.hourly:[]).flatMap(s=>{
+    const d=slotDate(s);
+    if(!d||dateKey(d)!==today||d.getTime()<now)return [];
+    const hour=Number(getJst(d).hour);
+    if(hour<4||hour>17)return [];
+    const height=numeric(s.model_wave_height_m??s.wave_height_m),speed=numeric(s.wind_speed_ms);
+    if(!Number.isFinite(height)||!Number.isFinite(speed)||height<0||speed<0)return [];
+    return [{hour,height,speed,dir:String(s.wind_direction_label||"")}];
+  });
+  if(!rows.length){box.textContent="今日の残り時間帯の予報データが不足しています。ライブカメラ等で現地情報を確認してください。";return;}
+  const min=Math.min(...rows.map(r=>r.height)),max=Math.max(...rows.map(r=>r.height));
+  const calm=[...rows].sort((a,b)=>a.speed-b.speed||a.hour-b.hour)[0];
+  const dir=calm.dir?"（"+calm.dir+"）":"";
+  box.textContent="今日の残り時間帯のモデル波高は"+min.toFixed(1)+"〜"+max.toFixed(1)+"m。風が比較的弱い予報は"+String(calm.hour).padStart(2,"0")+":00ごろ、"+calm.speed.toFixed(1)+"m/s"+dir+"です。波の割れ方や混雑はライブカメラと現地で確認してください。";
+}
 function selectMode(){title.textContent="波・風";renderGrid()}
 panel.setAttribute("aria-busy","true");
 selectMode();
@@ -527,7 +553,7 @@ loadSource().then(data=>{
   renderObservation();
   const spotName=document.querySelector("[data-spot-name]");if(spotName&&source.spot?.name)spotName.textContent=source.spot.name;
   panel.setAttribute("aria-busy","false");
-  selectMode();renderDaily();
+  selectMode();renderDaily();renderKugenumaAdvice();
   // Keep the pulsing current-time marker aligned to the clock without a page reload.
   if(compactTest)setInterval(()=>{
     if(compactDay!==0)return;
