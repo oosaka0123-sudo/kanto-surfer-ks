@@ -18,6 +18,8 @@ resetDirectory($outputDir, $root);
 ensureDirectory($outputDir . '/data');
 copyRequired($root . '/prototype/spot-forecast/app.js', $outputDir . '/app.js');
 copyRequired($root . '/prototype/spot-forecast/styles.css', $outputDir . '/styles.css');
+ensureDirectory($outputDir . '/media');
+copyRequired($root . '/media/kugenuma-hero-muted.mp4', $outputDir . '/media/kugenuma-hero-muted.mp4');
 atomicWrite($outputDir . '/.nojekyll', '');
 atomicWrite($outputDir . '/CNAME', "kanto.rss7.net\n");
 atomicWrite(
