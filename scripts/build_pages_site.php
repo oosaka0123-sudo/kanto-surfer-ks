@@ -266,7 +266,7 @@ function buildKugenumaTop(): string
     </section>
     <section class="forecast-section" aria-labelledby="camera-title">
       <div class="section-title"><span class="section-number">02</span><h2 id="camera-title">ライブカメラ</h2></div>
-      <div class="forecast-panel" style="padding:1rem"><p><a href="https://www.pref.kanagawa.jp/docs/f4i/tsunami/p613103.html" target="_blank" rel="noopener noreferrer">神奈川県公式・藤沢海岸カメラ →</a></p><p class="forecast-note">一覧から藤沢海岸を選択してください。</p><p><a href="https://www.youtube.com/c/%E6%B3%A2%E9%80%9ALIVE/streams" target="_blank" rel="noopener noreferrer">なみある？・引地川河口（YouTube）→</a></p><p class="forecast-note">外部配信です。配信休止や映像の遅延がある場合があります。</p></div>
+      <div class="forecast-panel" style="padding:1rem"><p><a href="https://www.pref.kanagawa.jp/docs/f4i/tsunami/p613103.html" target="_blank" rel="noopener noreferrer">神奈川県公式・藤沢海岸カメラ →</a></p><p class="forecast-note">一覧から藤沢海岸を選択してください。</p><p><a href="https://livecombs.com/kanagawaken/fujisawa-shi/kugenuma-beach/" target="_blank" rel="noopener noreferrer">なみある？・鵠沼ライブ映像（外部ページ）→</a></p><p class="forecast-note">外部配信です。配信休止や映像の遅延がある場合があります。</p></div>
     </section>';
 }
 
@@ -278,7 +278,7 @@ function buildKugenumaBottom(string $context): string
     </section>
     <section class="forecast-section" aria-labelledby="wide-wave-title">
       <div class="section-title"><span class="section-number">06</span><h2 id="wide-wave-title">広域波高マップ</h2></div>
-      <div class="forecast-panel" style="padding:1rem"><p>日本周辺の波高分布を確認できます。</p><a href="https://www.imocwx.com/cwm/cwm_jp.gif" target="_blank" rel="noopener noreferrer"><img src="https://www.imocwx.com/cwm/cwm_jp.gif" alt="日本周辺の広域波高マップ（タップで拡大）" loading="lazy" style="width:100%;height:auto;display:block"></a><p class="forecast-note">出典：国際気象海洋株式会社。<a href="https://www.data.jma.go.jp/waveinf/tile/jp/index.html" target="_blank" rel="noopener noreferrer">気象庁の波浪実況・予想図も確認する →</a></p></div>
+      <div class="forecast-panel" style="padding:1rem"><p>日本周辺の波高分布を確認できます。</p><p><a href="https://www.imocwx.com/cwm.php?Area=0" target="_blank" rel="noopener noreferrer">日本周辺の広域波高マップを開く →</a></p><p class="forecast-note">出典：国際気象海洋株式会社。<a href="https://www.data.jma.go.jp/waveinf/tile/jp/index.html" target="_blank" rel="noopener noreferrer">気象庁の波浪実況・予想図も確認する →</a></p></div>
     </section>';
 }
 
