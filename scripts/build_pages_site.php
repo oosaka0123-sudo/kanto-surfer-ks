@@ -266,7 +266,7 @@ function buildApprovedKugenumaArticle(string $root): string
     $path = $root . '/content/approved/kugenuma.json';
     if (!is_file($path)) return '';
     $article = readJson($path);
-    if (($article['status'] ?? '') !== 'approved') return '';
+    if (!in_array(($article['status'] ?? ''), ['approved', 'preview'], true)) return '';
     $date = (string)($article['date'] ?? '');
     $title = trim((string)($article['title'] ?? ''));
     $paragraphs = $article['paragraphs'] ?? [];
@@ -291,7 +291,7 @@ function buildApprovedKugenumaArticle(string $root): string
     return '<section class="forecast-section" aria-labelledby="ks-article-title">'
         . '<div class="section-title"><h2 id="ks-article-title">KS 波情報レポート</h2></div>'
         . '<article class="forecast-panel" style="padding:1rem">'
-        . '<p class="forecast-note">対象日：' . h($date) . '｜公開前確認済み</p>'
+        . '<p class="forecast-note">対象日：' . h($date) . (($article['status'] ?? '') === 'preview' ? '｜【試験公開・未検証】予報内容の確認用です。波サイズ・現地状況は未確認。' : '｜公開前確認済み') . '</p>'
         . '<h3>' . h($title) . '</h3>' . $body
         . '<details><summary>情報源</summary><ul>' . $links . '</ul></details>'
         . '<p class="forecast-note">現地の波・流れ・注意報を確認してから入水してください。</p>'
