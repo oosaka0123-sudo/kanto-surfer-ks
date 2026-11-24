@@ -294,7 +294,7 @@ function buildApprovedKugenumaArticle(string $root): string
     }
     return '<section class="forecast-section" aria-labelledby="ks-article-title">'
         . '<div class="section-title"><h2 id="ks-article-title">KS 波情報レポート</h2></div>'
-        . '<article class="forecast-panel" style="padding:1rem">'
+        . '<article class="forecast-panel ks-gpt-article" style="padding:1rem">'
         . '<p class="forecast-note">対象日：' . h($date) . (($article['status'] ?? '') === 'preview' ? '｜【試験公開・未検証】予報内容の確認用です。波サイズ・現地状況は未確認。' : '｜公開前確認済み') . '</p>'
         . '<h3>' . h($title) . '</h3>' . $body
         . '<details><summary>情報源</summary><ul>' . $links . '</ul></details>'
