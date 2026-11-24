@@ -180,7 +180,7 @@ function buildForecastPage(
     }
 
     $kugenumaPilot = !$homePage && $id === 'kugenuma';
-    $pilotTop = $kugenumaPilot ? buildKugenumaTop() : '';
+    $pilotTop = $kugenumaPilot ? buildKugenumaTop() . buildApprovedKugenumaArticle($root = dirname(__DIR__)) : '';
     $pilotBottom = $kugenumaPilot ? buildKugenumaBottom($context) : '';
     if ($kugenumaPilot) $context = '';
     $compactAttrs = (!$homePage && $id === 'kugenuma') ? ' data-compact-test="1"' : '';
@@ -255,6 +255,47 @@ function buildForecastPage(
 </body>
 </html>
 ';
+}
+
+/**
+ * Only explicitly approved, source-backed articles are displayed.
+ * Scheduled drafts under test-only/ are deliberately excluded.
+ */
+function buildApprovedKugenumaArticle(string $root): string
+{
+    $path = $root . '/content/approved/kugenuma.json';
+    if (!is_file($path)) return '';
+    $article = readJson($path);
+    if (($article['status'] ?? '') !== 'approved') return '';
+    $date = (string)($article['date'] ?? '');
+    $title = trim((string)($article['title'] ?? ''));
+    $paragraphs = $article['paragraphs'] ?? [];
+    $sources = $article['sources'] ?? [];
+    if (!preg_match('/^20[0-9]{2}-[0-9]{2}-[0-9]{2}$/', $date)
+        || !is_array($paragraphs) || count($paragraphs) < 2 || count($paragraphs) > 6
+        || !is_array($sources) || count($sources) < 2 || strlen($title) < 12) {
+        fail('Invalid approved Kugenuma article');
+    }
+    $body = '';
+    foreach ($paragraphs as $paragraph) {
+        if (!is_string($paragraph) || mb_strlen(trim($paragraph)) < 20 || mb_strlen($paragraph) > 500) fail('Invalid article paragraph');
+        $body .= '<p>' . h($paragraph) . '</p>';
+    }
+    $links = '';
+    foreach ($sources as $source) {
+        if (!is_array($source) || !isset($source['name'], $source['url'])
+            || !is_string($source['name']) || !is_string($source['url'])
+            || !preg_match('~^https://[^\\s]+$~', $source['url'])) fail('Invalid article source');
+        $links .= '<li><a href="' . h($source['url']) . '" target="_blank" rel="noopener noreferrer">' . h($source['name']) . '</a></li>';
+    }
+    return '<section class="forecast-section" aria-labelledby="ks-article-title">'
+        . '<div class="section-title"><h2 id="ks-article-title">KS 波情報レポート</h2></div>'
+        . '<article class="forecast-panel" style="padding:1rem">'
+        . '<p class="forecast-note">対象日：' . h($date) . '｜公開前確認済み</p>'
+        . '<h3>' . h($title) . '</h3>' . $body
+        . '<details><summary>情報源</summary><ul>' . $links . '</ul></details>'
+        . '<p class="forecast-note">現地の波・流れ・注意報を確認してから入水してください。</p>'
+        . '</article></section>';
 }
 
 /** 鵠沼限定の個別ページ試作。既存グラフとデータ処理は変更しない。 */
