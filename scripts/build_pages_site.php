@@ -231,12 +231,12 @@ function buildForecastPage(
   </header>
   <main>
     ' . $hero . '
-    <section class="beta-intro" id="spots">
+    ' . ($kugenumaPilot ? '' : '<section class="beta-intro" id="spots">
       <p class="beta-label">KANTO SURFER KS / SURF FORECAST</p>
-      ' . ($kugenumaPilot ? '' : '<h1>' . h($heading) . '</h1>') . '
+      <h1>' . h($heading) . '</h1>
       <p>' . h($intro) . '</p>
       ' . $context . '
-    </section>
+    </section>') . '
     ' . $pilotTop . '
     <section class="forecast-section" aria-labelledby="forecast-title">
       <p class="current-spot">SPOT <strong data-spot-name>' . h($name) . '</strong></p>
@@ -305,7 +305,7 @@ function buildApprovedKugenumaArticle(string $root): string
 /** 鵠沼限定の無音背景動画。グラフ・10日予報・他地点には影響させない。 */
 function buildKugenumaVideoHero(): string
 {
-    return '<section class="kugenuma-video-hero" aria-label="鵠沼の波情報">
+    return '<section class="kugenuma-video-hero" id="spots" aria-label="鵠沼の波情報">
       <style>
         /* Kugenuma only: transparent navigation layered above the first-screen video. */
         .kugenuma-landing .site-header{position:fixed;inset:0 0 auto;z-index:80;width:100%;height:88px;padding:0 22px;background:transparent;border:0;box-shadow:none;transition:background-color .22s ease,box-shadow .22s ease,border-color .22s ease}
@@ -315,15 +315,20 @@ function buildKugenumaVideoHero(): string
         .kugenuma-landing .site-header .menu-button{color:#fff;background:rgba(4,20,29,.10);border:1px solid rgba(255,255,255,.52);box-shadow:0 1px 15px rgba(0,0,0,.12)}
         .kugenuma-landing .site-header .menu-button[aria-expanded="true"]{background:rgba(4,20,29,.65)}
         .kugenuma-landing .site-header .site-menu{background:#082331}
-        .kugenuma-video-hero{position:relative;isolation:isolate;display:flex;align-items:flex-end;justify-content:center;width:100%;height:100svh;min-height:100svh;overflow:hidden;background:linear-gradient(145deg,#061a29,#176075 60%,#082331);color:#fff}
+        .kugenuma-video-hero{position:relative;isolation:isolate;display:flex;align-items:flex-start;justify-content:center;box-sizing:border-box;width:100%;min-height:100svh;padding:clamp(118px,17svh,170px) 20px 76px;overflow:hidden;background:linear-gradient(145deg,#061a29,#176075 60%,#082331);color:#fff}
         .kugenuma-video-hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-2}
-        .kugenuma-video-hero:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,14,23,.42),rgba(2,14,23,.06) 35%,rgba(2,14,23,.58));z-index:-1}
-        .kugenuma-video-hero__content{width:100%;padding:0 20px clamp(100px,18svh,180px);text-align:center;text-shadow:0 2px 20px rgba(0,0,0,.72)}
-        .kugenuma-video-hero__title{margin:0;color:#fff;font-size:clamp(32px,6.5vw,64px);font-weight:600;line-height:1.3;letter-spacing:.07em}
+        .kugenuma-video-hero:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,14,23,.64),rgba(2,14,23,.38) 50%,rgba(2,14,23,.65));z-index:-1}
+        .kugenuma-video-hero__content{width:min(100%,760px);text-align:left;text-shadow:0 2px 20px rgba(0,0,0,.72)}
+        .kugenuma-video-hero__title{margin:0 0 clamp(30px,7svh,76px);color:#fff;text-align:center;font-size:clamp(32px,6.5vw,64px);font-weight:600;line-height:1.3;letter-spacing:.07em}
+        .kugenuma-video-hero__eyebrow{margin:0 0 12px;color:#ff8b7e;font:700 clamp(11px,2.3vw,14px)/1.5 "Yu Gothic",sans-serif;letter-spacing:.11em}
+        .kugenuma-video-hero__lead{margin:0;color:rgba(255,255,255,.93);font:400 clamp(13px,2.5vw,17px)/1.85 "Yu Gothic",sans-serif}
+        .kugenuma-video-hero__advice{display:flex;align-items:baseline;gap:10px;margin:clamp(22px,5svh,45px) 0 0}
+        .kugenuma-video-hero__advice .section-number{color:#ff8b7e;font-size:clamp(24px,5vw,36px)}
+        .kugenuma-video-hero__advice h2{margin:0;color:#fff;font-size:clamp(25px,5.8vw,42px);font-weight:600;line-height:1.35}
         @media(max-width:520px){
           .kugenuma-landing .site-header{height:76px;padding:0 16px}
-          .kugenuma-video-hero__content{padding:0 14px clamp(110px,19svh,180px)}
-          .kugenuma-video-hero__title{font-size:clamp(32px,8vw,46px)}
+          .kugenuma-video-hero{padding:110px 16px 56px}
+          .kugenuma-video-hero__title{font-size:clamp(32px,8vw,46px);margin-bottom:clamp(24px,5svh,48px)}
         }
         @media(prefers-reduced-motion:reduce){.kugenuma-video-hero video{display:none}}
       </style>
@@ -332,6 +337,9 @@ function buildKugenumaVideoHero(): string
       </video>
       <div class="kugenuma-video-hero__content">
         <h1 class="kugenuma-video-hero__title">鵠沼の波情報</h1>
+        <p class="kugenuma-video-hero__eyebrow">KANTO SURFER KS / SURF FORECAST</p>
+        <p class="kugenuma-video-hero__lead">鵠沼（湘南）のモデル予報です。モデル波高は実際のブレイクサイズを直接示す値ではありません。</p>
+        <div class="kugenuma-video-hero__advice"><span class="section-number" aria-hidden="true">01</span><h2 id="advice-title">今日のアドバイス</h2></div>
       </div>
     </section>
     <script>
@@ -347,7 +355,6 @@ function buildKugenumaVideoHero(): string
 function buildKugenumaTop(): string
 {
     return '<section class="forecast-section" aria-labelledby="advice-title">
-      <div class="section-title"><span class="section-number">01</span><h2 id="advice-title">今日のアドバイス</h2></div>
       <div class="forecast-panel" style="padding:1rem"><h3>今日の狙い方</h3><p data-kugenuma-advice aria-live="polite">最新の予報データを確認中です。</p><p class="forecast-note">モデル予報による目安です。入水の可否は現地の波・流れ・注意報等を確認して判断してください。</p></div>
     </section>
     <section class="forecast-section" aria-labelledby="camera-title">
