@@ -180,7 +180,7 @@ function buildForecastPage(
     }
 
     $kugenumaPilot = !$homePage && $id === 'kugenuma';
-    $pilotTop = $kugenumaPilot ? buildKugenumaTop() . buildApprovedKugenumaArticle($root = dirname(__DIR__)) : '';
+    $pilotTop = $kugenumaPilot ? buildKugenumaTop() . buildApprovedKugenumaArticle(dirname(__DIR__)) : '';
     $pilotBottom = $kugenumaPilot ? buildKugenumaBottom($context) : '';
     if ($kugenumaPilot) $context = '';
     $compactAttrs = (!$homePage && $id === 'kugenuma') ? ' data-compact-test="1"' : '';
@@ -278,7 +278,7 @@ function buildApprovedKugenumaArticle(string $root): string
     }
     $body = '';
     foreach ($paragraphs as $paragraph) {
-        if (!is_string($paragraph) || mb_strlen(trim($paragraph)) < 20 || mb_strlen($paragraph) > 500) fail('Invalid article paragraph');
+        if (!is_string($paragraph) || strlen(trim($paragraph)) < 20 || strlen($paragraph) > 1500) fail('Invalid article paragraph');
         $body .= '<p>' . h($paragraph) . '</p>';
     }
     $links = '';
