@@ -179,6 +179,10 @@ function buildForecastPage(
             . '</dl>';
     }
 
+    $kugenumaPilot = !$homePage && $id === 'kugenuma';
+    $pilotTop = $kugenumaPilot ? buildKugenumaTop() : '';
+    $pilotBottom = $kugenumaPilot ? buildKugenumaBottom($context) : '';
+    if ($kugenumaPilot) $context = '';
     $compactAttrs = (!$homePage && $id === 'kugenuma') ? ' data-compact-test="1"' : '';
     $compactDays = (!$homePage && $id === 'kugenuma') ? '<nav class="compact-days" aria-label="日付切替"><button type="button" data-compact-day="0" class="is-active" aria-pressed="true">今日</button><button type="button" data-compact-day="1" aria-pressed="false">明日</button><button type="button" data-compact-day="2" aria-pressed="false">明後日</button></nav>' : '';
     $compactExtras = (!$homePage && $id === 'kugenuma') ? '<div class="compact-extras" data-compact-extras>
@@ -229,9 +233,10 @@ function buildForecastPage(
       <p>' . h($intro) . '</p>
       ' . $context . '
     </section>
+    ' . $pilotTop . '
     <section class="forecast-section" aria-labelledby="forecast-title">
       <p class="current-spot">SPOT <strong data-spot-name>' . h($name) . '</strong></p>
-      <div class="section-title"><span class="section-number">04</span><span class="section-icon" aria-hidden="true">⌁</span><h2 id="forecast-title">波・風</h2></div>
+      <div class="section-title"><span class="section-number">' . ($kugenumaPilot ? '03' : '04') . '</span><span class="section-icon" aria-hidden="true">⌁</span><h2 id="forecast-title">波・風</h2></div>
       <div class="forecast-shell" data-forecast' . $compactAttrs . ' data-data-base="' . h($dataBase) . '" data-default-spot="' . h($id) . '">
         <div class="forecast-panel" id="panel-forecast" aria-labelledby="forecast-title">' . $compactDays . '
           <div class="forecast-legend" aria-label="グラフ凡例"><span><i class="legend-wave"></i><span data-wave-label>モデル波高(m)</span></span><span><i class="legend-wind"></i>風(m/s)</span><span class="data-state" data-state>読み込み中</span></div>
@@ -244,7 +249,7 @@ function buildForecastPage(
       </div>
       <p class="forecast-note" id="forecast-note" data-forecast-note>Open-Meteoの海洋モデル波高です。実際のブレイクサイズを直接示す値ではありません。</p>
     </section>
-    ' . ($showDaily ? buildDailySection($name) : '') . '
+    ' . ($showDaily ? buildDailySection($name, $kugenumaPilot ? '04' : '05') : '') . $pilotBottom . '
   </main>
   <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="' . h($trustPrefix) . 'about/">サイト概要</a><a href="' . h($trustPrefix) . 'contact/">お問い合わせ</a><a href="' . h($trustPrefix) . 'privacy/">プライバシー</a></nav></footer>
 </body>
@@ -252,14 +257,39 @@ function buildForecastPage(
 ';
 }
 
+/** 鵠沼限定の個別ページ試作。既存グラフとデータ処理は変更しない。 */
+function buildKugenumaTop(): string
+{
+    return '<section class="forecast-section" aria-labelledby="advice-title">
+      <div class="section-title"><span class="section-number">01</span><h2 id="advice-title">今日のアドバイス</h2></div>
+      <div class="forecast-panel" style="padding:1rem"><h3>今日の狙い方</h3><p data-kugenuma-advice aria-live="polite">最新の予報データを確認中です。</p><p class="forecast-note">モデル予報による目安です。入水の可否は現地の波・流れ・注意報等を確認して判断してください。</p></div>
+    </section>
+    <section class="forecast-section" aria-labelledby="camera-title">
+      <div class="section-title"><span class="section-number">02</span><h2 id="camera-title">ライブカメラ</h2></div>
+      <div class="forecast-panel" style="padding:1rem"><p><a href="https://www.pref.kanagawa.jp/docs/f4i/tsunami/p613103.html" target="_blank" rel="noopener noreferrer">神奈川県公式・藤沢海岸カメラ →</a></p><p class="forecast-note">一覧から藤沢海岸を選択してください。</p><p><a href="https://livecombs.com/kanagawaken/fujisawa-shi/kugenuma-beach/" target="_blank" rel="noopener noreferrer">なみある？・鵠沼ライブ映像（外部ページ）→</a></p><p class="forecast-note">外部配信です。配信休止や映像の遅延がある場合があります。</p></div>
+    </section>';
+}
+
+function buildKugenumaBottom(string $context): string
+{
+    return '<section class="forecast-section" aria-labelledby="spot-info-title">
+      <div class="section-title"><span class="section-number">05</span><h2 id="spot-info-title">スポット情報</h2></div>
+      <div class="forecast-panel" style="padding:1rem"><p>神奈川県藤沢市・湘南の砂地のビーチブレイク。引地川河口周辺などでサーフィンが行われます。</p>' . $context . '<p>比較的穏やかな日には初心者にも親しまれますが、混雑、離岸流、海水浴期間の規制には注意してください。</p></div>
+    </section>
+    <section class="forecast-section" aria-labelledby="wide-wave-title">
+      <div class="section-title"><span class="section-number">06</span><h2 id="wide-wave-title">広域波高マップ</h2></div>
+      <div class="forecast-panel" style="padding:1rem"><p>日本周辺の波高分布を確認できます。</p><p><a href="https://www.imocwx.com/cwm.php?Area=0" target="_blank" rel="noopener noreferrer">日本周辺の広域波高マップを開く →</a></p><p class="forecast-note">出典：国際気象海洋株式会社。<a href="https://www.data.jma.go.jp/waveinf/tile/jp/index.html" target="_blank" rel="noopener noreferrer">気象庁の波浪実況・予想図も確認する →</a></p></div>
+    </section>';
+}
+
 /**
  * 10日間の波・風予報（日別6列表）。値は build_public_forecast.php が生成する payload.daily を
  * app.js が描画するだけで、ブラウザ側で集約・補完はしない。全スポット共通テンプレート。
  */
-function buildDailySection(string $spotName): string
+function buildDailySection(string $spotName, string $number = '05'): string
 {
     return '<section class="forecast-section daily-section" id="daily-forecast" aria-labelledby="daily-title" data-daily>
-      <div class="section-title"><span class="section-number">05</span><span class="section-icon" aria-hidden="true">⌁</span><h2 id="daily-title">10日間の波・風予報</h2></div>
+      <div class="section-title"><span class="section-number">' . h($number) . '</span><span class="section-icon" aria-hidden="true">⌁</span><h2 id="daily-title">10日間の波・風予報</h2></div>
       <p class="daily-subtitle"><span data-daily-spot>' . h($spotName) . '</span>｜5:00〜17:00</p>
       <div class="daily-table-wrap">
         <table class="daily-table" aria-label="' . h($spotName) . ' 10日間の波と風の予報">
