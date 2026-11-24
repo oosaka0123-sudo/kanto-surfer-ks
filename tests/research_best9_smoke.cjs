@@ -8,7 +8,7 @@ const os = require('node:os');
 const {spawnSync} = require('node:child_process');
 const base = path.resolve(__dirname, '..');
 const spots = JSON.parse(fs.readFileSync(path.join(base, 'config/representative-spots.json'), 'utf8')).spots;
-const jst = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('Z', '+09:00');
+const jst = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 19) + '+09:00';
 const day = jst.slice(0, 10);
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ks-research-test-'));
 const html = '<!doctype html><html><head></head><body><main><section class="beta-intro"><h1>Current design</h1></section><section class="forecast-section" aria-label="existing"><div data-forecast>graph</div><table data-daily-body><tr><td>10-day forecast</td></tr></table></section></main></body></html>';
