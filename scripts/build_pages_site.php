@@ -18,6 +18,8 @@ resetDirectory($outputDir, $root);
 ensureDirectory($outputDir . '/data');
 copyRequired($root . '/prototype/spot-forecast/app.js', $outputDir . '/app.js');
 copyRequired($root . '/prototype/spot-forecast/styles.css', $outputDir . '/styles.css');
+ensureDirectory($outputDir . '/media');
+copyRequired($root . '/media/kugenuma-hero-muted.mp4', $outputDir . '/media/kugenuma-hero-muted.mp4');
 atomicWrite($outputDir . '/.nojekyll', '');
 atomicWrite($outputDir . '/CNAME', "kanto.rss7.net\n");
 atomicWrite(
@@ -165,7 +167,7 @@ function buildForecastPage(
     $description = $homePage
         ? '関東サーファーKS。関東9地点の時間別・10日間モデル波予報。'
         : $name . '（' . $region . '）の時間別・10日間モデル波予報。Open-Meteo海洋モデルを使用しています。';
-    $heading = $homePage ? '関東9地点の波予報' : $name . 'の波予報';
+    $heading = $homePage ? '関東9地点の波予報' : $name . ($id === 'kugenuma' ? 'の波情報' : 'の波予報');
     $intro = $homePage
         ? 'Open-Meteoの海洋モデルを使った波予報です。各スポットの個別予報はページ下部のリンクからご覧ください。'
         : $name . '（' . $region . '）のモデル予報です。モデル波高は実際のブレイクサイズを直接示す値ではありません。';
@@ -181,6 +183,7 @@ function buildForecastPage(
 
     $kugenumaPilot = !$homePage && $id === 'kugenuma';
     $pilotTop = $kugenumaPilot ? buildKugenumaTop() . buildApprovedKugenumaArticle(dirname(__DIR__)) : '';
+    $hero = $kugenumaPilot ? buildKugenumaVideoHero() : '';
     $pilotBottom = $kugenumaPilot ? buildKugenumaBottom($context) : '';
     if ($kugenumaPilot) $context = '';
     $compactAttrs = (!$homePage && $id === 'kugenuma') ? ' data-compact-test="1"' : '';
@@ -227,6 +230,7 @@ function buildForecastPage(
     ' . buildHeaderMenu($spotNavLinks, $assetPrefix) . '
   </header>
   <main>
+    ' . $hero . '
     <section class="beta-intro" id="spots">
       <p class="beta-label">KANTO SURFER KS / SURF FORECAST</p>
       <h1>' . h($heading) . '</h1>
@@ -296,6 +300,32 @@ function buildApprovedKugenumaArticle(string $root): string
         . '<details><summary>情報源</summary><ul>' . $links . '</ul></details>'
         . '<p class="forecast-note">現地の波・流れ・注意報を確認してから入水してください。</p>'
         . '</article></section>';
+}
+
+/** 鵠沼限定の無音背景動画。グラフ・10日予報・他地点には影響させない。 */
+function buildKugenumaVideoHero(): string
+{
+    return '<section class="kugenuma-video-hero" aria-label="鵠沼の海の映像">
+      <style>
+        .kugenuma-video-hero{position:relative;isolation:isolate;display:grid;place-items:center;min-height:min(82svh,720px);overflow:hidden;background:linear-gradient(145deg,#061a29,#176075 60%,#082331);color:#fff}
+        .kugenuma-video-hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-2}
+        .kugenuma-video-hero:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,14,23,.52),rgba(2,14,23,.12) 50%,rgba(2,14,23,.7));z-index:-1}
+        .kugenuma-video-hero__content{text-align:center;padding:90px 20px 72px;text-shadow:0 2px 18px rgba(0,0,0,.5)}
+        .kugenuma-video-hero__eyebrow{font-size:clamp(11px,2vw,14px);letter-spacing:.22em;font-weight:700}
+        .kugenuma-video-hero__title{margin:16px 0;font-size:clamp(38px,9vw,88px);line-height:1.15;font-weight:700}
+        .kugenuma-video-hero__subtitle{font-size:clamp(12px,3vw,18px);letter-spacing:.08em}
+        @media(max-width:720px){.kugenuma-video-hero{min-height:65svh}.kugenuma-video-hero__content{padding:70px 16px}}
+        @media(prefers-reduced-motion:reduce){.kugenuma-video-hero video{display:none}}
+      </style>
+      <video autoplay muted loop playsinline preload="metadata" aria-hidden="true" disablepictureinpicture>
+        <source src="../../media/kugenuma-hero-muted.mp4" type="video/mp4">
+      </video>
+      <div class="kugenuma-video-hero__content">
+        <p class="kugenuma-video-hero__eyebrow">KANTO SURFER KS</p>
+        <p class="kugenuma-video-hero__title">KUGENUMA</p>
+        <p class="kugenuma-video-hero__subtitle">湘南・鵠沼の波情報</p>
+      </div>
+    </section>';
 }
 
 /** 鵠沼限定の個別ページ試作。既存グラフとデータ処理は変更しない。 */
