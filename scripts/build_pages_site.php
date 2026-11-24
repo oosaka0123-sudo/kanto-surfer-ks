@@ -315,7 +315,7 @@ function buildKugenumaVideoHero(): string
         .kugenuma-landing .site-header .menu-button{color:#fff;background:rgba(4,20,29,.10);border:1px solid rgba(255,255,255,.52);box-shadow:0 1px 15px rgba(0,0,0,.12)}
         .kugenuma-landing .site-header .menu-button[aria-expanded="true"]{background:rgba(4,20,29,.65)}
         .kugenuma-landing .site-header .site-menu{background:#082331}
-        .kugenuma-video-hero{position:relative;isolation:isolate;display:flex;align-items:flex-start;justify-content:center;box-sizing:border-box;width:100%;padding:clamp(118px,17svh,170px) 20px 22px;overflow:hidden;background:linear-gradient(145deg,#061a29,#176075 60%,#082331);color:#fff}
+        .kugenuma-video-hero{position:relative;isolation:isolate;display:flex;align-items:flex-start;justify-content:center;box-sizing:border-box;width:100%;min-height:100svh;padding:clamp(118px,17svh,170px) 20px 32px;overflow:hidden;background:linear-gradient(145deg,#061a29,#176075 60%,#082331);color:#fff}
         .kugenuma-video-hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-2}
         .kugenuma-video-hero:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,14,23,.64),rgba(2,14,23,.38) 50%,rgba(2,14,23,.65));z-index:-1}
         .kugenuma-video-hero__content{width:min(100%,760px);text-align:left;text-shadow:0 2px 20px rgba(0,0,0,.72)}
@@ -325,10 +325,15 @@ function buildKugenumaVideoHero(): string
         .kugenuma-video-hero__advice{display:flex;align-items:baseline;gap:10px;margin:clamp(22px,5svh,45px) 0 0}
         .kugenuma-video-hero__advice .section-number{color:#ff8b7e;font-size:clamp(24px,5vw,36px)}
         .kugenuma-video-hero__advice h2{margin:0;color:#fff;font-size:clamp(25px,5.8vw,42px);font-weight:600;line-height:1.35}
-        .kugenuma-landing main > .forecast-section[aria-labelledby="advice-title"]{padding-top:16px}
+        .kugenuma-video-hero__advice-details{margin-top:12px;max-width:650px}
+        .kugenuma-video-hero__advice-details h3{margin:0 0 8px;color:#fff;font-size:clamp(19px,4vw,26px);font-weight:600;line-height:1.35}
+        .kugenuma-video-hero__advice-details p{margin:0;color:rgba(255,255,255,.95);font:400 clamp(12px,2.7vw,15px)/1.65 "Yu Gothic",sans-serif}
+        .kugenuma-video-hero__advice-details .forecast-note{margin-top:10px;color:rgba(225,240,245,.8);font-size:11px;line-height:1.65}
         @media(max-width:520px){
           .kugenuma-landing .site-header{height:76px;padding:0 16px}
-          .kugenuma-video-hero{padding:110px 16px 20px}
+          .kugenuma-video-hero{padding:110px 16px 24px}
+          .kugenuma-video-hero__advice{margin-top:18px}
+          .kugenuma-video-hero__advice-details{margin-top:8px}
           .kugenuma-video-hero__title{font-size:clamp(32px,8vw,46px);margin-bottom:clamp(24px,5svh,48px)}
         }
         @media(prefers-reduced-motion:reduce){.kugenuma-video-hero video{display:none}}
@@ -341,6 +346,7 @@ function buildKugenumaVideoHero(): string
         <p class="kugenuma-video-hero__eyebrow">KANTO SURFER KS / SURF FORECAST</p>
         <p class="kugenuma-video-hero__lead">鵠沼（湘南）のモデル予報です。モデル波高は実際のブレイクサイズを直接示す値ではありません。</p>
         <div class="kugenuma-video-hero__advice"><span class="section-number" aria-hidden="true">01</span><h2 id="advice-title">今日のアドバイス</h2></div>
+        <div class="kugenuma-video-hero__advice-details" aria-labelledby="advice-title"><h3>今日の狙い方</h3><p data-kugenuma-advice aria-live="polite">最新の予報データを確認中です。</p><p class="forecast-note">モデル予報による目安です。入水の可否は現地の波・流れ・注意報等を確認して判断してください。</p></div>
       </div>
     </section>
     <script>
@@ -355,10 +361,7 @@ function buildKugenumaVideoHero(): string
 /** 鵠沼限定の個別ページ試作。既存グラフとデータ処理は変更しない。 */
 function buildKugenumaTop(): string
 {
-    return '<section class="forecast-section" aria-labelledby="advice-title">
-      <div class="forecast-panel" style="padding:1rem"><h3>今日の狙い方</h3><p data-kugenuma-advice aria-live="polite">最新の予報データを確認中です。</p><p class="forecast-note">モデル予報による目安です。入水の可否は現地の波・流れ・注意報等を確認して判断してください。</p></div>
-    </section>
-    <section class="forecast-section" aria-labelledby="camera-title">
+    return '<section class="forecast-section" aria-labelledby="camera-title">
       <div class="section-title"><span class="section-number">02</span><h2 id="camera-title">ライブカメラ</h2></div>
       <div class="forecast-panel" style="padding:1rem"><p><a href="https://www.pref.kanagawa.jp/docs/f4i/tsunami/p613103.html" target="_blank" rel="noopener noreferrer">神奈川県公式・藤沢海岸カメラ →</a></p><p class="forecast-note">一覧から藤沢海岸を選択してください。</p><p><a href="https://livecombs.com/kanagawaken/fujisawa-shi/kugenuma-beach/" target="_blank" rel="noopener noreferrer">なみある？・鵠沼ライブ映像（外部ページ）→</a></p><p class="forecast-note">外部配信です。配信休止や映像の遅延がある場合があります。</p></div>
     </section>';
