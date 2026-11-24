@@ -278,7 +278,7 @@ function buildKugenumaBottom(string $context): string
     </section>
     <section class="forecast-section" aria-labelledby="wide-wave-title">
       <div class="section-title"><span class="section-number">06</span><h2 id="wide-wave-title">広域波高マップ</h2></div>
-      <div class="forecast-panel" style="padding:1rem"><p>日本周辺の波高分布を確認できます。</p><p><a href="https://www.imocwx.com/cwm.php?Area=0" target="_blank" rel="noopener noreferrer">日本周辺の広域波高マップを開く →</a></p><p class="forecast-note">出典：国際気象海洋株式会社。<a href="https://www.data.jma.go.jp/waveinf/tile/jp/index.html" target="_blank" rel="noopener noreferrer">気象庁の波浪実況・予想図も確認する →</a></p></div>
+      <div class="forecast-panel" style="padding:1rem"><p>日本周辺の波高分布を確認できます。</p><a href="https://www.imocwx.com/cwm/cwm_jp.gif" target="_blank" rel="noopener noreferrer" aria-label="広域波高マップを拡大"><img src="https://www.imocwx.com/cwm/cwm_jp.gif" alt="日本周辺の広域波高マップ" loading="lazy" style="width:100%;height:auto;display:block"></a><p class="forecast-note">画像をタップして拡大できます。表示できない場合は<a href="https://www.imocwx.com/cwm.php?Area=0" target="_blank" rel="noopener noreferrer">配信元の波高マップを開く →</a></p><p class="forecast-note">出典：国際気象海洋株式会社。<a href="https://www.data.jma.go.jp/waveinf/tile/jp/index.html" target="_blank" rel="noopener noreferrer">気象庁の波浪実況・予想図も確認する →</a></p></div>
     </section>';
 }
 
