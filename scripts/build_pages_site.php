@@ -253,7 +253,7 @@ function buildForecastPage(
       </div>
       <p class="forecast-note" id="forecast-note" data-forecast-note>Open-Meteoの海洋モデル波高です。実際のブレイクサイズを直接示す値ではありません。</p>
     </section>
-    ' . ($showDaily ? buildDailySection($name, $kugenumaPilot ? '04' : '05') : '') . $pilotBottom . '
+    ' . ($kugenumaPilot ? buildKugenumaWindy() : '') . ($showDaily ? buildDailySection($name, $kugenumaPilot ? '04' : '05') : '') . $pilotBottom . '
   </main>
   <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="' . h($trustPrefix) . 'about/">サイト概要</a><a href="' . h($trustPrefix) . 'contact/">お問い合わせ</a><a href="' . h($trustPrefix) . 'privacy/">プライバシー</a></nav></footer>
 </body>
@@ -375,6 +375,58 @@ function buildKugenumaVideoHero(): string
 }
 /** 鵠沼限定の個別ページ試作。既存グラフとデータ処理は変更しない。 */
 /** 鵠沼のみ：APIキー不要のGoogleマップ表示。外部配信が失敗する場合は経路案内リンクへ誘導。 */
+/** 鵠沼のみ：グラフ直下にWindy公式マップ（初期表示は波、風に切替可）を追加。 */
+function buildKugenumaWindy(): string
+{
+    return '<!-- KUGENUMA_WINDY_START -->
+    <section class="forecast-section kugenuma-windy" id="kugenuma-windy" aria-labelledby="kugenuma-windy-title" data-windy-active="waves">
+      <style>
+        .kugenuma-windy{scroll-margin-top:92px}
+        .kugenuma-windy__switch{display:flex;gap:8px;margin:12px 0 14px}
+        .kugenuma-windy__switch button{flex:1;min-height:42px;border:1px solid rgba(162,205,225,.6);border-radius:8px;background:#0c3043;color:#f3f8fc;font-size:15px;font-weight:700;cursor:pointer}
+        .kugenuma-windy__switch button[aria-pressed="true"]{background:#21677d;border-color:#a8ddeb;color:#fff}
+        .kugenuma-windy__switch button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+        .kugenuma-windy__frame{overflow:hidden;border:1px solid rgba(156,206,226,.28);border-radius:10px;background:#1a3546}
+        .kugenuma-windy__frame iframe{display:block;width:100%;height:clamp(340px,102vw,480px);border:0}
+        .kugenuma-windy__note{margin:10px 0 0;font-size:12px;line-height:1.7;color:#b7ceda}
+      </style>
+      <div class="section-title"><h2 id="kugenuma-windy-title">Windy｜波・風マップ</h2></div>
+      <p class="forecast-note">鵠沼周辺の波とうねり・風向風速を地図で確認できます。</p>
+      <div class="kugenuma-windy__switch" role="group" aria-label="Windyマップの表示切替">
+        <button type="button" data-windy-layer="waves" aria-pressed="true">波</button>
+        <button type="button" data-windy-layer="wind" aria-pressed="false">風</button>
+      </div>
+      <div class="kugenuma-windy__frame">
+        <iframe data-windy-frame title="Windy 鵠沼周辺の波予報" src="https://embed.windy.com/embed2.html?lat=35.3148611&amp;lon=139.4708889&amp;detailLat=35.3148611&amp;detailLon=139.4708889&amp;zoom=9&amp;level=surface&amp;overlay=waves&amp;product=ecmwfWaves&amp;menu=true&amp;message=false&amp;marker=true&amp;calendar=now&amp;pressure=false&amp;type=map&amp;location=coordinates&amp;detail=false&amp;metricWind=m%2Fs&amp;metricTemp=%C2%B0C&amp;radarRange=-1" width="650" height="450" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+      </div>
+      <p class="kugenuma-windy__note">Windy提供の予報です。上のOpen-Meteoグラフとはモデル・更新時刻が異なる場合があります。表示されない場合は <a href="https://www.windy.com/?waves,35.315,139.471,9" target="_blank" rel="noopener noreferrer">Windy公式サイトで見る</a>。</p>
+    </section>
+    <script>
+      (function(){
+        var root=document.getElementById("kugenuma-windy");
+        if(!root)return;
+        var frame=root.querySelector("[data-windy-frame]");
+        var buttons=root.querySelectorAll("[data-windy-layer]");
+        for(var i=0;i<buttons.length;i++){
+          buttons[i].addEventListener("click",function(){
+            var layer=this.getAttribute("data-windy-layer");
+            if(root.getAttribute("data-windy-active")===layer)return;
+            var url=new URL(frame.src);
+            url.searchParams.set("overlay",layer);
+            url.searchParams.set("product",layer==="waves"?"ecmwfWaves":"ecmwf");
+            frame.src=url.toString();
+            frame.title="Windy 鵠沼周辺の"+(layer==="waves"?"波":"風")+"予報";
+            root.setAttribute("data-windy-active",layer);
+            for(var j=0;j<buttons.length;j++){
+              buttons[j].setAttribute("aria-pressed",buttons[j].getAttribute("data-windy-layer")===layer?"true":"false");
+            }
+          });
+        }
+      })();
+    </script>
+    <!-- KUGENUMA_WINDY_END -->';
+}
+
 function buildKugenumaAccessMap(): string
 {
     return '<!-- KUGENUMA_GOOGLE_MAP_START -->
