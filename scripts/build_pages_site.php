@@ -315,7 +315,7 @@ function buildKugenumaVideoHero(): string
         .kugenuma-landing .site-header .menu-button{color:#fff;background:rgba(4,20,29,.10);border:1px solid rgba(255,255,255,.52);box-shadow:0 1px 15px rgba(0,0,0,.12)}
         .kugenuma-landing .site-header .menu-button[aria-expanded="true"]{background:rgba(4,20,29,.65)}
         .kugenuma-landing .site-header .site-menu{background:#082331}
-        .kugenuma-video-hero{position:relative;isolation:isolate;display:flex;align-items:flex-start;justify-content:center;box-sizing:border-box;width:100%;min-height:100svh;padding:clamp(118px,17svh,170px) 20px 76px;overflow:hidden;background:linear-gradient(145deg,#061a29,#176075 60%,#082331);color:#fff}
+        .kugenuma-video-hero{position:relative;isolation:isolate;display:flex;align-items:flex-start;justify-content:center;box-sizing:border-box;width:100%;padding:clamp(118px,17svh,170px) 20px 22px;overflow:hidden;background:linear-gradient(145deg,#061a29,#176075 60%,#082331);color:#fff}
         .kugenuma-video-hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-2}
         .kugenuma-video-hero:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,14,23,.64),rgba(2,14,23,.38) 50%,rgba(2,14,23,.65));z-index:-1}
         .kugenuma-video-hero__content{width:min(100%,760px);text-align:left;text-shadow:0 2px 20px rgba(0,0,0,.72)}
@@ -325,9 +325,10 @@ function buildKugenumaVideoHero(): string
         .kugenuma-video-hero__advice{display:flex;align-items:baseline;gap:10px;margin:clamp(22px,5svh,45px) 0 0}
         .kugenuma-video-hero__advice .section-number{color:#ff8b7e;font-size:clamp(24px,5vw,36px)}
         .kugenuma-video-hero__advice h2{margin:0;color:#fff;font-size:clamp(25px,5.8vw,42px);font-weight:600;line-height:1.35}
+        .kugenuma-landing main > .forecast-section[aria-labelledby="advice-title"]{padding-top:16px}
         @media(max-width:520px){
           .kugenuma-landing .site-header{height:76px;padding:0 16px}
-          .kugenuma-video-hero{padding:110px 16px 56px}
+          .kugenuma-video-hero{padding:110px 16px 20px}
           .kugenuma-video-hero__title{font-size:clamp(32px,8vw,46px);margin-bottom:clamp(24px,5svh,48px)}
         }
         @media(prefers-reduced-motion:reduce){.kugenuma-video-hero video{display:none}}
