@@ -7,7 +7,6 @@ on:
     paths:
       - 'config/**'
       - 'content/approved/**'
-      - 'content/approved/**'
       - 'prototype/spot-forecast/**'
       - 'scripts/fetch_open_meteo.php'
       - 'scripts/normalize_open_meteo.php'
@@ -22,6 +21,7 @@ on:
     branches: [main]
     paths:
       - 'config/**'
+      - 'content/approved/**'
       - 'prototype/spot-forecast/**'
       - 'scripts/fetch_open_meteo.php'
       - 'scripts/normalize_open_meteo.php'
