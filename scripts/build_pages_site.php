@@ -224,7 +224,7 @@ function buildForecastPage(
   <link rel="stylesheet" href="' . h($assetPrefix) . 'styles.css?v=' . h($styleVersion) . '">
   <script defer src="' . h($assetPrefix) . 'app.js?v=' . h($appVersion) . '"></script>
 </head>
-<body>
+<body' . ($kugenumaPilot ? ' class="kugenuma-landing"' : '') . '>
   <header class="site-header">
     <a class="brand" href="' . h($homeHref) . '" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a>
     ' . buildHeaderMenu($spotNavLinks, $assetPrefix) . '
@@ -233,7 +233,7 @@ function buildForecastPage(
     ' . $hero . '
     <section class="beta-intro" id="spots">
       <p class="beta-label">KANTO SURFER KS / SURF FORECAST</p>
-      <h1>' . h($heading) . '</h1>
+      ' . ($kugenumaPilot ? '' : '<h1>' . h($heading) . '</h1>') . '
       <p>' . h($intro) . '</p>
       ' . $context . '
     </section>
@@ -305,29 +305,34 @@ function buildApprovedKugenumaArticle(string $root): string
 /** 鵠沼限定の無音背景動画。グラフ・10日予報・他地点には影響させない。 */
 function buildKugenumaVideoHero(): string
 {
-    return '<section class="kugenuma-video-hero" aria-label="鵠沼の海の映像">
+    return '<section class="kugenuma-video-hero" aria-label="鵠沼の波情報">
       <style>
-        .kugenuma-video-hero{position:relative;isolation:isolate;display:grid;place-items:center;min-height:min(82svh,720px);overflow:hidden;background:linear-gradient(145deg,#061a29,#176075 60%,#082331);color:#fff}
+        /* Kugenuma only: transparent navigation layered above the first-screen video. */
+        .kugenuma-landing .site-header{position:absolute;inset:0 0 auto;z-index:80;width:100%;height:88px;padding:0 22px;background:transparent;border:0;box-shadow:none}
+        .kugenuma-landing .site-header .brand{color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.72)}
+        .kugenuma-landing .site-header .menu-button{color:#fff;background:rgba(4,20,29,.10);border:1px solid rgba(255,255,255,.52);box-shadow:0 1px 15px rgba(0,0,0,.12)}
+        .kugenuma-landing .site-header .menu-button[aria-expanded="true"]{background:rgba(4,20,29,.65)}
+        .kugenuma-landing .site-header .site-menu{background:#082331}
+        .kugenuma-video-hero{position:relative;isolation:isolate;display:flex;align-items:flex-end;justify-content:center;width:100%;height:100svh;min-height:100svh;overflow:hidden;background:linear-gradient(145deg,#061a29,#176075 60%,#082331);color:#fff}
         .kugenuma-video-hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-2}
-        .kugenuma-video-hero:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,14,23,.52),rgba(2,14,23,.12) 50%,rgba(2,14,23,.7));z-index:-1}
-        .kugenuma-video-hero__content{text-align:center;padding:90px 20px 72px;text-shadow:0 2px 18px rgba(0,0,0,.5)}
-        .kugenuma-video-hero__eyebrow{font-size:clamp(11px,2vw,14px);letter-spacing:.22em;font-weight:700}
-        .kugenuma-video-hero__title{margin:16px 0;font-size:clamp(38px,9vw,88px);line-height:1.15;font-weight:700}
-        .kugenuma-video-hero__subtitle{font-size:clamp(12px,3vw,18px);letter-spacing:.08em}
-        @media(max-width:720px){.kugenuma-video-hero{min-height:65svh}.kugenuma-video-hero__content{padding:70px 16px}}
+        .kugenuma-video-hero:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,14,23,.42),rgba(2,14,23,.06) 35%,rgba(2,14,23,.58));z-index:-1}
+        .kugenuma-video-hero__content{width:100%;padding:0 20px clamp(100px,18svh,180px);text-align:center;text-shadow:0 2px 20px rgba(0,0,0,.72)}
+        .kugenuma-video-hero__title{margin:0;color:#fff;font-size:clamp(32px,6.5vw,64px);font-weight:600;line-height:1.3;letter-spacing:.07em}
+        @media(max-width:520px){
+          .kugenuma-landing .site-header{height:76px;padding:0 16px}
+          .kugenuma-video-hero__content{padding:0 14px clamp(110px,19svh,180px)}
+          .kugenuma-video-hero__title{font-size:clamp(32px,8vw,46px)}
+        }
         @media(prefers-reduced-motion:reduce){.kugenuma-video-hero video{display:none}}
       </style>
       <video autoplay muted loop playsinline preload="metadata" aria-hidden="true" disablepictureinpicture>
         <source src="../../media/kugenuma-hero-muted.mp4" type="video/mp4">
       </video>
       <div class="kugenuma-video-hero__content">
-        <p class="kugenuma-video-hero__eyebrow">KANTO SURFER KS</p>
-        <p class="kugenuma-video-hero__title">KUGENUMA</p>
-        <p class="kugenuma-video-hero__subtitle">湘南・鵠沼の波情報</p>
+        <h1 class="kugenuma-video-hero__title">鵠沼の波情報</h1>
       </div>
     </section>';
 }
-
 /** 鵠沼限定の個別ページ試作。既存グラフとデータ処理は変更しない。 */
 function buildKugenumaTop(): string
 {
