@@ -308,7 +308,9 @@ function buildKugenumaVideoHero(): string
     return '<section class="kugenuma-video-hero" aria-label="鵠沼の波情報">
       <style>
         /* Kugenuma only: transparent navigation layered above the first-screen video. */
-        .kugenuma-landing .site-header{position:absolute;inset:0 0 auto;z-index:80;width:100%;height:88px;padding:0 22px;background:transparent;border:0;box-shadow:none}
+        .kugenuma-landing .site-header{position:fixed;inset:0 0 auto;z-index:80;width:100%;height:88px;padding:0 22px;background:transparent;border:0;box-shadow:none;transition:background-color .22s ease,box-shadow .22s ease,border-color .22s ease}
+        .kugenuma-landing.is-scrolled .site-header{background:rgba(6,30,42,.96);border-bottom:1px solid rgba(172,207,222,.22);box-shadow:0 5px 22px rgba(0,0,0,.22);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+        .kugenuma-landing.is-scrolled .site-header .menu-button{background:rgba(5,29,40,.68)}
         .kugenuma-landing .site-header .brand{color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.72)}
         .kugenuma-landing .site-header .menu-button{color:#fff;background:rgba(4,20,29,.10);border:1px solid rgba(255,255,255,.52);box-shadow:0 1px 15px rgba(0,0,0,.12)}
         .kugenuma-landing .site-header .menu-button[aria-expanded="true"]{background:rgba(4,20,29,.65)}
@@ -331,7 +333,15 @@ function buildKugenumaVideoHero(): string
       <div class="kugenuma-video-hero__content">
         <h1 class="kugenuma-video-hero__title">鵠沼の波情報</h1>
       </div>
-    </section>';
+    </section>
+    <script>
+      (function(){
+        var updateHeader = function(){document.body.classList.toggle("is-scrolled", window.scrollY > 36);};
+        window.addEventListener("scroll", updateHeader, {passive:true});
+        window.addEventListener("pageshow", updateHeader);
+        updateHeader();
+      })();
+    </script>';
 }
 /** 鵠沼限定の個別ページ試作。既存グラフとデータ処理は変更しない。 */
 function buildKugenumaTop(): string
