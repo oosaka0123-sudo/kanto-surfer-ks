@@ -182,7 +182,7 @@ function buildForecastPage(
     }
 
     $kugenumaPilot = !$homePage && $id === 'kugenuma';
-    $pilotTop = $kugenumaPilot ? buildApprovedKugenumaArticle(dirname(__DIR__)) : '';
+    $pilotTop = $kugenumaPilot ? buildKugenumaAccessMap() . buildApprovedKugenumaArticle(dirname(__DIR__)) : '';
     $hero = $kugenumaPilot ? buildKugenumaVideoHero() : '';
     $pilotBottom = $kugenumaPilot ? buildKugenumaBottom($context) : '';
     if ($kugenumaPilot) $context = '';
@@ -374,6 +374,21 @@ function buildKugenumaVideoHero(): string
     </script>';
 }
 /** 鵠沼限定の個別ページ試作。既存グラフとデータ処理は変更しない。 */
+/** 鵠沼のみ：APIキー不要のGoogleマップ表示。外部配信が失敗する場合は経路案内リンクへ誘導。 */
+function buildKugenumaAccessMap(): string
+{
+    return '<!-- KUGENUMA_GOOGLE_MAP_START -->
+    <section class="forecast-section kugenuma-access-map" id="kugenuma-access-map" aria-labelledby="kugenuma-access-map-title" style="margin-top:0;padding-top:24px;scroll-margin-top:92px">
+      <div class="section-title"><h2 id="kugenuma-access-map-title">鵠沼海岸 Googleマップ</h2></div>
+      <p class="forecast-note">県立湘南海岸公園サーフビレッジ付近の地図です。地図を動かして周辺を確認できます。</p>
+      <div class="kugenuma-map-frame" style="width:100%;overflow:hidden;border-radius:10px;background:#dbe4e8">
+        <iframe title="鵠沼海岸・県立湘南海岸公園サーフビレッジのGoogleマップ" src="https://www.google.com/maps?q=%E7%9C%8C%E7%AB%8B%E6%B9%98%E5%8D%97%E6%B5%B7%E5%B2%B8%E5%85%AC%E5%9C%92%20%E3%82%B5%E3%83%BC%E3%83%95%E3%83%93%E3%83%AC%E3%83%83%E3%82%B8%20%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C%E8%97%A4%E6%B2%A2%E5%B8%82%E9%B5%A0%E6%B2%BC%E6%B5%B7%E5%B2%B81-17-3&amp;z=15&amp;output=embed" width="600" height="400" style="display:block;width:100%;height:clamp(320px,85vw,440px);border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+      </div>
+      <p class="forecast-note">地図が表示されない場合は <a href="https://www.google.com/maps/dir/?api=1&amp;destination=%E7%9C%8C%E7%AB%8B%E6%B9%98%E5%8D%97%E6%B5%B7%E5%B2%B8%E5%85%AC%E5%9C%92%20%E3%82%B5%E3%83%BC%E3%83%95%E3%83%93%E3%83%AC%E3%83%83%E3%82%B8%20%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C%E8%97%A4%E6%B2%A2%E5%B8%82%E9%B5%A0%E6%B2%BC%E6%B5%B7%E5%B2%B81-17-3" target="_blank" rel="noopener noreferrer">Googleマップで経路案内を開く</a>。</p>
+    </section>
+    <!-- KUGENUMA_GOOGLE_MAP_END -->';
+}
+
 function buildKugenumaTop(): string
 {
     return '<section class="forecast-section" aria-labelledby="camera-title">
