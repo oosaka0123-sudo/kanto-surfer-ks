@@ -375,11 +375,11 @@ function buildKugenumaVideoHero(): string
 }
 /** 鵠沼限定の個別ページ試作。既存グラフとデータ処理は変更しない。 */
 /** 鵠沼のみ：APIキー不要のGoogleマップ表示。外部配信が失敗する場合は経路案内リンクへ誘導。 */
-/** 鵠沼のみ：グラフ直下にWindy公式マップ（初期表示は波、風に切替可）を追加。 */
+/** 鵠沼のみ：04の下にWindy公式マップ（初期表示は風、波に切替可）を追加。 */
 function buildKugenumaWindy(): string
 {
     return '<!-- KUGENUMA_WINDY_START -->
-    <section class="forecast-section kugenuma-windy" id="kugenuma-windy" aria-labelledby="kugenuma-windy-title" data-windy-active="waves">
+    <section class="forecast-section kugenuma-windy" id="kugenuma-windy" aria-labelledby="kugenuma-windy-title" data-windy-active="wind">
       <style>
         .kugenuma-windy{scroll-margin-top:92px}
         .kugenuma-windy__switch{display:flex;gap:8px;margin:12px 0 14px}
@@ -393,13 +393,13 @@ function buildKugenumaWindy(): string
       <div class="section-title"><h2 id="kugenuma-windy-title">Windy｜波・風マップ</h2></div>
       <p class="forecast-note">鵠沼周辺の波とうねり・風向風速を地図で確認できます。</p>
       <div class="kugenuma-windy__switch" role="group" aria-label="Windyマップの表示切替">
-        <button type="button" data-windy-layer="waves" aria-pressed="true">波</button>
-        <button type="button" data-windy-layer="wind" aria-pressed="false">風</button>
+        <button type="button" data-windy-layer="waves" aria-pressed="false">波</button>
+        <button type="button" data-windy-layer="wind" aria-pressed="true">風</button>
       </div>
       <div class="kugenuma-windy__frame">
-        <iframe data-windy-frame title="Windy 鵠沼周辺の波予報" src="https://embed.windy.com/embed2.html?lat=35.3148611&amp;lon=139.4708889&amp;detailLat=35.3148611&amp;detailLon=139.4708889&amp;zoom=9&amp;level=surface&amp;overlay=waves&amp;product=ecmwfWaves&amp;menu=true&amp;message=false&amp;marker=true&amp;calendar=now&amp;pressure=false&amp;type=map&amp;location=coordinates&amp;detail=false&amp;metricWind=m%2Fs&amp;metricTemp=%C2%B0C&amp;radarRange=-1" width="650" height="450" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+        <iframe data-windy-frame title="Windy 鵠沼周辺の風予報" src="https://embed.windy.com/embed2.html?lat=35.3148611&amp;lon=139.4708889&amp;detailLat=35.3148611&amp;detailLon=139.4708889&amp;zoom=9&amp;level=surface&amp;overlay=wind&amp;product=ecmwf&amp;menu=true&amp;message=false&amp;marker=true&amp;calendar=now&amp;pressure=false&amp;type=map&amp;location=coordinates&amp;detail=false&amp;metricWind=m%2Fs&amp;metricTemp=%C2%B0C&amp;radarRange=-1" width="650" height="450" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
       </div>
-      <p class="kugenuma-windy__note">Windy提供の予報です。上のOpen-Meteoグラフとはモデル・更新時刻が異なる場合があります。表示されない場合は <a href="https://www.windy.com/?waves,35.315,139.471,9" target="_blank" rel="noopener noreferrer">Windy公式サイトで見る</a>。</p>
+      <p class="kugenuma-windy__note">Windy提供の予報です。上のOpen-Meteoグラフとはモデル・更新時刻が異なる場合があります。表示されない場合は <a href="https://www.windy.com/?wind,35.315,139.471,9" target="_blank" rel="noopener noreferrer">Windy公式サイトで見る</a>。</p>
     </section>
     <script>
       (function(){
