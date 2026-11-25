@@ -1,0 +1,192 @@
+{
+  "schema_version": 2,
+  "slot": "evening",
+  "date": "2026-11-26",
+  "generated_at": "2026-11-25T19:30:57+09:00",
+  "status": "partial",
+  "rankings": [],
+  "reports": {
+    "kugenuma": {
+      "title": "鵠沼 11月26日の波予報",
+      "summary": "23日生成のKS予報では朝は小さな海上波高で、11時には南西5.87m/s。南向きの海岸では早朝の北東風が比較的有利だが、モデルが古く現地サイズは不明。",
+      "wave": "海上モデル0.42〜0.46m（7〜9時）",
+      "wind": "北東1.7m/s→南0.5m/s（7〜9時）",
+      "confidence": "low",
+      "basis": "forecast",
+      "paragraphs": [
+        "23日生成のKS予報では朝は小さな海上波高で、11時には南西5.87m/s。南向きの海岸では早朝の北東風が比較的有利だが、モデルが古く現地サイズは不明。",
+        "気象庁の神奈川県東部予報では北風から南西風へ変化し、沿岸波高は1mから1.5m。朝の現地確認を優先し、潮位・うねり方向は未確認。"
+      ],
+      "sources": [
+        {
+          "name": "KS地点別時系列",
+          "url": "https://kanto.rss7.net/data/kugenuma.json",
+          "upstream": "Open-Meteo",
+          "scope": "spot",
+          "kind": "forecast",
+          "target_date": "2026-11-26",
+          "issued_at": null,
+          "checked_at": "2026-11-25T19:30:57+09:00"
+        },
+        {
+          "name": "神奈川県東部予報（気象庁発表の転載）",
+          "url": "https://weather.3rd-in.co.jp/station/code/2500216",
+          "upstream": "気象庁",
+          "scope": "region",
+          "kind": "forecast",
+          "target_date": "2026-11-26",
+          "issued_at": null,
+          "checked_at": "2026-11-25T19:30:57+09:00"
+        }
+      ],
+      "warning": "25日18:15更新の海上情報では関東海域北部に強風警報、南部にも風の警報。26日も沖合は高波予報。現地の最新注意報・離岸流を確認し、無理な入水は避ける。"
+    },
+    "oarai_onuki": {
+      "title": "大洗・大貫 11月26日の波予報",
+      "summary": "大洗サンビーチの予報では朝は弱い陸寄りの風が見込まれる。南東向きの大貫では北西風が有利だが、正確な地点のブレイクは未確認。",
+      "wave": "モデル予報：適度な波、周期約9秒",
+      "wind": "モデル予報：1〜3m/s",
+      "confidence": "low",
+      "basis": "forecast",
+      "paragraphs": [
+        "大洗サンビーチの予報では朝は弱い陸寄りの風が見込まれる。南東向きの大貫では北西風が有利だが、正確な地点のブレイクは未確認。",
+        "朝の下げ潮が予想されるが、独立した潮汐発表元は確認できていない。沖合の高波と強風に注意。"
+      ],
+      "sources": [
+        {
+          "name": "Surf-OK地点別予報",
+          "url": "https://surf-ok.jp/forecast/oarai-sunbeach/",
+          "upstream": "Open-Meteo",
+          "scope": "spot",
+          "kind": "forecast",
+          "target_date": "2026-11-26",
+          "issued_at": null,
+          "checked_at": "2026-11-25T19:30:57+09:00"
+        },
+        {
+          "name": "第三管区 海上予報",
+          "url": "https://www6.kaiho.mlit.go.jp/03kanku/keihou_kaijou.html",
+          "upstream": "気象庁",
+          "scope": "region",
+          "kind": "forecast",
+          "target_date": "2026-11-26",
+          "issued_at": null,
+          "checked_at": "2026-11-25T19:30:57+09:00"
+        },
+        null
+      ],
+      "warning": "25日18:15更新の海上情報では関東海域北部に強風警報、南部にも風の警報。26日も沖合は高波予報。現地の最新注意報・離岸流を確認し、無理な入水は避ける。"
+    },
+    "ichinomiya": {
+      "title": "一宮 11月26日の波予報",
+      "summary": "朝は西寄りの弱風で東向きの海岸には比較的有利。南南西の波向、周期7.6〜8秒のモデル予報だが、海岸への入り方は不確実。",
+      "wave": "海上モデル1.00〜1.06m（7〜10時）",
+      "wind": "西〜西南西1.1〜2.3m/s",
+      "confidence": "low",
+      "basis": "forecast",
+      "paragraphs": [
+        "朝は西寄りの弱風で東向きの海岸には比較的有利。南南西の波向、周期7.6〜8秒のモデル予報だが、海岸への入り方は不確実。",
+        "勝浦基準の潮位予報は7時143cmから10時104cmへ低下。朝の下げ潮を確認候補とするが、沖合の荒れと流れに注意。"
+      ],
+      "sources": [
+        {
+          "name": "Surf-OK地点別予報",
+          "url": "https://surf-ok.jp/forecast/ichinomiya/",
+          "upstream": "Open-Meteo",
+          "scope": "spot",
+          "kind": "forecast",
+          "target_date": "2026-11-26",
+          "issued_at": null,
+          "checked_at": "2026-11-25T19:30:57+09:00"
+        },
+        {
+          "name": "第三管区 海上予報",
+          "url": "https://www6.kaiho.mlit.go.jp/03kanku/keihou_kaijou.html",
+          "upstream": "気象庁",
+          "scope": "region",
+          "kind": "forecast",
+          "target_date": "2026-11-26",
+          "issued_at": null,
+          "checked_at": "2026-11-25T19:30:57+09:00"
+        }
+      ],
+      "warning": "25日18:15更新の海上情報では関東海域北部に強風警報、南部にも風の警報。26日も沖合は高波予報。現地の最新注意報・離岸流を確認し、無理な入水は避ける。"
+    },
+    "taito": {
+      "title": "太東 11月26日の波予報",
+      "summary": "朝は西寄りの風で面が整う可能性がある。ただし南南西の波向は東〜北東向きの太東に入りにくい場合があり、海上波高を実際のサイズに換算できない。",
+      "wave": "海上モデル1.24〜1.38m（7〜10時）",
+      "wind": "西〜西南西1.5〜2.6m/s",
+      "confidence": "low",
+      "basis": "forecast",
+      "paragraphs": [
+        "朝は西寄りの風で面が整う可能性がある。ただし南南西の波向は東〜北東向きの太東に入りにくい場合があり、海上波高を実際のサイズに換算できない。",
+        "勝浦基準の潮位は7時143cmから10時104cmへ低下。朝の現地確認候補だが、堤防周辺の流れと沖合の高波に注意。"
+      ],
+      "sources": [
+        {
+          "name": "Surf-OK地点別予報",
+          "url": "https://surf-ok.jp/forecast/taito/",
+          "upstream": "Open-Meteo",
+          "scope": "spot",
+          "kind": "forecast",
+          "target_date": "2026-11-26",
+          "issued_at": null,
+          "checked_at": "2026-11-25T19:30:57+09:00"
+        },
+        {
+          "name": "第三管区 海上予報",
+          "url": "https://www6.kaiho.mlit.go.jp/03kanku/keihou_kaijou.html",
+          "upstream": "気象庁",
+          "scope": "region",
+          "kind": "forecast",
+          "target_date": "2026-11-26",
+          "issued_at": null,
+          "checked_at": "2026-11-25T19:30:57+09:00"
+        }
+      ],
+      "warning": "25日18:15更新の海上情報では関東海域北部に強風警報、南部にも風の警報。26日も沖合は高波予報。現地の最新注意報・離岸流を確認し、無理な入水は避ける。"
+    },
+    "onjuku": {
+      "title": "御宿 11月26日の波予報",
+      "summary": "南南西の波向、周期6.7〜7.3秒。南東向きの湾では波の入り方に差が出る可能性があり、西南西風の強まりも面の悪化要因。",
+      "wave": "海上モデル1.44〜1.64m（7〜10時）",
+      "wind": "西南西3.1〜5.1m/s",
+      "confidence": "low",
+      "basis": "forecast",
+      "paragraphs": [
+        "南南西の波向、周期6.7〜7.3秒。南東向きの湾では波の入り方に差が出る可能性があり、西南西風の強まりも面の悪化要因。",
+        "勝浦基準の潮位は朝に下がる予報。日出後の早い時間に陸上から確認し、強い流れや荒れがあれば見送る。"
+      ],
+      "sources": [
+        {
+          "name": "Surf-OK地点別予報",
+          "url": "https://surf-ok.jp/forecast/onjuku-main/",
+          "upstream": "Open-Meteo",
+          "scope": "spot",
+          "kind": "forecast",
+          "target_date": "2026-11-26",
+          "issued_at": null,
+          "checked_at": "2026-11-25T19:30:57+09:00"
+        },
+        {
+          "name": "第三管区 海上予報",
+          "url": "https://www6.kaiho.mlit.go.jp/03kanku/keihou_kaijou.html",
+          "upstream": "気象庁",
+          "scope": "region",
+          "kind": "forecast",
+          "target_date": "2026-11-26",
+          "issued_at": null,
+          "checked_at": "2026-11-25T19:30:57+09:00"
+        }
+      ],
+      "warning": "25日18:15更新の海上情報では関東海域北部に強風警報、南部にも風の警報。26日も沖合は高波予報。現地の最新注意報・離岸流を確認し、無理な入水は避ける。"
+    }
+  },
+  "missing": {
+    "yuigahama": "海天気の対象日予報は確認したが上流発表元を特定できず、独立性を確認できない。KS時系列に対象日なし。",
+    "kashima_hirai": "KS時系列に対象日なし。平井固有の対象日波予報を確認できない。",
+    "katakai": "KS時系列に対象日なし。新堤の対象日予報を確認できず、漁港の別地点情報は代用しない。",
+    "kamogawa_maruki": "KS時系列に対象日なし。マルキ固有の対象日波予報を確認できない。"
+  }
+}
