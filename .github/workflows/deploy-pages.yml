@@ -9,6 +9,8 @@ on:
       - 'content/approved/**'
       - 'content/research/**'
       - 'scripts/render_daily_research.cjs'
+      - 'scripts/render_research_v2.cjs'
+      - 'tests/research_v2_smoke.cjs'
       - 'tests/research_best9_smoke.cjs'
       - 'prototype/spot-forecast/**'
       - 'scripts/fetch_open_meteo.php'
@@ -27,6 +29,8 @@ on:
       - 'content/approved/**'
       - 'content/research/**'
       - 'scripts/render_daily_research.cjs'
+      - 'scripts/render_research_v2.cjs'
+      - 'tests/research_v2_smoke.cjs'
       - 'tests/research_best9_smoke.cjs'
       - 'prototype/spot-forecast/**'
       - 'scripts/fetch_open_meteo.php'
@@ -74,6 +78,8 @@ jobs:
           node --check prototype/spot-forecast/app.js
           node --check scripts/render_daily_research.cjs
           node tests/research_best9_smoke.cjs
+          node --check scripts/render_research_v2.cjs
+          node tests/research_v2_smoke.cjs
 
       - name: Fetch 8-day Open-Meteo forecast
         run: php scripts/fetch_open_meteo.php --output-dir="$RUNNER_TEMP/raw"
@@ -87,17 +93,8 @@ jobs:
       - name: Build Pages site
         run: php scripts/build_pages_site.php --public-dir="$RUNNER_TEMP/public" --output-dir="$RUNNER_TEMP/site"
 
-      - name: Insert validated current-day researched BEST9 and nine articles
-        shell: bash
-        run: |
-          set -euo pipefail
-          REPORT='content/research/latest.json'
-          TODAY="$(TZ=Asia/Tokyo date +%F)"
-          if [[ -f "$REPORT" ]] && jq -e --arg d "$TODAY" '.schema_version == 1 and .status == "published" and .date == $d' "$REPORT" >/dev/null; then
-            node scripts/render_daily_research.cjs --root "$RUNNER_TEMP/site" --data "$REPORT" --config config/representative-spots.json --date "$TODAY"
-          else
-            echo 'No approved research for the current JST date; omit ranking and new articles.'
-          fi
+      - name: Insert validated morning and evening research
+        run: node scripts/render_research_v2.cjs --root "$RUNNER_TEMP/site" --research-dir content/research --config config/representative-spots.json
 
       - name: Verify Pages artifact
         run: |
