@@ -13,12 +13,15 @@ $inputPath = $options['input'] ?? ($projectRoot . '/data/normalized/latest.json'
 $outputDir = $options['output-dir'] ?? ($projectRoot . '/data/public');
 $validationDir = $options['validation-dir'] ?? ($projectRoot . '/data/validation');
 $hourlyHours = isset($options['hourly-hours']) ? (int)$options['hourly-hours'] : 48;
-$hourlyStep = isset($options['hourly-step']) ? (int)$options['hourly-step'] : 2;
+$hourlyStep = isset($options['hourly-step']) ? (int)$options['hourly-step'] : 1;
 $weeklyDays = isset($options['weekly-days']) ? (int)$options['weekly-days'] : 8;
 $dailyDays = isset($options['daily-days']) ? (int)$options['daily-days'] : 10;
 
 if ($hourlyHours < 1 || $hourlyStep < 1 || $weeklyDays < 1 || $dailyDays < 1) {
     fail('hourly-hours, hourly-step, weekly-days and daily-days must all be >= 1.');
+}
+if ($hourlyStep !== 1) {
+    fail('All nine spots use 1-hour model slots; --hourly-step must be 1.');
 }
 
 $normalized = readJson($inputPath);
