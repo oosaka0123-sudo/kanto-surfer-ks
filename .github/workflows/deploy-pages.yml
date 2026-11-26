@@ -136,8 +136,8 @@ jobs:
             grep -q 'data-spot-advice' "$page"
             grep -q 'data-tide-rain-grid' "$page"
             grep -q '駐車場' "$page"
-            ! grep -q 'kugenuma-hero-muted.mp4' "$page"
-            ! grep -q '35.3148611' "$page"
+            if grep -q 'kugenuma-hero-muted.mp4' "$page"; then echo "Unexpected Kugenuma footage in $page" >&2; exit 1; fi
+            if grep -q '35.3148611' "$page"; then echo "Unexpected Kugenuma coordinates in $page" >&2; exit 1; fi
           done
           jq -e 'all(.hourly[]; has("precipitation_probability_pct"))' "$RUNNER_TEMP/site/data/kugenuma.json" >/dev/null
           test -f "$RUNNER_TEMP/site/app.js"
