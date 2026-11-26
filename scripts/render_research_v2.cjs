@@ -70,7 +70,7 @@ function read(slot,date) {
   return d;
 }
 const morning=read('morning',today), prior=read('evening',today), evening=read('evening',tomorrow);
-const style='<style id="ks-research-v2-css">.ks-research{width:min(calc(100% - 16px),1040px);margin:18px auto;padding:14px;box-sizing:border-box;background:#092735;color:#f3faff;border:1px solid #315563;border-radius:10px;overflow-wrap:anywhere}.ks-research h2{font-size:clamp(19px,4.8vw,26px);line-height:1.5;margin:0 0 8px}.ks-research h3{font-size:18px;margin:12px 0 6px}.ks-research p,.ks-research li{font-size:14px;line-height:1.7;margin:6px 0}.ks-research a{color:#b8e9ff}.ks-research ol{padding-left:1.5em}.ks-research .ks-note{font-size:12px;color:#bdd4df}.ks-research .ks-slot+.ks-slot{border-top:1px solid #315563;margin-top:16px;padding-top:16px}</style>';
+const style='<style id="ks-research-v2-css">.ks-research{width:min(calc(100% - 16px),1040px);margin:18px auto;padding:14px;box-sizing:border-box;background:#092735;color:#f3faff;border:1px solid #315563;border-radius:10px;overflow-wrap:anywhere}.ks-research h2{font-size:clamp(19px,4.8vw,26px);line-height:1.5;margin:0 0 8px}.ks-research h3{font-size:18px;margin:12px 0 6px}.ks-research p,.ks-research li{font-family:system-ui,"Yu Gothic",sans-serif;font-size:14px;line-height:1.85;margin:8px 0}.ks-research a{color:#b8e9ff}.ks-research ol{padding-left:1.5em}.ks-research .ks-note{font-size:12px;color:#bdd4df}.ks-research .ks-slot+.ks-slot{border-top:1px solid #315563;margin-top:16px;padding-top:16px}</style>';
 const label = d => d.slot==='morning'?'当日朝の調査':'前日夜の予報';
 const stamp = d => '<p class="ks-note">'+esc(d.date)+' 対象｜'+esc(d.generated_at.slice(0,16).replace('T',' '))+' JST 更新｜'+label(d)+'</p>';
 const safeNote='<p class="ks-note">海上モデル波高は現地ブレイクサイズとは異なります。予報・順位は安全性を保証しません。現地状況と最新の注意報を確認してください。</p>';
@@ -82,21 +82,29 @@ function ranked(d){
     return '<li><a href="spots/'+esc(s.slug)+'/"><strong>'+esc(s.display_name)+'</strong></a> '+esc(v.wave)+'｜'+esc(v.wind)+'<p>'+esc(r.summary)+'</p></li>';
   }).join('')+'</ol>';
 }
+function candidates(d) {
+  if (!d || !Object.keys(d.reports).length) return '';
+  return '<h3>確認できたポイント（順位なし）</h3><ul class="ks-candidates">'+spots.filter(s=>d.reports[s.id]).map(s=>{
+    const r=d.reports[s.id]; return '<li><a href="spots/'+esc(s.slug)+'/"><strong>'+esc(s.display_name)+'</strong></a><br>'+esc(r.wave)+'｜'+esc(r.wind)+'</li>';
+  }).join('')+'</ul>';
+}
 function homeDay(day,d,fallback){
   let out=heading(day,'関東 波ランキング BEST9');
   if(d?.status==='published') return out+stamp(d)+ranked(d);
   if(d) out+=stamp(d)+'<p>ランキング保留（確認済み '+Object.keys(d.reports).length+'/9 地点）。確認できた個別記事は各地点で掲載します。</p>';
   else out+='<p>最新の調査結果は未掲載です。</p>';
+  if(d) out+=candidates(d);
   if(fallback?.status==='published') out+='<h3>参考：昨夜の予報ランキング</h3>'+stamp(fallback)+ranked(fallback);
+  else if(fallback?.status==='partial') out+='<h3>参考：昨夜の予報</h3>'+stamp(fallback)+candidates(fallback);
   return out;
 }
 function reportMarkup(d,s){
   const r=d.reports[s.id];
   const basis={forecast:'予報・推定',observed:'現地観測',mixed:'観測と予報を区別して掲載'}[r.basis];
-  return stamp(d)+'<h3>'+esc(r.title)+'</h3><p><strong>'+esc(r.wave)+'｜'+esc(r.wind)+'</strong></p><p class="ks-note">'+basis+'｜確度 '+esc(r.confidence)+'</p><p>'+esc(r.summary)+'</p>'+
-    r.paragraphs.map(p=>'<p>'+esc(p)+'</p>').join('')+
+  return stamp(d)+'<h3>'+esc(r.title)+'</h3><p><strong>'+esc(r.wave)+'｜'+esc(r.wind)+'</strong></p><p class="ks-note">'+basis+'｜確度 '+({low:'低',medium:'中',high:'高'}[r.confidence])+'</p><p>'+esc(r.summary)+'</p>'+
+    r.paragraphs.filter(p=>p.trim()!==r.summary.trim()).map(p=>'<p>'+esc(p)+'</p>').join('')+
     (r.warning?'<p><strong>注意：</strong>'+esc(r.warning)+'</p>':'')+
-    '<details><summary>出典・確認時刻</summary><ul>'+r.sources.map(s=>'<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener noreferrer">'+esc(s.name)+'</a>（'+(s.scope==='spot'?'地点':'地域')+'・'+esc(s.kind)+'｜発表 '+esc(s.issued_at||'不明')+'｜確認 '+esc(s.checked_at)+'）</li>').join('')+'</ul></details>';
+    '<details><summary>出典・確認時刻</summary><ul>'+r.sources.map(s=>'<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener noreferrer">'+esc(s.name)+'</a>（'+(s.scope==='spot'?'地点':'地域')+'・'+({forecast:'予報',observed:'実況',official_warning:'注意報・警報',tide:'潮汐'}[s.kind])+'｜発表 '+esc(s.issued_at||'不明')+'｜確認 '+esc(s.checked_at)+'）</li>').join('')+'</ul></details>';
 }
 function spotDay(day,d,s,fallback){
   let out=heading(day,'波情報');
