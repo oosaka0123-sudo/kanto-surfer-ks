@@ -184,12 +184,13 @@ function buildForecastPage(
     $kugenumaPilot = !$homePage && $id === 'kugenuma';
     $yuigahamaPilot = !$homePage && $id === 'yuigahama';
     $ibarakiPilot = !$homePage && in_array($id, ['oarai_onuki', 'kashima_hirai'], true);
-    $spotPilot = $kugenumaPilot || $yuigahamaPilot || $ibarakiPilot;
+    $chibaPilot = !$homePage && in_array($id, ['katakai', 'ichinomiya', 'taito', 'onjuku', 'kamogawa_maruki'], true);
+    $spotPilot = $kugenumaPilot || $yuigahamaPilot || $ibarakiPilot || $chibaPilot;
     $pilotTop = ''; // Daily research v2 replaces the old fixed-date preview.
     $hero = $kugenumaPilot ? buildKugenumaVideoHero() :
-        ($yuigahamaPilot ? buildYuigahamaHero() : ($ibarakiPilot ? buildIbarakiHero($activeSpot) : ''));
+        ($yuigahamaPilot ? buildYuigahamaHero() : ($ibarakiPilot ? buildIbarakiHero($activeSpot) : ($chibaPilot ? buildChibaHero($activeSpot) : '')));
     $pilotBottom = $kugenumaPilot ? buildKugenumaBottom($context) :
-        ($yuigahamaPilot ? buildYuigahamaBottom($context) : ($ibarakiPilot ? buildIbarakiBottom($activeSpot, $context) : ''));
+        ($yuigahamaPilot ? buildYuigahamaBottom($context) : ($ibarakiPilot ? buildIbarakiBottom($activeSpot, $context) : ($chibaPilot ? buildChibaBottom($activeSpot, $context) : '')));
     if ($spotPilot) $context = '';
     $compactAttrs = $spotPilot ? ' data-compact-test="1"' : '';
     $compactDays = $spotPilot ? '<nav class="compact-days" aria-label="日付切替"><button type="button" data-compact-day="0" class="is-active" aria-pressed="true">今日</button><button type="button" data-compact-day="1" aria-pressed="false">明日</button><button type="button" data-compact-day="2" aria-pressed="false">明後日</button></nav>' : '';
@@ -217,8 +218,10 @@ function buildForecastPage(
             $compactExtras
         );
     }
-    if ($ibarakiPilot) {
-        $station = $id === 'oarai_onuki' ? ['D3', '大洗'] : ['D2', '鹿島'];
+    if ($ibarakiPilot || $chibaPilot) {
+        $station = $ibarakiPilot
+            ? ($id === 'oarai_onuki' ? ['D3', '大洗'] : ['D2', '鹿島'])
+            : ($id === 'katakai' ? ['CS', '銚子漁港'] : ['ZF', '勝浦']);
         $compactExtras = str_replace(
             ['kugenuma-tide-rain-title', 'stn=D8', '湘南港', '鵠沼の実測値ではありません'],
             [$id . '-tide-rain-title', 'stn=' . $station[0], $station[1], $name . 'の実測値ではありません'],
@@ -244,7 +247,7 @@ function buildForecastPage(
   <link rel="stylesheet" href="' . h($assetPrefix) . 'styles.css?v=' . h($styleVersion) . '">
   <script defer src="' . h($assetPrefix) . 'app.js?v=' . h($appVersion) . '"></script>
 </head>
-<body' . ($spotPilot ? ' class="kugenuma-landing' . ($yuigahamaPilot ? ' yuigahama-landing' : ($ibarakiPilot ? ' ibaraki-landing' : '')) . '"' : '') . '>
+<body' . ($spotPilot ? ' class="kugenuma-landing' . ($yuigahamaPilot ? ' yuigahama-landing' : ($ibarakiPilot ? ' ibaraki-landing' : ($chibaPilot ? ' chiba-landing' : ''))) . '"' : '') . '>
   <header class="site-header">
     <a class="brand" href="' . h($homeHref) . '" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a>
     ' . buildHeaderMenu($spotNavLinks, $assetPrefix) . '
@@ -274,9 +277,9 @@ function buildForecastPage(
       <p class="forecast-note" id="forecast-note" data-forecast-note>Open-Meteoの海洋モデル波高です。実際のブレイクサイズを直接示す値ではありません。</p>
     </section>
     ' . ($showDaily ? buildDailySection($name, $spotPilot ? '04' : '05') : '')
-      . ($kugenumaPilot ? buildKugenumaWindy() : ($yuigahamaPilot ? buildYuigahamaWindy() : ($ibarakiPilot ? buildIbarakiWindy($activeSpot) : '')))
+      . ($kugenumaPilot ? buildKugenumaWindy() : ($yuigahamaPilot ? buildYuigahamaWindy() : ($ibarakiPilot ? buildIbarakiWindy($activeSpot) : ($chibaPilot ? buildChibaWindy($activeSpot) : ''))))
       . $pilotBottom
-      . ($kugenumaPilot ? buildKugenumaAccessMap() : ($yuigahamaPilot ? buildYuigahamaAccessMap() : ($ibarakiPilot ? buildIbarakiAccessMap($activeSpot) : ''))) . '
+      . ($kugenumaPilot ? buildKugenumaAccessMap() : ($yuigahamaPilot ? buildYuigahamaAccessMap() : ($ibarakiPilot ? buildIbarakiAccessMap($activeSpot) : ($chibaPilot ? buildChibaAccessMap($activeSpot) : '')))) . '
   </main>
   <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="' . h($trustPrefix) . 'about/">サイト概要</a><a href="' . h($trustPrefix) . 'contact/">お問い合わせ</a><a href="' . h($trustPrefix) . 'privacy/">プライバシー</a></nav></footer>
 </body>
@@ -693,6 +696,140 @@ function buildIbarakiBottom(array $spot, string $context): string
     );
 }
 
+
+/**
+ * Final five Chiba surf breaks. Maps and routes are distinct from Open-Meteo grid coordinates.
+ * Camera links are external-provider directories: never imply free, current or spot-exact feeds.
+ */
+function chibaPageMeta(string $id): array
+{
+    $lookup = [
+        'katakai' => [
+            'station' => '銚子漁港',
+            'camera' => 'https://www.bcm-surfpatrol.com/livecam/',
+            'camera_label' => 'BCM・片貝漁港周辺カメラ一覧',
+            'map_query' => '千葉県九十九里町 片貝新堤 サーフポイント',
+            'parking' => '片貝新堤付近の駐車場',
+            'destination' => '千葉県山武郡九十九里町片貝 片貝新堤 駐車場',
+            'intro' => '千葉県九十九里町の片貝新堤周辺。堤防沿いのポイントで潮位や風向によって波質が変わります。',
+            'caution' => '漁港・堤防周辺では立入禁止区域や強い流れに注意し、指定の駐車場とローカルルールを確認してください。',
+        ],
+        'ichinomiya' => [
+            'station' => '勝浦',
+            'camera' => 'https://www.bcm-surfpatrol.com/livecam/',
+            'camera_label' => 'BCM・一宮北側カメラ一覧',
+            'map_query' => '千葉県長生郡一宮町 一宮海岸 サーフィン',
+            'parking' => '一宮海岸駐車場',
+            'destination' => '千葉県長生郡一宮町 一宮海岸駐車場',
+            'intro' => '千葉県一宮町の一宮海岸。外房のオープンなビーチブレイクで、東向きのうねりを受けます。',
+            'caution' => '海水浴場の季節的な区分と駐車場の規制、混雑時の安全な入水動線を確認してください。',
+        ],
+        'taito' => [
+            'station' => '勝浦',
+            'camera' => 'https://www.bcm-surfpatrol.com/livecam/',
+            'camera_label' => 'BCM・太東堤防横カメラ一覧',
+            'map_query' => '千葉県いすみ市岬町中原 太東海水浴場',
+            'parking' => '太東海水浴場駐車場',
+            'destination' => '千葉県いすみ市岬町中原 太東海水浴場駐車場',
+            'intro' => '千葉県いすみ市の太東海水浴場。堤防周辺を含め多くのサーファーに利用される海岸です。',
+            'caution' => '海水浴場開設中は遊泳区域の規制があり、周辺道路にも一方通行などの臨時規制が設定される場合があります。',
+        ],
+        'onjuku' => [
+            'station' => '勝浦',
+            'camera' => 'https://www.bcm-surfpatrol.com/livecam/',
+            'camera_label' => 'BCM・御宿岩和田周辺カメラ一覧',
+            'map_query' => '千葉県夷隅郡御宿町 御宿中央海岸',
+            'parking' => '御宿中央海岸町営駐車場',
+            'destination' => '千葉県夷隅郡御宿町浜2163-112 御宿中央海岸駐車場',
+            'intro' => '千葉県御宿町の御宿中央海岸。白い砂浜が続くビーチで、砂の地形と潮位によって波質が変わります。',
+            'caution' => '夏季の遊泳区域・町営駐車場の料金や利用時間・離岸流に注意してください。',
+        ],
+        'kamogawa_maruki' => [
+            'station' => '勝浦',
+            'camera' => 'https://www.bcm-surfpatrol.com/livecam/',
+            'camera_label' => 'BCM・鴨川マルキ周辺カメラ一覧',
+            'map_query' => '千葉県鴨川市東町 マルキ サーフポイント',
+            'parking' => 'マルキ・東条海岸周辺駐車場',
+            'destination' => '千葉県鴨川市東町 マルキ 東条海岸 駐車場',
+            'intro' => '千葉県鴨川市東町のマルキ。東条海岸沿いのサーフポイントで、季節とうねりによって波の形が変化します。',
+            'caution' => '海岸周辺の駐車・通行ルールに注意し、混雑、離岸流、潮位変化を確認してください。',
+        ],
+    ];
+    if (!isset($lookup[$id])) fail('Unknown Chiba spot: ' . $id);
+    return $lookup[$id];
+}
+
+function buildChibaHero(array $spot): string
+{
+    $name = (string)$spot['display_name'];
+    $html = buildKugenumaVideoHero();
+    $camera = buildKugenumaTop();
+    if (substr_count($html, $camera) !== 1) fail('Chiba hero camera mismatch');
+    $meta = chibaPageMeta((string)$spot['id']);
+    $cameraHtml = '<section class="forecast-section" aria-labelledby="camera-title">
+      <div class="section-title"><span class="section-number">02</span><h2 id="camera-title">ライブカメラ</h2></div>
+      <div class="forecast-panel" style="padding:1rem">
+        <p><a href="' . h($meta['camera']) . '" target="_blank" rel="noopener noreferrer">' . h($meta['camera_label']) . ' →</a></p>
+        <p class="forecast-note">映像は外部配信です。実際に対象ポイントを映しているか、配信時刻・会員条件・配信休止は提供元で確認してください。</p>
+      </div>
+    </section>';
+    $html = str_replace($camera, $cameraHtml, $html);
+    $html = preg_replace('~<video autoplay muted loop playsinline.*?</video>~s', '', $html, 1, $removed);
+    if ($removed !== 1) fail('Chiba hero video removal failed');
+    $html = str_replace('鵠沼（湘南）', h($name . '（' . $spot['region'] . '）'), $html);
+    $html = str_replace('鵠沼', h($name), $html);
+    return str_replace('data-kugenuma-advice', 'data-spot-advice', $html);
+}
+
+function buildChibaWindy(array $spot): string
+{
+    $id = (string)$spot['id'];
+    $lat = (string)$spot['latitude']; $lon = (string)$spot['longitude'];
+    return str_replace(
+        ['KUGENUMA_WINDY', 'kugenuma-windy', '鵠沼', '35.3148611', '139.4708889', '35.315,139.471'],
+        ['CHIBA_WINDY', $id . '-windy', h((string)$spot['display_name']), $lat, $lon, sprintf('%.3f,%.3f', (float)$lat, (float)$lon)],
+        buildKugenumaWindy()
+    );
+}
+
+function buildChibaAccessMap(array $spot): string
+{
+    $id = (string)$spot['id'];
+    $name = (string)$spot['display_name'];
+    $meta = chibaPageMeta($id);
+    $html = buildKugenumaAccessMap();
+    $html = str_replace(
+        ['KUGENUMA_GOOGLE_MAP', 'kugenuma-access-map', '湘南海岸公園サーフビレッジ（海岸側）',
+         '県立湘南海岸公園サーフビレッジ', '鵠沼海岸'],
+        ['CHIBA_GOOGLE_MAP', $id . '-access-map', h($meta['map_query']),
+         h($meta['map_query']), h($name)],
+        $html
+    );
+    $html = preg_replace('~href="https://www.google.com/maps/dir/\?api=1&amp;destination=[^"]+"~',
+        'href="https://www.google.com/maps/dir/?api=1&amp;destination=' . rawurlencode($meta['destination']) . '"', $html, 1, $linkCount);
+    $html = preg_replace('~src="https://www.google.com/maps\?q=[^"]+"~',
+        'src="https://www.google.com/maps?q=' . rawurlencode($meta['map_query']) . '&amp;z=15&amp;output=embed"', $html, 1, $mapCount);
+    if ($linkCount !== 1 || $mapCount !== 1) fail('Chiba map frame or route mismatch: ' . $id);
+    $html = str_replace($name . ' Googleマップ', $name . ' Googleマップ', $html);
+    $html = str_replace($name . 'へのアクセス・周辺地図',
+        '海岸周辺地図と' . h($meta['parking']) . 'への経路案内。地図のピンと経路目的地は別地点の可能性があります。', $html);
+    $html = str_replace($name . 'へ行く（Googleマップ）', h($meta['parking']) . 'へ行く（Googleマップ）', $html);
+    $html = str_replace('Googleマップで' . $name . 'への経路案内を開く',
+        'Googleマップで' . h($meta['parking']) . 'への経路案内を開く', $html);
+    return $html;
+}
+
+function buildChibaBottom(array $spot, string $context): string
+{
+    $meta = chibaPageMeta((string)$spot['id']);
+    $html = buildKugenumaBottom($context);
+    return str_replace(
+        ['神奈川県藤沢市・湘南の砂地のビーチブレイク。引地川河口周辺などでサーフィンが行われます。',
+         '比較的穏やかな日には初心者にも親しまれますが、混雑、離岸流、海水浴期間の規制には注意してください。'],
+        [h($meta['intro']), h($meta['caution'])],
+        $html
+    );
+}
 
 /**
  * 10日間の波・風予報（日別6列表）。値は build_public_forecast.php が生成する payload.daily を
