@@ -1,0 +1,262 @@
+{
+  "schema_version": 2,
+  "slot": "evening",
+  "date": "2026-11-27",
+  "generated_at": "2026-11-26T19:33:20+09:00",
+  "status": "partial",
+  "rankings": [],
+  "reports": {
+    "kugenuma": {
+      "title": "下げ潮で割れる場所を探す",
+      "summary": "鵠沼は下げ潮で割れる場所を探す。現地実況ではなく翌日予報に基づく判断。",
+      "wave": "小波傾向（予報）",
+      "wind": "北→南寄り（地域予報）",
+      "confidence": "low",
+      "basis": "forecast",
+      "paragraphs": [
+        "周期約6.6秒のモデル予報。南向きの海岸では朝の北風が面を整える方向だが、うねりの力は弱そう。",
+        "潮が引いて割れ始めるピークを確認したい。午後の南風が入る前が候補で、ショートでの遠征は期待を抑えたい。"
+      ],
+      "sources": [
+        {
+          "name": "Surf-OK 地点モデル予報",
+          "url": "https://surf-ok.jp/forecast/kugenuma/",
+          "upstream": "Open-Meteo",
+          "scope": "spot",
+          "kind": "forecast",
+          "target_date": "2026-11-27",
+          "issued_at": "2026-11-26T16:30:00+09:00",
+          "checked_at": "2026-11-26T19:33:20+09:00"
+        },
+        {
+          "name": "気象庁 府県天気予報",
+          "url": "https://www.jma.go.jp/bosai/forecast/data/forecast/140000.json",
+          "upstream": "気象庁",
+          "scope": "region",
+          "kind": "forecast",
+          "target_date": "2026-11-27",
+          "issued_at": "2026-11-26T17:00:00+09:00",
+          "checked_at": "2026-11-26T19:33:20+09:00"
+        }
+      ]
+    },
+    "yuigahama": {
+      "title": "小波、朝の風が弱いうちに確認",
+      "summary": "由比ヶ浜は小波、朝の風が弱いうちに確認。現地実況ではなく翌日予報に基づく判断。",
+      "wave": "海上0.42〜0.48m（6〜10時予報）",
+      "wind": "北→南寄り（地域予報）",
+      "confidence": "low",
+      "basis": "forecast",
+      "paragraphs": [
+        "KSモデルでは朝の周期が約4秒と短く、波高も昼へ低下する。湾内では押しの弱い波になる可能性がある。",
+        "北風の時間に潮が引いて割れる場所を探したいが、無理に遠征する条件ではない。"
+      ],
+      "sources": [
+        {
+          "name": "KS 時系列予報",
+          "url": "https://kanto.rss7.net/data/yuigahama.json",
+          "upstream": "Open-Meteo",
+          "scope": "spot",
+          "kind": "forecast",
+          "target_date": "2026-11-27",
+          "issued_at": "2026-11-26T17:21:08+09:00",
+          "checked_at": "2026-11-26T19:33:20+09:00"
+        },
+        {
+          "name": "気象庁 府県天気予報",
+          "url": "https://www.jma.go.jp/bosai/forecast/data/forecast/140000.json",
+          "upstream": "気象庁",
+          "scope": "region",
+          "kind": "forecast",
+          "target_date": "2026-11-27",
+          "issued_at": "2026-11-26T17:00:00+09:00",
+          "checked_at": "2026-11-26T19:33:20+09:00"
+        }
+      ]
+    },
+    "oarai_onuki": {
+      "title": "午前の下げに期待",
+      "summary": "大洗・大貫は午前の下げに期待。現地実況ではなく翌日予報に基づく判断。",
+      "wave": "海上0.78〜0.80m（6〜10時予報）",
+      "wind": "約2〜2.4m/s（朝モデル）",
+      "confidence": "low",
+      "basis": "forecast",
+      "paragraphs": [
+        "KSモデルは周期8.7秒前後。南東向きの大貫はうねりが入れば湘南より押しが期待できるが、方向と実際のサイズは確定できない。",
+        "朝の満潮付近から下げに向かう時間を候補に、流れとセットの間隔を確認したい。",
+        "関東海域北部は沖合で西風と高波が残る予報。流れやセットに注意。"
+      ],
+      "sources": [
+        {
+          "name": "KS 時系列予報",
+          "url": "https://kanto.rss7.net/data/oarai_onuki.json",
+          "upstream": "Open-Meteo",
+          "scope": "spot",
+          "kind": "forecast",
+          "target_date": "2026-11-27",
+          "issued_at": "2026-11-26T17:37:02+09:00",
+          "checked_at": "2026-11-26T19:33:20+09:00"
+        },
+        {
+          "name": "気象庁 府県天気予報",
+          "url": "https://www.jma.go.jp/bosai/forecast/data/forecast/080000.json",
+          "upstream": "気象庁",
+          "scope": "region",
+          "kind": "forecast",
+          "target_date": "2026-11-27",
+          "issued_at": "2026-11-26T17:00:00+09:00",
+          "checked_at": "2026-11-26T19:33:20+09:00"
+        }
+      ],
+      "warning": "関東海域北部は沖合で西風と高波が残る予報。流れやセットに注意。"
+    },
+    "kashima_hirai": {
+      "title": "満潮後の割れ方を確認",
+      "summary": "鹿嶋・平井は満潮後の割れ方を確認。現地実況ではなく翌日予報に基づく判断。",
+      "wave": "海上0.55〜0.70m（朝予報）",
+      "wind": "約2〜3m/s（朝予報）",
+      "confidence": "low",
+      "basis": "forecast",
+      "paragraphs": [
+        "KSの周期は約8.6〜8.9秒。海天気の波浪予報は0.55mで、モデル間に差がある。北東向きの浜では南西風が有利だが、朝の風向は現地確認が必要。",
+        "満潮6:55、干潮11:16の予測。朝の厚い波が下げで割れ始めるかを見たい。",
+        "関東海域北部は沖合で西風と高波が残る予報。流れやセットに注意。"
+      ],
+      "sources": [
+        {
+          "name": "KS 時系列予報",
+          "url": "https://kanto.rss7.net/data/kashima_hirai.json",
+          "upstream": "Open-Meteo",
+          "scope": "spot",
+          "kind": "forecast",
+          "target_date": "2026-11-27",
+          "issued_at": "2026-11-26T17:37:02+09:00",
+          "checked_at": "2026-11-26T19:33:20+09:00"
+        },
+        {
+          "name": "気象庁 府県天気予報",
+          "url": "https://www.jma.go.jp/bosai/forecast/data/forecast/080000.json",
+          "upstream": "気象庁",
+          "scope": "region",
+          "kind": "forecast",
+          "target_date": "2026-11-27",
+          "issued_at": "2026-11-26T17:00:00+09:00",
+          "checked_at": "2026-11-26T19:33:20+09:00"
+        }
+      ],
+      "warning": "関東海域北部は沖合で西風と高波が残る予報。流れやセットに注意。"
+    },
+    "ichinomiya": {
+      "title": "西風の時間を優先",
+      "summary": "一宮は西風の時間を優先。現地実況ではなく翌日予報に基づく判断。",
+      "wave": "うねり残る見込み（予報）",
+      "wind": "西→南西（地域予報）",
+      "confidence": "low",
+      "basis": "forecast",
+      "paragraphs": [
+        "地点モデルでは朝より午後の評価が改善する傾向。東向きの海岸では西風が面を整える方向だが、セットの強さは現地次第。",
+        "朝の潮が多い時間に割れづらければ、午前後半の下げを待つ選択もある。",
+        "千葉太平洋沿岸は波が残る予報。高波・離岸流に注意し、最新注意報を確認。"
+      ],
+      "sources": [
+        {
+          "name": "Surf-OK 地点モデル予報",
+          "url": "https://surf-ok.jp/forecast/ichinomiya/",
+          "upstream": "Open-Meteo",
+          "scope": "spot",
+          "kind": "forecast",
+          "target_date": "2026-11-27",
+          "issued_at": "2026-11-26T09:31:00+09:00",
+          "checked_at": "2026-11-26T19:33:20+09:00"
+        },
+        {
+          "name": "気象庁 府県天気予報",
+          "url": "https://www.jma.go.jp/bosai/forecast/data/forecast/120000.json",
+          "upstream": "気象庁",
+          "scope": "region",
+          "kind": "forecast",
+          "target_date": "2026-11-27",
+          "issued_at": "2026-11-26T17:00:00+09:00",
+          "checked_at": "2026-11-26T19:33:20+09:00"
+        }
+      ],
+      "warning": "千葉太平洋沿岸は波が残る予報。高波・離岸流に注意し、最新注意報を確認。"
+    },
+    "taito": {
+      "title": "堤防横の下げ始めを確認",
+      "summary": "太東は堤防横の下げ始めを確認。現地実況ではなく翌日予報に基づく判断。",
+      "wave": "周期約7.8秒（モデル予報）",
+      "wind": "1〜3m/s（地点予報）",
+      "confidence": "low",
+      "basis": "forecast",
+      "paragraphs": [
+        "地点予報では朝の風は比較的弱く、午前はサイドオフ寄り。西〜南西風と東向きの地形の相性は比較的よい。",
+        "満潮後に割れやすくなる可能性がある。堤防付近の流れとセットを見て判断したい。",
+        "千葉太平洋沿岸は波が残る予報。高波・離岸流に注意し、最新注意報を確認。"
+      ],
+      "sources": [
+        {
+          "name": "Surf-OK 地点モデル予報",
+          "url": "https://surf-ok.jp/forecast/taito/",
+          "upstream": "Open-Meteo",
+          "scope": "spot",
+          "kind": "forecast",
+          "target_date": "2026-11-27",
+          "issued_at": "2026-11-26T09:31:00+09:00",
+          "checked_at": "2026-11-26T19:33:20+09:00"
+        },
+        {
+          "name": "気象庁 府県天気予報",
+          "url": "https://www.jma.go.jp/bosai/forecast/data/forecast/120000.json",
+          "upstream": "気象庁",
+          "scope": "region",
+          "kind": "forecast",
+          "target_date": "2026-11-27",
+          "issued_at": "2026-11-26T17:00:00+09:00",
+          "checked_at": "2026-11-26T19:33:20+09:00"
+        }
+      ],
+      "warning": "千葉太平洋沿岸は波が残る予報。高波・離岸流に注意し、最新注意報を確認。"
+    },
+    "onjuku": {
+      "title": "午前後半の下げを確認",
+      "summary": "御宿は午前後半の下げを確認。現地実況ではなく翌日予報に基づく判断。",
+      "wave": "周期約7.5秒（モデル予報）",
+      "wind": "1〜5m/s（地点予報）",
+      "confidence": "low",
+      "basis": "forecast",
+      "paragraphs": [
+        "中央付近のモデルでは午前に風が弱まり、面が整う可能性がある。南東向きの湾では西寄りの風が有利な場合がある。",
+        "潮が多い朝より下げ始めのピークを見たい。夷隅沿岸は沖の波が残る予報なので、湾内でも流れに注意。",
+        "千葉太平洋沿岸は波が残る予報。高波・離岸流に注意し、最新注意報を確認。"
+      ],
+      "sources": [
+        {
+          "name": "Surf-OK 地点モデル予報",
+          "url": "https://surf-ok.jp/forecast/onjuku-main/",
+          "upstream": "Open-Meteo",
+          "scope": "spot",
+          "kind": "forecast",
+          "target_date": "2026-11-27",
+          "issued_at": "2026-11-26T09:31:00+09:00",
+          "checked_at": "2026-11-26T19:33:20+09:00"
+        },
+        {
+          "name": "気象庁 府県天気予報",
+          "url": "https://www.jma.go.jp/bosai/forecast/data/forecast/120000.json",
+          "upstream": "気象庁",
+          "scope": "region",
+          "kind": "forecast",
+          "target_date": "2026-11-27",
+          "issued_at": "2026-11-26T17:00:00+09:00",
+          "checked_at": "2026-11-26T19:33:20+09:00"
+        }
+      ],
+      "warning": "千葉太平洋沿岸は波が残る予報。高波・離岸流に注意し、最新注意報を確認。"
+    }
+  },
+  "missing": {
+    "katakai": "新堤の地点固有予報が不足。近隣の片貝中央予報のみ確認、KS時系列は27日分なし。",
+    "kamogawa_maruki": "海天気の地点予報は取得したが上流モデルが不詳で、気象庁との独立性を確定できず、KS時系列も27日分なし。"
+  }
+}
