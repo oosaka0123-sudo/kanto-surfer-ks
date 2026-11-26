@@ -182,7 +182,7 @@ function buildForecastPage(
     }
 
     $kugenumaPilot = !$homePage && $id === 'kugenuma';
-    $pilotTop = $kugenumaPilot ? buildKugenumaAccessMap() . buildApprovedKugenumaArticle(dirname(__DIR__)) : '';
+    $pilotTop = ''; // Daily research v2 replaces the old fixed-date preview.
     $hero = $kugenumaPilot ? buildKugenumaVideoHero() : '';
     $pilotBottom = $kugenumaPilot ? buildKugenumaBottom($context) : '';
     if ($kugenumaPilot) $context = '';
@@ -253,7 +253,7 @@ function buildForecastPage(
       </div>
       <p class="forecast-note" id="forecast-note" data-forecast-note>Open-Meteoの海洋モデル波高です。実際のブレイクサイズを直接示す値ではありません。</p>
     </section>
-    ' . ($showDaily ? buildDailySection($name, $kugenumaPilot ? '04' : '05') : '') . ($kugenumaPilot ? buildKugenumaWindy() : '') . $pilotBottom . '
+    ' . ($showDaily ? buildDailySection($name, $kugenumaPilot ? '04' : '05') : '') . ($kugenumaPilot ? buildKugenumaWindy() : '') . $pilotBottom . ($kugenumaPilot ? buildKugenumaAccessMap() : '') . '
   </main>
   <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="' . h($trustPrefix) . 'about/">サイト概要</a><a href="' . h($trustPrefix) . 'contact/">お問い合わせ</a><a href="' . h($trustPrefix) . 'privacy/">プライバシー</a></nav></footer>
 </body>
