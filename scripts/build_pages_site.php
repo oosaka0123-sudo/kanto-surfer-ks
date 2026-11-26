@@ -535,9 +535,12 @@ function buildYuigahamaAccessMap(): string
     );
     // Use the independent near-shore public spot coordinates, never Kugenuma's access address.
     $coord = rawurlencode('35.3094444,139.5377778');
+    // Directions lead to a verified public access-side landmark, not an offshore model grid.
+    // 由比ガ浜地区（鎌倉海浜公園）: 鎌倉市由比ガ浜4-7-1.
+    $accessDestination = rawurlencode('神奈川県鎌倉市由比ガ浜4-7-1 鎌倉海浜公園 由比ガ浜地区');
     $html = preg_replace(
         '~href="https://www.google.com/maps/dir/\?api=1&amp;destination=[^"]+"~',
-        'href="https://www.google.com/maps/dir/?api=1&amp;destination=' . $coord . '"',
+        'href="https://www.google.com/maps/dir/?api=1&amp;destination=' . $accessDestination . '"',
         $html, 1, $hrefCount
     );
     $html = preg_replace(
@@ -546,6 +549,7 @@ function buildYuigahamaAccessMap(): string
         $html, 1, $frameCount
     );
     if ($hrefCount !== 1 || $frameCount !== 1) fail('Yuigahama map link replacement mismatch');
+    $html = str_replace('由比ヶ浜海岸へのアクセス・周辺地図', '鎌倉海浜公園（由比ガ浜地区）への経路案内・海岸周辺地図', $html);
     return $html;
 }
 
