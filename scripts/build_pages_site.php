@@ -709,6 +709,7 @@ function chibaPageMeta(string $id): array
             'camera' => 'https://www.bcm-surfpatrol.com/livecam/',
             'camera_label' => 'BCM・片貝漁港周辺カメラ一覧',
             'map_query' => '千葉県九十九里町 片貝新堤 サーフポイント',
+            'map_coords' => '35.52766,140.45285',
             'parking' => '片貝新堤付近の駐車場',
             'destination' => '千葉県山武郡九十九里町片貝 片貝新堤 駐車場',
             'intro' => '千葉県九十九里町の片貝新堤周辺。堤防沿いのポイントで潮位や風向によって波質が変わります。',
@@ -719,6 +720,7 @@ function chibaPageMeta(string $id): array
             'camera' => 'https://www.bcm-surfpatrol.com/livecam/',
             'camera_label' => 'BCM・一宮北側カメラ一覧',
             'map_query' => '千葉県長生郡一宮町 一宮海岸 サーフィン',
+            'map_coords' => '35.3780667,140.3912389',
             'parking' => '一宮海岸駐車場',
             'destination' => '千葉県長生郡一宮町 一宮海岸駐車場',
             'intro' => '千葉県一宮町の一宮海岸。外房のオープンなビーチブレイクで、東向きのうねりを受けます。',
@@ -729,6 +731,7 @@ function chibaPageMeta(string $id): array
             'camera' => 'https://www.bcm-surfpatrol.com/livecam/',
             'camera_label' => 'BCM・太東堤防横カメラ一覧',
             'map_query' => '千葉県いすみ市岬町中原 太東海水浴場',
+            'map_coords' => '35.3296278,140.3992972',
             'parking' => '太東海水浴場駐車場',
             'destination' => '千葉県いすみ市岬町中原 太東海水浴場駐車場',
             'intro' => '千葉県いすみ市の太東海水浴場。堤防周辺を含め多くのサーファーに利用される海岸です。',
@@ -739,6 +742,7 @@ function chibaPageMeta(string $id): array
             'camera' => 'https://www.bcm-surfpatrol.com/livecam/',
             'camera_label' => 'BCM・御宿岩和田周辺カメラ一覧',
             'map_query' => '千葉県夷隅郡御宿町 御宿中央海岸',
+            'map_coords' => '35.183358,140.356983',
             'parking' => '御宿中央海岸町営駐車場',
             'destination' => '千葉県夷隅郡御宿町浜2163-112 御宿中央海岸駐車場',
             'intro' => '千葉県御宿町の御宿中央海岸。白い砂浜が続くビーチで、砂の地形と潮位によって波質が変わります。',
@@ -749,6 +753,7 @@ function chibaPageMeta(string $id): array
             'camera' => 'https://www.bcm-surfpatrol.com/livecam/',
             'camera_label' => 'BCM・鴨川マルキ周辺カメラ一覧',
             'map_query' => '千葉県鴨川市東町 マルキ サーフポイント',
+            'map_coords' => '35.12166,140.13577',
             'parking' => 'マルキ・東条海岸周辺駐車場',
             'destination' => '千葉県鴨川市東町 マルキ 東条海岸 駐車場',
             'intro' => '千葉県鴨川市東町のマルキ。東条海岸沿いのサーフポイントで、季節とうねりによって波の形が変化します。',
@@ -808,7 +813,7 @@ function buildChibaAccessMap(array $spot): string
     $html = preg_replace('~href="https://www.google.com/maps/dir/\?api=1&amp;destination=[^"]+"~',
         'href="https://www.google.com/maps/dir/?api=1&amp;destination=' . rawurlencode($meta['destination']) . '"', $html, 1, $linkCount);
     $html = preg_replace('~src="https://www.google.com/maps\?q=[^"]+"~',
-        'src="https://www.google.com/maps?q=' . rawurlencode($meta['map_query']) . '&amp;z=15&amp;output=embed"', $html, 1, $mapCount);
+        'src="https://www.google.com/maps?q=' . rawurlencode($meta['map_coords']) . '&amp;z=15&amp;output=embed"', $html, 1, $mapCount);
     if ($linkCount !== 1 || $mapCount !== 1) fail('Chiba map frame or route mismatch: ' . $id);
     $html = str_replace($name . ' Googleマップ', $name . ' Googleマップ', $html);
     $html = str_replace($name . 'へのアクセス・周辺地図',
