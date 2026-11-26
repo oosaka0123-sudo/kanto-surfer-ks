@@ -665,7 +665,13 @@ function buildIbarakiAccessMap(array $spot): string
     );
     if ($linkCount !== 1 || $mapCount !== 1) fail('Ibaraki access map replacement mismatch');
     $html = str_replace($name . '海岸 Googleマップ', $name . ' Googleマップ', $html);
-    $html = str_replace($name . 'へのアクセス・周辺地図', '海岸周辺地図と公共駐車場への経路案内（目的地は地図のピンと異なる場合があります）', $html);
+    $parking = $oarai ? '大洗サンビーチ駐車場' : '平井海水浴場駐車場';
+    $html = str_replace($name . '海岸へのアクセス・周辺地図',
+        '海岸周辺地図と' . $parking . 'への経路案内（地図のピンと経路目的地は別地点です）', $html);
+    $html = str_replace($name . '海岸へ行く（Googleマップ）',
+        $parking . 'へ行く（Googleマップ）', $html);
+    $html = str_replace('Googleマップで' . $name . '海岸への経路案内を開く',
+        'Googleマップで' . $parking . 'への経路案内を開く', $html);
     return $html;
 }
 
