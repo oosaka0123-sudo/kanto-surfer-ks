@@ -53,11 +53,13 @@ foreach ($spots as $spotId => $spotEntry) {
     }
 
     $spotMeta = is_array($spotEntry['spot'] ?? null) ? $spotEntry['spot'] : ['id' => (string)$spotId];
-    // Only Kugenuma uses 1-hour slots during the UI alignment trial; the other eight stay 2-hour.
-    $spotStep = (string)$spotId === 'kugenuma' ? 1 : $hourlyStep;
-    // 72h covers 04:00-20:00 of the day after tomorrow, even just after midnight.
-    $spotHours = (string)$spotId === 'kugenuma' ? max(72, $hourlyHours) : $hourlyHours;
-    $hourly = buildHourly($hours, $now, $tz, $spotHours, $spotStep, (string)$spotId === 'kugenuma');
+    // First staged rollout: Kugenuma and Yuigahama use true 1-hour model slots.
+    // Other seven spots remain on the original 2-hour contract until their own rollout.
+    $compactPilot = in_array((string)$spotId, ['kugenuma', 'yuigahama'], true);
+    $spotStep = $compactPilot ? 1 : $hourlyStep;
+    // 72h covers 04:00-20:00 of the day after tomorrow, including today's past model slots.
+    $spotHours = $compactPilot ? max(72, $hourlyHours) : $hourlyHours;
+    $hourly = buildHourly($hours, $now, $tz, $spotHours, $spotStep, $compactPilot);
     $weekly = buildWeekly($hours, $now, $tz, $weeklyDays);
     $daily = buildDaily((string)$spotId, $hours, $now, $tz, $dailyDays, $normalized['source_generated_at'] ?? null);
     $observations = $verified[(string)$spotId] ?? [];
@@ -75,13 +77,14 @@ foreach ($spots as $spotId => $spotEntry) {
         'status' => $observations === [] ? 'model_only' : 'model_plus_verified_observation',
         'wave_metric_label' => 'モデル波高',
         'model_notice' => 'Open-Meteoの海洋モデル波高です。実際のブレイクサイズを直接示す値ではありません。' .
-            ((string)$spotId === 'kugenuma' ? ' 過去の時間も取得時点のモデル値で、実測記録や当時配信された予報の保存値ではありません。' : ''),
+            ($compactPilot ? ' 過去の時間も取得時点のモデル値で、実測記録や当時配信された予報の保存値ではありません。' : ''),
         'hourly' => $hourly,
         'weekly' => $weekly,
         'daily' => $daily,
         'verified_observations' => $observations,
     ];
-    if ((string)$spotId === 'kugenuma') {
+    if ($compactPilot) {
+        // Yuigahama uses Shonan Port as a *reference*, not Yuigahama's local observed tide.
         $payload['tide'] = buildShonanTides($projectRoot . '/data/tide-jma', $now, 42);
     }
 
@@ -103,10 +106,10 @@ function buildHourly(array $hours, DateTimeImmutable $now, DateTimeZone $tz, int
 {
     $selected = [];
     $limit = $now->modify('+' . $horizonHours . ' hours');
-    // Kugenuma's 1-hour graph shows today 04:00–20:00, including elapsed hours.
+    // The compact 1-hour graph shows today 04:00–20:00, including elapsed hours.
     // The forecast API returns today's model time series from midnight JST.
     // Do not synthesize past values; include only samples actually supplied by Open-Meteo.
-    // The other eight spots continue to publish future-only model forecasts.
+    // Non-pilot spots continue to publish future-only model forecasts.
     $start = $includeRain ? $now->setTime(0, 0, 0) : $now;
     $futureIndex = 0;
     $previous = [];
