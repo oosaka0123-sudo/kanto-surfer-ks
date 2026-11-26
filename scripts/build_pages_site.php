@@ -338,9 +338,6 @@ function buildKugenumaVideoHero(): string
         .kugenuma-video-hero .forecast-panel a{color:#fff;text-decoration:underline;text-underline-offset:3px}
         .kugenuma-video-hero .forecast-panel a:focus-visible{outline:2px solid #fff;outline-offset:3px}
         .kugenuma-video-hero .forecast-panel .forecast-note{margin:2px 0 8px;color:rgba(225,240,245,.82);font-size:11px;line-height:1.45}
-        .kugenuma-video-hero__map-link{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;max-width:420px;min-height:48px;box-sizing:border-box;margin:clamp(16px,3svh,26px) 0 0;padding:12px 16px;border:1px solid rgba(255,255,255,.8);border-radius:8px;background:rgba(4,24,36,.74);color:#fff;font:700 clamp(14px,3vw,17px)/1.4 "Yu Gothic",sans-serif;text-decoration:none;text-shadow:none;transition:background-color .18s ease}
-        .kugenuma-video-hero__map-link:hover,.kugenuma-video-hero__map-link:focus-visible{background:rgba(9,48,67,.96);outline:2px solid #fff;outline-offset:2px}
-        .kugenuma-video-hero__map-note{margin:6px 0 0;color:rgba(255,255,255,.83);font:400 11px/1.5 "Yu Gothic",sans-serif}
         @media(max-width:520px){
           .kugenuma-landing .site-header{height:76px;padding:0 16px}
           .kugenuma-video-hero{padding:110px 16px 24px}
@@ -360,8 +357,6 @@ function buildKugenumaVideoHero(): string
         <div class="kugenuma-video-hero__advice"><span class="section-number" aria-hidden="true">01</span><h2 id="advice-title">今日のアドバイス</h2></div>
         <div class="kugenuma-video-hero__advice-details" aria-labelledby="advice-title"><h3>今日の狙い方</h3><p data-kugenuma-advice aria-live="polite">最新の予報データを確認中です。</p><p class="forecast-note">モデル予報による目安です。入水の可否は現地の波・流れ・注意報等を確認して判断してください。</p></div>
         ' . buildKugenumaTop() . '
-        <a class="kugenuma-video-hero__map-link" href="https://www.google.com/maps/dir/?api=1&amp;destination=%E7%9C%8C%E7%AB%8B%E6%B9%98%E5%8D%97%E6%B5%B7%E5%B2%B8%E5%85%AC%E5%9C%92%20%E3%82%B5%E3%83%BC%E3%83%95%E3%83%93%E3%83%AC%E3%83%83%E3%82%B8%20%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C%E8%97%A4%E6%B2%A2%E5%B8%82%E9%B5%A0%E6%B2%BC%E6%B5%B7%E5%B2%B81-17-3" target="_blank" rel="noopener noreferrer" aria-label="Googleマップで鵠沼海岸への経路案内を開く">📍 鵠沼海岸へ行く（Googleマップ）</a>
-        <p class="kugenuma-video-hero__map-note">目的地：湘南海岸公園サーフビレッジ（海岸側）</p>
       </div>
     </section>
     <script>
@@ -431,12 +426,18 @@ function buildKugenumaAccessMap(): string
 {
     return '<!-- KUGENUMA_GOOGLE_MAP_START -->
     <section class="forecast-section kugenuma-access-map" id="kugenuma-access-map" aria-labelledby="kugenuma-access-map-title" style="margin-top:0;padding-top:24px;scroll-margin-top:92px">
+      <style>
+        .kugenuma-access-map__link{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;box-sizing:border-box;margin:14px 0 0;padding:12px 16px;border:1px solid rgba(255,255,255,.8);border-radius:8px;background:rgba(4,24,36,.74);color:#fff;font:700 clamp(14px,3vw,17px)/1.4 "Yu Gothic",sans-serif;text-decoration:none;text-align:center}
+        .kugenuma-access-map__link:hover,.kugenuma-access-map__link:focus-visible{background:rgba(9,48,67,.96);outline:2px solid #fff;outline-offset:2px}
+        .kugenuma-access-map__note{margin:12px 0;color:#b7ceda;font:400 13px/1.6 "Yu Gothic",sans-serif}
+      </style>
       <div class="section-title"><h2 id="kugenuma-access-map-title">鵠沼海岸 Googleマップ</h2></div>
-      <p class="forecast-note">県立湘南海岸公園サーフビレッジ付近の地図です。地図を動かして周辺を確認できます。</p>
+      <p class="kugenuma-access-map__note">目的地：湘南海岸公園サーフビレッジ（海岸側）。地図を動かして周辺を確認できます。</p>
       <div class="kugenuma-map-frame" style="width:100%;overflow:hidden;border-radius:10px;background:#dbe4e8">
         <iframe title="鵠沼海岸・県立湘南海岸公園サーフビレッジのGoogleマップ" src="https://www.google.com/maps?q=%E7%9C%8C%E7%AB%8B%E6%B9%98%E5%8D%97%E6%B5%B7%E5%B2%B8%E5%85%AC%E5%9C%92%20%E3%82%B5%E3%83%BC%E3%83%95%E3%83%93%E3%83%AC%E3%83%83%E3%82%B8%20%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C%E8%97%A4%E6%B2%A2%E5%B8%82%E9%B5%A0%E6%B2%BC%E6%B5%B7%E5%B2%B81-17-3&amp;z=15&amp;output=embed" width="600" height="400" style="display:block;width:100%;height:clamp(320px,85vw,440px);border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
       </div>
-      <p class="forecast-note">地図が表示されない場合は <a href="https://www.google.com/maps/dir/?api=1&amp;destination=%E7%9C%8C%E7%AB%8B%E6%B9%98%E5%8D%97%E6%B5%B7%E5%B2%B8%E5%85%AC%E5%9C%92%20%E3%82%B5%E3%83%BC%E3%83%95%E3%83%93%E3%83%AC%E3%83%83%E3%82%B8%20%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C%E8%97%A4%E6%B2%A2%E5%B8%82%E9%B5%A0%E6%B2%BC%E6%B5%B7%E5%B2%B81-17-3" target="_blank" rel="noopener noreferrer">Googleマップで経路案内を開く</a>。</p>
+      <a class="kugenuma-access-map__link" href="https://www.google.com/maps/dir/?api=1&amp;destination=%E7%9C%8C%E7%AB%8B%E6%B9%98%E5%8D%97%E6%B5%B7%E5%B2%B8%E5%85%AC%E5%9C%92%20%E3%82%B5%E3%83%BC%E3%83%95%E3%83%93%E3%83%AC%E3%83%83%E3%82%B8%20%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C%E8%97%A4%E6%B2%A2%E5%B8%82%E9%B5%A0%E6%B2%BC%E6%B5%B7%E5%B2%B81-17-3" target="_blank" rel="noopener noreferrer" aria-label="Googleマップで鵠沼海岸への経路案内を開く">📍 鵠沼海岸へ行く（Googleマップ）</a>
+      <p class="kugenuma-access-map__note">地図が表示されない場合も、上のボタンからGoogleマップを開けます。</p>
     </section>
     <!-- KUGENUMA_GOOGLE_MAP_END -->';
 }
