@@ -182,13 +182,15 @@ function buildForecastPage(
     }
 
     $kugenumaPilot = !$homePage && $id === 'kugenuma';
+    $yuigahamaPilot = !$homePage && $id === 'yuigahama';
+    $spotPilot = $kugenumaPilot || $yuigahamaPilot;
     $pilotTop = ''; // Daily research v2 replaces the old fixed-date preview.
-    $hero = $kugenumaPilot ? buildKugenumaVideoHero() : '';
-    $pilotBottom = $kugenumaPilot ? buildKugenumaBottom($context) : '';
-    if ($kugenumaPilot) $context = '';
-    $compactAttrs = (!$homePage && $id === 'kugenuma') ? ' data-compact-test="1"' : '';
-    $compactDays = (!$homePage && $id === 'kugenuma') ? '<nav class="compact-days" aria-label="日付切替"><button type="button" data-compact-day="0" class="is-active" aria-pressed="true">今日</button><button type="button" data-compact-day="1" aria-pressed="false">明日</button><button type="button" data-compact-day="2" aria-pressed="false">明後日</button></nav>' : '';
-    $compactExtras = (!$homePage && $id === 'kugenuma') ? '<div class="compact-extras" data-compact-extras>
+    $hero = $kugenumaPilot ? buildKugenumaVideoHero() : ($yuigahamaPilot ? buildYuigahamaHero() : '');
+    $pilotBottom = $kugenumaPilot ? buildKugenumaBottom($context) : ($yuigahamaPilot ? buildYuigahamaBottom($context) : '');
+    if ($spotPilot) $context = '';
+    $compactAttrs = $spotPilot ? ' data-compact-test="1"' : '';
+    $compactDays = $spotPilot ? '<nav class="compact-days" aria-label="日付切替"><button type="button" data-compact-day="0" class="is-active" aria-pressed="true">今日</button><button type="button" data-compact-day="1" aria-pressed="false">明日</button><button type="button" data-compact-day="2" aria-pressed="false">明後日</button></nav>' : '';
+    $compactExtras = $spotPilot ? '<div class="compact-extras" data-compact-extras>
   <section class="compact-extra-panel compact-tide-rain-panel" aria-labelledby="kugenuma-tide-rain-title">
     <div class="compact-tide-rain-header">
       <h3 id="kugenuma-tide-rain-title" class="compact-tide-rain-title"><span>潮位</span><i class="tide-line-chip" aria-hidden="true"></i><span class="compact-title-divider">−</span><span>降水量</span><i class="rain-bar-chip" aria-hidden="true"></i></h3>
@@ -205,6 +207,13 @@ function buildForecastPage(
     <p class="compact-tide-note">潮位は<a href="https://www.data.jma.go.jp/kaiyou/db/tide/suisan/suisan.php?stn=D8" target="_blank" rel="noopener noreferrer">気象庁・湘南港の天文潮位</a>（潮位表基準面上）。鵠沼の実測値ではありません。降水量・確率はOpen-Meteoのモデル予報。二つの量は別の目盛りです。過去の潮位線も推算値です。潮回りは旧暦換算による目安で、気象庁の公表値ではありません。</p>
   </section>
 </div>' : '';
+    if ($yuigahamaPilot) {
+        $compactExtras = str_replace(
+            ['kugenuma-tide-rain-title', '鵠沼の実測値ではありません'],
+            ['yuigahama-tide-rain-title', '由比ヶ浜の実測値ではありません'],
+            $compactExtras
+        );
+    }
     $trustPrefix = $assetPrefix;
     $appVersion = substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/app.js'), 0, 12);
     $styleVersion = substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/styles.css'), 0, 12);
@@ -224,14 +233,14 @@ function buildForecastPage(
   <link rel="stylesheet" href="' . h($assetPrefix) . 'styles.css?v=' . h($styleVersion) . '">
   <script defer src="' . h($assetPrefix) . 'app.js?v=' . h($appVersion) . '"></script>
 </head>
-<body' . ($kugenumaPilot ? ' class="kugenuma-landing"' : '') . '>
+<body' . ($spotPilot ? ' class="kugenuma-landing' . ($yuigahamaPilot ? ' yuigahama-landing' : '') . '"' : '') . '>
   <header class="site-header">
     <a class="brand" href="' . h($homeHref) . '" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a>
     ' . buildHeaderMenu($spotNavLinks, $assetPrefix) . '
   </header>
   <main>
     ' . $hero . '
-    ' . ($kugenumaPilot ? '' : '<section class="beta-intro" id="spots">
+    ' . ($spotPilot ? '' : '<section class="beta-intro" id="spots">
       <p class="beta-label">KANTO SURFER KS / SURF FORECAST</p>
       <h1>' . h($heading) . '</h1>
       <p>' . h($intro) . '</p>
@@ -240,7 +249,7 @@ function buildForecastPage(
     ' . $pilotTop . '
     <section class="forecast-section" aria-labelledby="forecast-title">
       <p class="current-spot">SPOT <strong data-spot-name>' . h($name) . '</strong></p>
-      <div class="section-title"><span class="section-number">' . ($kugenumaPilot ? '03' : '04') . '</span><span class="section-icon" aria-hidden="true">⌁</span><h2 id="forecast-title">波・風</h2></div>
+      <div class="section-title"><span class="section-number">' . ($spotPilot ? '03' : '04') . '</span><span class="section-icon" aria-hidden="true">⌁</span><h2 id="forecast-title">波・風</h2></div>
       <div class="forecast-shell" data-forecast' . $compactAttrs . ' data-data-base="' . h($dataBase) . '" data-default-spot="' . h($id) . '">
         <div class="forecast-panel" id="panel-forecast" aria-labelledby="forecast-title">' . $compactDays . '
           <div class="forecast-legend" aria-label="グラフ凡例"><span><i class="legend-wave"></i><span data-wave-label>モデル波高(m)</span></span><span><i class="legend-wind"></i>風(m/s)</span><span class="data-state" data-state>読み込み中</span></div>
@@ -253,7 +262,10 @@ function buildForecastPage(
       </div>
       <p class="forecast-note" id="forecast-note" data-forecast-note>Open-Meteoの海洋モデル波高です。実際のブレイクサイズを直接示す値ではありません。</p>
     </section>
-    ' . ($showDaily ? buildDailySection($name, $kugenumaPilot ? '04' : '05') : '') . ($kugenumaPilot ? buildKugenumaWindy() : '') . $pilotBottom . ($kugenumaPilot ? buildKugenumaAccessMap() : '') . '
+    ' . ($showDaily ? buildDailySection($name, $spotPilot ? '04' : '05') : '')
+      . ($kugenumaPilot ? buildKugenumaWindy() : ($yuigahamaPilot ? buildYuigahamaWindy() : ''))
+      . $pilotBottom
+      . ($kugenumaPilot ? buildKugenumaAccessMap() : ($yuigahamaPilot ? buildYuigahamaAccessMap() : '')) . '
   </main>
   <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="' . h($trustPrefix) . 'about/">サイト概要</a><a href="' . h($trustPrefix) . 'contact/">お問い合わせ</a><a href="' . h($trustPrefix) . 'privacy/">プライバシー</a></nav></footer>
 </body>
@@ -472,6 +484,83 @@ function buildKugenumaBottom(string $context): string
       <div class="forecast-panel" style="padding:1rem"><p>日本周辺の波高分布を確認できます。</p><a href="https://www.imocwx.com/cwm/cwm_jp.gif" target="_blank" rel="noopener noreferrer" aria-label="広域波高マップを拡大"><img src="https://www.imocwx.com/cwm/cwm_jp.gif" alt="日本周辺の広域波高マップ" loading="lazy" style="width:100%;height:auto;display:block"></a><p class="forecast-note">画像をタップして拡大できます。表示できない場合は<a href="https://www.imocwx.com/cwm.php?Area=0" target="_blank" rel="noopener noreferrer">配信元の波高マップを開く →</a></p><p class="forecast-note">出典：国際気象海洋株式会社。<a href="https://www.data.jma.go.jp/waveinf/tile/jp/index.html" target="_blank" rel="noopener noreferrer">気象庁の波浪実況・予想図も確認する →</a></p></div>
     </section>';
 }
+
+
+/** Stage-one rollout: reuse the proven Kugenuma structure without copying its spot-specific sources. */
+function buildYuigahamaHero(): string
+{
+    $markup = buildKugenumaVideoHero();
+    $camera = buildKugenumaTop();
+    if (substr_count($markup, $camera) !== 1) fail('Yuigahama camera template mismatch');
+    $markup = str_replace($camera, buildYuigahamaCamera(), $markup);
+    // There is no verified Yuigahama-owned hero video yet. Use the existing CSS ocean gradient.
+    $markup = preg_replace('~<video autoplay muted loop playsinline.*?</video>~s', '', $markup, 1, $removed);
+    if ($removed !== 1) fail('Yuigahama hero fallback mismatch');
+    $markup = str_replace('鵠沼', '由比ヶ浜', $markup);
+    $markup = str_replace('data-kugenuma-advice', 'data-spot-advice', $markup);
+    return $markup;
+}
+
+function buildYuigahamaCamera(): string
+{
+    return '<section class="forecast-section" aria-labelledby="camera-title">
+      <div class="section-title"><span class="section-number">02</span><h2 id="camera-title">ライブカメラ</h2></div>
+      <div class="forecast-panel" style="padding:1rem">
+        <p><a href="https://www.surfers-ocean.com/%E3%82%B5%E3%83%BC%E3%83%95%E3%82%A3%E3%83%B3%E6%B3%A2%E6%83%85%E5%A0%B1/%E6%B9%98%E5%8D%97/" target="_blank" rel="noopener noreferrer">由比ヶ浜周辺の公開カメラ一覧（外部） →</a></p>
+        <p class="forecast-note">配信状況は提供元で確認してください。映像停止・遅延や過去画像の可能性があります。</p>
+      </div>
+    </section>';
+}
+
+function buildYuigahamaWindy(): string
+{
+    $html = buildKugenumaWindy();
+    $html = str_replace(
+        ['KUGENUMA_WINDY', 'kugenuma-windy', '鵠沼', '35.3148611', '139.4708889', '35.315,139.471'],
+        ['YUIGAHAMA_WINDY', 'yuigahama-windy', '由比ヶ浜', '35.3094444', '139.5377778', '35.309,139.538'],
+        $html
+    );
+    return $html;
+}
+
+function buildYuigahamaAccessMap(): string
+{
+    $html = buildKugenumaAccessMap();
+    $html = str_replace(
+        ['KUGENUMA_GOOGLE_MAP', 'kugenuma-access-map', 'kugenuma-map-frame',
+         '湘南海岸公園サーフビレッジ（海岸側）', '県立湘南海岸公園サーフビレッジ', '鵠沼'],
+        ['YUIGAHAMA_GOOGLE_MAP', 'yuigahama-access-map', 'yuigahama-map-frame',
+         '由比ヶ浜海岸（鎌倉市）', '由比ヶ浜海岸', '由比ヶ浜'],
+        $html
+    );
+    // Use the independent near-shore public spot coordinates, never Kugenuma's access address.
+    $coord = rawurlencode('35.3094444,139.5377778');
+    $html = preg_replace(
+        '~href="https://www.google.com/maps/dir/\?api=1&amp;destination=[^"]+"~',
+        'href="https://www.google.com/maps/dir/?api=1&amp;destination=' . $coord . '"',
+        $html, 1, $hrefCount
+    );
+    $html = preg_replace(
+        '~src="https://www.google.com/maps\?q=[^"]+"~',
+        'src="https://www.google.com/maps?q=' . $coord . '&amp;z=15&amp;output=embed"',
+        $html, 1, $frameCount
+    );
+    if ($hrefCount !== 1 || $frameCount !== 1) fail('Yuigahama map link replacement mismatch');
+    return $html;
+}
+
+function buildYuigahamaBottom(string $context): string
+{
+    $html = buildKugenumaBottom($context);
+    return str_replace(
+        ['神奈川県藤沢市・湘南の砂地のビーチブレイク。引地川河口周辺などでサーフィンが行われます。',
+         '比較的穏やかな日には初心者にも親しまれますが、混雑、離岸流、海水浴期間の規制には注意してください。'],
+        ['神奈川県鎌倉市・由比ヶ浜海岸。砂浜のビーチで、季節によって海水浴区域や利用ルールが変わります。',
+         '夏季は遊泳とサーフィンの区分・利用ルールを現地で確認してください。混雑や離岸流、海況の変化にも注意してください。'],
+        $html
+    );
+}
+
 
 /**
  * 10日間の波・風予報（日別6列表）。値は build_public_forecast.php が生成する payload.daily を
