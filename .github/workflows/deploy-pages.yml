@@ -104,8 +104,8 @@ jobs:
           # A successful deploy must include the editorial preview in the generated HTML.
           test -f content/approved/kugenuma.json
           jq -e '.status == "preview" or .status == "approved"' content/approved/kugenuma.json >/dev/null
-          grep -Fq '【試験公開・未検証】' "$RUNNER_TEMP/site/spots/kugenuma/index.html"
-          grep -Fq '11月25日（水）の波予想' "$RUNNER_TEMP/site/spots/kugenuma/index.html"
+          ! grep -q 'ks-gpt-article' "$RUNNER_TEMP/site/spots/kugenuma/index.html"
+          node -e 'const s=require("fs").readFileSync(process.argv[1],"utf8");if(!(s.indexOf("id=\"kugenuma-access-map\"")>s.indexOf("id=\"daily-forecast\"")&&s.indexOf("id=\"kugenuma-access-map\"")<s.indexOf("<footer")))process.exit(1)' "$RUNNER_TEMP/site/spots/kugenuma/index.html"
           grep -q 'data-tide-rain-grid' "$RUNNER_TEMP/site/spots/kugenuma/index.html"
           ! grep -q 'data-tide-rain-grid' "$RUNNER_TEMP/site/spots/katakai/index.html"
           jq -e 'all(.hourly[]; has("precipitation_probability_pct"))' "$RUNNER_TEMP/site/data/kugenuma.json" >/dev/null
