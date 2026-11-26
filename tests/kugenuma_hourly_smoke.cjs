@@ -5,15 +5,17 @@ const all=["kugenuma","yuigahama","oarai_onuki","kashima_hirai","katakai","ichin
 for(const id of all){
   const j=get(id),rows=j.hourly;
   assert(rows.length>=10,id+": too few hours");
-  const step=id==="kugenuma"?1:2;
+  const compact=["kugenuma","yuigahama"].includes(id);
+  const step=compact?1:2;
   for(let i=1;i<rows.length;i++){
     assert.equal((Date.parse(rows[i].time)-Date.parse(rows[i-1].time))/3600000,step,id+" hourly gap at "+i);
   }
-  if(id==="kugenuma"){
+  if(compact){
     assert.equal(j.tide.station_id,"D8");
     assert(rows.some(r=>r.precipitation_1h_mm!==null&&Number.isFinite(r.precipitation_1h_mm)),"no hourly precipitation");
     assert(rows.every(r=>Object.hasOwn(r,"precipitation_1h_mm")),"missing hourly precipitation key");
     assert(rows.every(r=>Object.hasOwn(r,"precipitation_probability_pct")),"missing hourly precipitation probability key");
+    assert(rows.some(r=>Number.isFinite(r.precipitation_probability_pct)),id+": precipitation probability not fetched");
     for(const r of rows)assert(r.precipitation_probability_pct===null||(Number.isFinite(r.precipitation_probability_pct)&&r.precipitation_probability_pct>=0&&r.precipitation_probability_pct<=100),"invalid rainfall probability");
     assert(rows.every(r=>!Object.hasOwn(r,"precipitation_2h_mm")),"stale two-hour precipitation key");
     for(const row of rows)assert(row.precipitation_1h_mm===null||row.precipitation_1h_mm>=0,"negative precipitation");
@@ -26,7 +28,7 @@ for(const id of all){
     const todayRows=rows.filter(r=>dayKey(new Date(r.time))===today)
       .filter(r=>{const h=Number(localParts(new Date(r.time)).hour);return h>=4&&h<=20;});
     const actualTodayHours=todayRows.map(r=>Number(localParts(new Date(r.time)).hour));
-    assert.deepEqual(actualTodayHours,Array.from({length:17},(_,i)=>i+4),"Kugenuma today requires full 04:00-20:00 from Open-Meteo");
+    assert.deepEqual(actualTodayHours,Array.from({length:17},(_,i)=>i+4),id+" today requires full 04:00-20:00 from Open-Meteo");
     assert(todayRows.some(r=>Number.isFinite(r.model_wave_height_m)&&Number.isFinite(r.wind_speed_ms)),
       "Today's wave/wind hours were removed or missing");
     // Future day and day after tomorrow must each cover 04:00-20:00 JST.
@@ -35,7 +37,7 @@ for(const id of all){
       const chosen=rows.filter(r=>dayKey(new Date(r.time))===target)
         .map(r=>Number(localParts(new Date(r.time)).hour)).filter(h=>h>=4&&h<=20);
       assert.deepEqual(chosen,Array.from({length:17},(_,i)=>i+4),
-        "Kugenuma requires full 04:00-20:00 for "+target);
+        id+" requires full 04:00-20:00 for "+target);
     }
   }else{
     assert(rows.every(r=>!Object.hasOwn(r,"precipitation_1h_mm")),id+" unexpectedly changed");

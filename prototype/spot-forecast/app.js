@@ -51,6 +51,8 @@ function bindScrollSync(from,to){
 }
 if(!compactTest){bindScrollSync(scroll,chartScroll);bindScrollSync(chartScroll,scroll);}
 function requestedSpot(){
+  // Spot pages always show their own data; query overrides are only for the home preview.
+  if(location.pathname.includes("/spots/")&&root.dataset.defaultSpot)return root.dataset.defaultSpot;
   const requested=new URLSearchParams(location.search).get("spot");
   return requested&&/^[a-z0-9_-]+$/.test(requested)?requested:(root.dataset.defaultSpot||"kugenuma");
 }
@@ -516,13 +518,13 @@ function renderDaily(){
   updated.classList.toggle("is-stale",stale);
   if(source.spot?.name){const spotLabel=dailyRoot.querySelector("[data-daily-spot]");if(spotLabel)spotLabel.textContent=source.spot.name;dailyRoot.querySelector("table")?.setAttribute("aria-label",`${source.spot.name} 10日間の波と風の予報`)}
 }
-// 鵠沼限定。既存の時間別予報を用い、現地サイズや安全性は推測しない。
+// Compact pilot: existing hourly model values only, never infer actual breaking wave size or safety.
 function renderKugenumaAdvice(){
-  const box=document.querySelector("[data-kugenuma-advice]");
+  const box=document.querySelector("[data-kugenuma-advice], [data-spot-advice]");
   if(!box)return;
   const stamp=Date.parse(source.source_generated_at||"");
   const now=Date.now();
-  if(requestedSpot()!=="kugenuma"||!Number.isFinite(stamp)||now-stamp>3*3600000||stamp>now+300000){
+  if(!["kugenuma","yuigahama"].includes(requestedSpot())||!Number.isFinite(stamp)||now-stamp>3*3600000||stamp>now+300000){
     box.textContent="予報の更新時刻を確認できないか、更新が遅れています。最新の現地情報を確認してください。";
     return;
   }
