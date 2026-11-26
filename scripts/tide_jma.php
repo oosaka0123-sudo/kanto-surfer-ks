@@ -2,14 +2,17 @@
 declare(strict_types=1);
 
 /**
- * JMA Shonan Port (D8) astronomical tide table.
- * Official fixed-width daily annual text data, cm above tide-table datum.
- * https://www.data.jma.go.jp/kaiyou/db/tide/suisan/suisan.php?stn=D8
+ * JMA astronomical tide predictions. Official fixed-width daily annual text data;
+ * heights in cm above that station's tide table datum.
  * https://www.data.jma.go.jp/kaiyou/db/tide/suisan/readme.html
- * Do not mix with Open-Meteo MSL heights; never interpolate missing days.
+ * Never mix with Open-Meteo MSL heights or present as break-local observed tide.
+ * Never interpolate missing days.
  */
-function buildShonanTides(string $sourceDir, DateTimeImmutable $from, int $days = 42): array
+function buildJmaTides(string $sourceDir, string $stationId, string $stationName, DateTimeImmutable $from, int $days = 42): array
 {
+    if (!preg_match('/^[A-Z0-9]{2}$/', $stationId) || trim($stationName) === '') {
+        throw new InvalidArgumentException('Invalid JMA tide station');
+    }
     $start = $from->setTimezone(new DateTimeZone('Asia/Tokyo'))->setTime(0, 0);
     $wanted = [];
     for ($i=0; $i<$days; $i++) {
@@ -17,10 +20,10 @@ function buildShonanTides(string $sourceDir, DateTimeImmutable $from, int $days 
     }
     $rows = [];
     foreach (array_unique(array_map(static fn(string $date): string => substr($date,0,4), array_keys($wanted))) as $year) {
-        $file = rtrim($sourceDir,'/\\') . DIRECTORY_SEPARATOR . "D8-$year.txt";
+        $file = rtrim($sourceDir,'/\\') . DIRECTORY_SEPARATOR . "$stationId-$year.txt";
         if (!is_file($file)) continue;
         foreach (file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
-            if (strlen($line) < 136 || substr($line,78,2) !== 'D8') continue;
+            if (strlen($line) < 136 || substr($line,78,2) !== $stationId) continue;
             $y = (int)trim(substr($line,72,2)) + 2000;
             $m = (int)trim(substr($line,74,2));
             $d = (int)trim(substr($line,76,2));
@@ -50,13 +53,19 @@ function buildShonanTides(string $sourceDir, DateTimeImmutable $from, int $days 
     }
     ksort($rows);
     return [
-        'station'=>'湘南港',
-        'station_id'=>'D8',
+        'station'=>$stationName,
+        'station_id'=>$stationId,
         'datum'=>'気象庁潮位表基準面',
         'unit'=>'cm',
         'timezone'=>'Asia/Tokyo',
         'source'=>'気象庁・潮位表（天文潮位予測）',
-        'source_url'=>'https://www.data.jma.go.jp/kaiyou/db/tide/suisan/suisan.php?stn=D8',
+        'source_url'=>'https://www.data.jma.go.jp/kaiyou/db/tide/suisan/suisan.php?stn=' . rawurlencode($stationId),
         'days'=>array_values($rows),
     ];
+}
+
+/** Backwards-compatible API used by Kugenuma and Yuigahama. */
+function buildShonanTides(string $sourceDir, DateTimeImmutable $from, int $days = 42): array
+{
+    return buildJmaTides($sourceDir, 'D8', '湘南港', $from, $days);
 }
