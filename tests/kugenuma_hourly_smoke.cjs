@@ -5,13 +5,14 @@ const all=["kugenuma","yuigahama","oarai_onuki","kashima_hirai","katakai","ichin
 for(const id of all){
   const j=get(id),rows=j.hourly;
   assert(rows.length>=10,id+": too few hours");
-  const compact=["kugenuma","yuigahama","oarai_onuki","kashima_hirai"].includes(id);
-  const step=compact?1:2;
+  // All nine now use the Kugenuma 1-hour timeline.
+  const compact=true;
+  const step=1;
   for(let i=1;i<rows.length;i++){
     assert.equal((Date.parse(rows[i].time)-Date.parse(rows[i-1].time))/3600000,step,id+" hourly gap at "+i);
   }
   if(compact){
-    assert.equal(j.tide.station_id,{"kugenuma":"D8","yuigahama":"D8","oarai_onuki":"D3","kashima_hirai":"D2"}[id]);
+    assert.equal(j.tide.station_id,{"kugenuma":"D8","yuigahama":"D8","oarai_onuki":"D3","kashima_hirai":"D2","katakai":"CS","ichinomiya":"ZF","taito":"ZF","onjuku":"ZF","kamogawa_maruki":"ZF"}[id]);
     assert(rows.some(r=>r.precipitation_1h_mm!==null&&Number.isFinite(r.precipitation_1h_mm)),"no hourly precipitation");
     assert(rows.every(r=>Object.hasOwn(r,"precipitation_1h_mm")),"missing hourly precipitation key");
     assert(rows.every(r=>Object.hasOwn(r,"precipitation_probability_pct")),"missing hourly precipitation probability key");
