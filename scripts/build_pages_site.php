@@ -183,10 +183,13 @@ function buildForecastPage(
 
     $kugenumaPilot = !$homePage && $id === 'kugenuma';
     $yuigahamaPilot = !$homePage && $id === 'yuigahama';
-    $spotPilot = $kugenumaPilot || $yuigahamaPilot;
+    $ibarakiPilot = !$homePage && in_array($id, ['oarai_onuki', 'kashima_hirai'], true);
+    $spotPilot = $kugenumaPilot || $yuigahamaPilot || $ibarakiPilot;
     $pilotTop = ''; // Daily research v2 replaces the old fixed-date preview.
-    $hero = $kugenumaPilot ? buildKugenumaVideoHero() : ($yuigahamaPilot ? buildYuigahamaHero() : '');
-    $pilotBottom = $kugenumaPilot ? buildKugenumaBottom($context) : ($yuigahamaPilot ? buildYuigahamaBottom($context) : '');
+    $hero = $kugenumaPilot ? buildKugenumaVideoHero() :
+        ($yuigahamaPilot ? buildYuigahamaHero() : ($ibarakiPilot ? buildIbarakiHero($activeSpot) : ''));
+    $pilotBottom = $kugenumaPilot ? buildKugenumaBottom($context) :
+        ($yuigahamaPilot ? buildYuigahamaBottom($context) : ($ibarakiPilot ? buildIbarakiBottom($activeSpot, $context) : ''));
     if ($spotPilot) $context = '';
     $compactAttrs = $spotPilot ? ' data-compact-test="1"' : '';
     $compactDays = $spotPilot ? '<nav class="compact-days" aria-label="日付切替"><button type="button" data-compact-day="0" class="is-active" aria-pressed="true">今日</button><button type="button" data-compact-day="1" aria-pressed="false">明日</button><button type="button" data-compact-day="2" aria-pressed="false">明後日</button></nav>' : '';
@@ -214,6 +217,14 @@ function buildForecastPage(
             $compactExtras
         );
     }
+    if ($ibarakiPilot) {
+        $station = $id === 'oarai_onuki' ? ['D3', '大洗'] : ['D2', '鹿島'];
+        $compactExtras = str_replace(
+            ['kugenuma-tide-rain-title', 'stn=D8', '湘南港', '鵠沼の実測値ではありません'],
+            [$id . '-tide-rain-title', 'stn=' . $station[0], $station[1], $name . 'の実測値ではありません'],
+            $compactExtras
+        );
+    }
     $trustPrefix = $assetPrefix;
     $appVersion = substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/app.js'), 0, 12);
     $styleVersion = substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/styles.css'), 0, 12);
@@ -233,7 +244,7 @@ function buildForecastPage(
   <link rel="stylesheet" href="' . h($assetPrefix) . 'styles.css?v=' . h($styleVersion) . '">
   <script defer src="' . h($assetPrefix) . 'app.js?v=' . h($appVersion) . '"></script>
 </head>
-<body' . ($spotPilot ? ' class="kugenuma-landing' . ($yuigahamaPilot ? ' yuigahama-landing' : '') . '"' : '') . '>
+<body' . ($spotPilot ? ' class="kugenuma-landing' . ($yuigahamaPilot ? ' yuigahama-landing' : ($ibarakiPilot ? ' ibaraki-landing' : '')) . '"' : '') . '>
   <header class="site-header">
     <a class="brand" href="' . h($homeHref) . '" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a>
     ' . buildHeaderMenu($spotNavLinks, $assetPrefix) . '
@@ -263,9 +274,9 @@ function buildForecastPage(
       <p class="forecast-note" id="forecast-note" data-forecast-note>Open-Meteoの海洋モデル波高です。実際のブレイクサイズを直接示す値ではありません。</p>
     </section>
     ' . ($showDaily ? buildDailySection($name, $spotPilot ? '04' : '05') : '')
-      . ($kugenumaPilot ? buildKugenumaWindy() : ($yuigahamaPilot ? buildYuigahamaWindy() : ''))
+      . ($kugenumaPilot ? buildKugenumaWindy() : ($yuigahamaPilot ? buildYuigahamaWindy() : ($ibarakiPilot ? buildIbarakiWindy($activeSpot) : '')))
       . $pilotBottom
-      . ($kugenumaPilot ? buildKugenumaAccessMap() : ($yuigahamaPilot ? buildYuigahamaAccessMap() : '')) . '
+      . ($kugenumaPilot ? buildKugenumaAccessMap() : ($yuigahamaPilot ? buildYuigahamaAccessMap() : ($ibarakiPilot ? buildIbarakiAccessMap($activeSpot) : ''))) . '
   </main>
   <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="' . h($trustPrefix) . 'about/">サイト概要</a><a href="' . h($trustPrefix) . 'contact/">お問い合わせ</a><a href="' . h($trustPrefix) . 'privacy/">プライバシー</a></nav></footer>
 </body>
@@ -561,6 +572,112 @@ function buildYuigahamaBottom(string $context): string
          '比較的穏やかな日には初心者にも親しまれますが、混雑、離岸流、海水浴期間の規制には注意してください。'],
         ['神奈川県鎌倉市・由比ヶ浜海岸。砂浜のビーチで、季節によって海水浴区域や利用ルールが変わります。',
          '夏季は遊泳とサーフィンの区分・利用ルールを現地で確認してください。混雑や離岸流、海況の変化にも注意してください。'],
+        $html
+    );
+}
+
+
+
+/** Stage two: Ibaraki spots reuse Kugenuma's proven layout but never its images or locations. */
+function buildIbarakiHero(array $spot): string
+{
+    $name = (string)$spot['display_name'];
+    $region = (string)$spot['region'];
+    $html = buildKugenumaVideoHero();
+    $camera = buildKugenumaTop();
+    if (substr_count($html, $camera) !== 1) fail('Ibaraki hero camera replacement mismatch');
+    $html = str_replace($camera, buildIbarakiCamera($spot), $html);
+    $html = preg_replace('~<video autoplay muted loop playsinline.*?</video>~s', '', $html, 1, $count);
+    if ($count !== 1) fail('Ibaraki hero must not reuse Kugenuma video');
+    $html = str_replace('鵠沼（湘南）', h($name . '（' . $region . '）'), $html);
+    $html = str_replace('鵠沼', h($name), $html);
+    $html = str_replace('data-kugenuma-advice', 'data-spot-advice', $html);
+    return $html;
+}
+
+function buildIbarakiCamera(array $spot): string
+{
+    if ((string)$spot['id'] === 'oarai_onuki') {
+        $url = 'https://www.oarai-info.jp/livecamera/';
+        $label = '大洗観光協会公式・大洗サンビーチライブカメラ';
+        $note = '大洗サンビーチの映像です。大貫つるかめ下そのものの映像とは限りません。';
+    } else {
+        $url = 'https://www.bcm-surfpatrol.com/livecam/';
+        $label = 'BCM・鹿嶋平井ライブカメラ案内';
+        $note = '外部配信です。映像の視聴に会員登録や利用条件が必要な場合があります。';
+    }
+    return '<section class="forecast-section" aria-labelledby="camera-title">
+      <div class="section-title"><span class="section-number">02</span><h2 id="camera-title">ライブカメラ</h2></div>
+      <div class="forecast-panel" style="padding:1rem">
+        <p><a href="' . h($url) . '" target="_blank" rel="noopener noreferrer">' . h($label) . ' →</a></p>
+        <p class="forecast-note">' . h($note) . ' 配信状況と時刻は提供元で確認してください。</p>
+      </div>
+    </section>';
+}
+
+function buildIbarakiWindy(array $spot): string
+{
+    $id = (string)$spot['id'];
+    $name = (string)$spot['display_name'];
+    $lat = (string)$spot['latitude'];
+    $lon = (string)$spot['longitude'];
+    $html = buildKugenumaWindy();
+    return str_replace(
+        ['KUGENUMA_WINDY', 'kugenuma-windy', '鵠沼', '35.3148611', '139.4708889', '35.315,139.471'],
+        ['IBARAKI_WINDY', $id . '-windy', h($name), $lat, $lon, sprintf('%.3f,%.3f', (float)$lat, (float)$lon)],
+        $html
+    );
+}
+
+function buildIbarakiAccessMap(array $spot): string
+{
+    $id = (string)$spot['id'];
+    $name = (string)$spot['display_name'];
+    $oarai = $id === 'oarai_onuki';
+    // These destinations are verified public beach facilities; the displayed pin is the surf coast.
+    $access = $oarai
+        ? '茨城県東茨城郡大洗町港中央 大洗サンビーチ駐車場'
+        : '茨城県鹿嶋市平井 平井海水浴場駐車場';
+    $mapLabel = $oarai ? '大洗サンビーチ（大洗町港中央）' : '平井海岸（鹿嶋市平井）';
+    $coords = rawurlencode((string)$spot['latitude'] . ',' . (string)$spot['longitude']);
+    $html = buildKugenumaAccessMap();
+    $html = str_replace(
+        ['KUGENUMA_GOOGLE_MAP', 'kugenuma-access-map', '湘南海岸公園サーフビレッジ（海岸側）',
+          '県立湘南海岸公園サーフビレッジ', '鵠沼'],
+        ['IBARAKI_GOOGLE_MAP', $id . '-access-map', h($mapLabel),
+          h($mapLabel), h($name)],
+        $html
+    );
+    $html = preg_replace(
+        '~href="https://www.google.com/maps/dir/\?api=1&amp;destination=[^"]+"~',
+        'href="https://www.google.com/maps/dir/?api=1&amp;destination=' . rawurlencode($access) . '"',
+        $html, 1, $linkCount
+    );
+    $html = preg_replace(
+        '~src="https://www.google.com/maps\?q=[^"]+"~',
+        'src="https://www.google.com/maps?q=' . $coords . '&amp;z=15&amp;output=embed"',
+        $html, 1, $mapCount
+    );
+    if ($linkCount !== 1 || $mapCount !== 1) fail('Ibaraki access map replacement mismatch');
+    $html = str_replace($name . '海岸 Googleマップ', $name . ' Googleマップ', $html);
+    $html = str_replace($name . 'へのアクセス・周辺地図', '海岸周辺地図と公共駐車場への経路案内（目的地は地図のピンと異なる場合があります）', $html);
+    return $html;
+}
+
+function buildIbarakiBottom(array $spot, string $context): string
+{
+    $isOarai = (string)$spot['id'] === 'oarai_onuki';
+    $intro = $isOarai
+        ? '茨城県大洗町の大貫エリア。南東向きの砂浜で、大洗サンビーチ付近にサーフポイントがあります。'
+        : '茨城県鹿嶋市の平井海岸。広い砂浜が続き、北東側からのうねりに反応します。';
+    $caution = $isOarai
+        ? '南うねりが強まる場合、堤防付近などで強い流れが発生することがあります。現地の危険区域・利用規則を確認してください。'
+        : '海水浴場の開設期間は遊泳区域やサーフィンの規制を現地で確認してください。離岸流や混雑にも注意してください。';
+    $html = buildKugenumaBottom($context);
+    return str_replace(
+        ['神奈川県藤沢市・湘南の砂地のビーチブレイク。引地川河口周辺などでサーフィンが行われます。',
+         '比較的穏やかな日には初心者にも親しまれますが、混雑、離岸流、海水浴期間の規制には注意してください。'],
+        [h($intro), h($caution)],
         $html
     );
 }
