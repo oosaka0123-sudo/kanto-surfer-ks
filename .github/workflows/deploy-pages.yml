@@ -103,6 +103,11 @@ jobs:
           jq -e '.spot.id=="yuigahama" and .tide.station_id=="D8" and (.tide.days | length)>=3 and any(.hourly[]; .precipitation_1h_mm != null)' "$RUNNER_TEMP/site/data/yuigahama.json" >/dev/null
           jq -e '.spot.id=="oarai_onuki" and .tide.station_id=="D3" and (.tide.days | length)>=3 and any(.hourly[]; .precipitation_probability_pct != null)' "$RUNNER_TEMP/site/data/oarai_onuki.json" >/dev/null
           jq -e '.spot.id=="kashima_hirai" and .tide.station_id=="D2" and (.tide.days | length)>=3 and any(.hourly[]; .precipitation_probability_pct != null)' "$RUNNER_TEMP/site/data/kashima_hirai.json" >/dev/null
+          for pair in katakai:CS ichinomiya:ZF taito:ZF onjuku:ZF kamogawa_maruki:ZF; do
+            id="${pair%:*}"
+            station="${pair#*:}"
+            jq -e --arg id "$id" --arg station "$station" '.spot.id==$id and .tide.station_id==$station and (.tide.days | length)>=3 and any(.hourly[]; .precipitation_probability_pct != null)' "$RUNNER_TEMP/site/data/$id.json" >/dev/null
+          done
           node tests/kugenuma_hourly_smoke.cjs "$RUNNER_TEMP/site/data"
           # A successful deploy must include the editorial preview in the generated HTML.
           test -f content/approved/kugenuma.json
@@ -124,7 +129,16 @@ jobs:
           done
           ! grep -q 'kugenuma-hero-muted.mp4' "$RUNNER_TEMP/site/spots/yuigahama/index.html"
           ! grep -q '35.3148611' "$RUNNER_TEMP/site/spots/yuigahama/index.html"
-          ! grep -q 'data-tide-rain-grid' "$RUNNER_TEMP/site/spots/katakai/index.html"
+          for place in katakai ichinomiya taito onjuku kamogawa-maruki; do
+            page="$RUNNER_TEMP/site/spots/$place/index.html"
+            grep -q 'CHIBA_GOOGLE_MAP_START' "$page"
+            grep -q 'CHIBA_WINDY_START' "$page"
+            grep -q 'data-spot-advice' "$page"
+            grep -q 'data-tide-rain-grid' "$page"
+            grep -q '駐車場' "$page"
+            if grep -q 'kugenuma-hero-muted.mp4' "$page"; then echo "Unexpected Kugenuma footage in $page" >&2; exit 1; fi
+            if grep -q '35.3148611' "$page"; then echo "Unexpected Kugenuma coordinates in $page" >&2; exit 1; fi
+          done
           jq -e 'all(.hourly[]; has("precipitation_probability_pct"))' "$RUNNER_TEMP/site/data/kugenuma.json" >/dev/null
           test -f "$RUNNER_TEMP/site/app.js"
           test -f "$RUNNER_TEMP/site/styles.css"

@@ -524,7 +524,7 @@ function renderKugenumaAdvice(){
   if(!box)return;
   const stamp=Date.parse(source.source_generated_at||"");
   const now=Date.now();
-  if(!["kugenuma","yuigahama","oarai_onuki","kashima_hirai"].includes(requestedSpot())||!Number.isFinite(stamp)||now-stamp>3*3600000||stamp>now+300000){
+  if(!source.spot?.id || requestedSpot()!==source.spot.id || (location.pathname.includes("/spots/")&&root.dataset.defaultSpot!==source.spot.id) || !Number.isFinite(stamp)||now-stamp>3*3600000||stamp>now+300000){
     box.textContent="予報の更新時刻を確認できないか、更新が遅れています。最新の現地情報を確認してください。";
     return;
   }

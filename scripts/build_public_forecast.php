@@ -13,12 +13,15 @@ $inputPath = $options['input'] ?? ($projectRoot . '/data/normalized/latest.json'
 $outputDir = $options['output-dir'] ?? ($projectRoot . '/data/public');
 $validationDir = $options['validation-dir'] ?? ($projectRoot . '/data/validation');
 $hourlyHours = isset($options['hourly-hours']) ? (int)$options['hourly-hours'] : 48;
-$hourlyStep = isset($options['hourly-step']) ? (int)$options['hourly-step'] : 2;
+$hourlyStep = isset($options['hourly-step']) ? (int)$options['hourly-step'] : 1;
 $weeklyDays = isset($options['weekly-days']) ? (int)$options['weekly-days'] : 8;
 $dailyDays = isset($options['daily-days']) ? (int)$options['daily-days'] : 10;
 
 if ($hourlyHours < 1 || $hourlyStep < 1 || $weeklyDays < 1 || $dailyDays < 1) {
     fail('hourly-hours, hourly-step, weekly-days and daily-days must all be >= 1.');
+}
+if ($hourlyStep !== 1) {
+    fail('All nine spots use 1-hour model slots; --hourly-step must be 1.');
 }
 
 $normalized = readJson($inputPath);
@@ -53,9 +56,9 @@ foreach ($spots as $spotId => $spotEntry) {
     }
 
     $spotMeta = is_array($spotEntry['spot'] ?? null) ? $spotEntry['spot'] : ['id' => (string)$spotId];
-    // First staged rollout: Kugenuma and Yuigahama use true 1-hour model slots.
-    // Other seven spots remain on the original 2-hour contract until their own rollout.
-    $compactPilot = in_array((string)$spotId, ['kugenuma', 'yuigahama', 'oarai_onuki', 'kashima_hirai'], true);
+    // All nine spots now share real one-hour slots (04:00-20:00 for three days).
+    // No extrapolated historical measurements; past columns are latest model values.
+    $compactPilot = true;
     $spotStep = $compactPilot ? 1 : $hourlyStep;
     // 72h covers 04:00-20:00 of the day after tomorrow, including today's past model slots.
     $spotHours = $compactPilot ? max(72, $hourlyHours) : $hourlyHours;
@@ -88,6 +91,8 @@ foreach ($spots as $spotId => $spotEntry) {
         $tideStation = match ((string)$spotId) {
             'oarai_onuki' => ['D3', '大洗'],
             'kashima_hirai' => ['D2', '鹿島'],
+            'katakai' => ['CS', '銚子漁港'],
+            'ichinomiya', 'taito', 'onjuku', 'kamogawa_maruki' => ['ZF', '勝浦'],
             default => ['D8', '湘南港'],
         };
         $payload['tide'] = buildJmaTides($projectRoot . '/data/tide-jma', $tideStation[0], $tideStation[1], $now, 42);
