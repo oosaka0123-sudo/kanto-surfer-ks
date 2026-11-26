@@ -639,7 +639,12 @@ function buildIbarakiAccessMap(array $spot): string
         ? '茨城県東茨城郡大洗町港中央 大洗サンビーチ駐車場'
         : '茨城県鹿嶋市平井 平井海水浴場駐車場';
     $mapLabel = $oarai ? '大洗サンビーチ（大洗町港中央）' : '平井海岸（鹿嶋市平井）';
-    $coords = rawurlencode((string)$spot['latitude'] . ',' . (string)$spot['longitude']);
+    // The model input for Kashima is offshore; the Google pin should be on Hirai bathing beach.
+    // Beach locator independently cross-checked against MapFan (2026-11-26).
+    $beachPosition = $oarai
+        ? ((string)$spot['latitude'] . ',' . (string)$spot['longitude'])
+        : '35.9704513,140.6734121';
+    $coords = rawurlencode($beachPosition);
     $html = buildKugenumaAccessMap();
     $html = str_replace(
         ['KUGENUMA_GOOGLE_MAP', 'kugenuma-access-map', '湘南海岸公園サーフビレッジ（海岸側）',
