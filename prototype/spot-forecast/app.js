@@ -51,6 +51,8 @@ function bindScrollSync(from,to){
 }
 if(!compactTest){bindScrollSync(scroll,chartScroll);bindScrollSync(chartScroll,scroll);}
 function requestedSpot(){
+  // Spot pages always show their own data; query overrides are only for the home preview.
+  if(location.pathname.includes("/spots/")&&root.dataset.defaultSpot)return root.dataset.defaultSpot;
   const requested=new URLSearchParams(location.search).get("spot");
   return requested&&/^[a-z0-9_-]+$/.test(requested)?requested:(root.dataset.defaultSpot||"kugenuma");
 }
