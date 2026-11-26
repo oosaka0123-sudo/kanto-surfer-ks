@@ -89,13 +89,23 @@ function candidates(d) {
   }).join('')+'</ul>';
 }
 function homeDay(day,d,fallback){
-  let out=heading(day,'関東 波ランキング BEST9');
-  if(d?.status==='published') return out+stamp(d)+ranked(d);
-  if(d) out+=stamp(d)+'<p>ランキング保留（確認済み '+Object.keys(d.reports).length+'/9 地点）。確認できた個別記事は各地点で掲載します。</p>';
-  else out+='<p>最新の調査結果は未掲載です。</p>';
-  if(d) out+=candidates(d);
+  // BEST9 is a verified editorial ranking, never a heading for partial or missing research.
+  const full=d?.status==='published';
+  let out=heading(day,full?'関東 波ランキング BEST9':'関東 波情報');
+  if(full) return out+stamp(d)+ranked(d);
+  if(d) {
+    out+=stamp(d);
+    const count=Object.keys(d.reports).length;
+    out+='<p>ランキングは保留です（掲載基準を満たした地点 '+count+'/9）。'+
+      (count?'確認できた地点の予報記事を掲載しています。':'比較可能な9地点の調査結果が揃っていません。')+'</p>';
+    out+=candidates(d);
+  } else {
+    out+='<p>'+(day==='今日'?
+      '今朝の調査結果が保存されていないため、当日のランキングは掲載できません。前夜の予報を参考情報として表示します。':
+      '翌日の調査結果がまだ保存されていません。')+'</p>';
+  }
   if(fallback?.status==='published') out+='<h3>参考：昨夜の予報ランキング</h3>'+stamp(fallback)+ranked(fallback);
-  else if(fallback?.status==='partial') out+='<h3>参考：昨夜の予報</h3>'+stamp(fallback)+candidates(fallback);
+  else if(fallback?.status==='partial') out+='<h3>参考：昨夜の予報（掲載可能 '+Object.keys(fallback.reports).length+'/9地点・順位なし）</h3>'+stamp(fallback)+candidates(fallback);
   return out;
 }
 function reportMarkup(d,s){
@@ -110,7 +120,7 @@ function spotDay(day,d,s,fallback){
   let out=heading(day,'波情報');
   if(d?.reports[s.id]) return out+reportMarkup(d,s);
   if(d) out+=stamp(d)+'<p>地点の情報不足：'+esc(d.missing[s.id]||'確認できる情報が不足')+'</p>';
-  else out+='<p>最新の調査結果は未掲載です。</p>';
+  else out+='<p>'+(day==='今日'?'今朝の調査記事は未保存です。前夜の予報があれば参考情報として表示します。':'翌日の調査記事はまだ保存されていません。')+'</p>';
   if(fallback?.reports[s.id]) out+='<h3>参考：昨夜の予報</h3>'+reportMarkup(fallback,s);
   return out;
 }

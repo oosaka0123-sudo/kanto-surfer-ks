@@ -31,12 +31,12 @@ try{
  run('2026-11-25T20:00:00+09:00');
  let out=snapshot(); assert(out[0].includes('3/9'));assert(out[0].includes('2026-11-26'));assert(out[1].includes('TEST ONLY'));assert(out[5].includes('Insufficient independent evidence'));assert(!out[1].includes('<script>'));assert(out[1].includes('&lt;script&gt;'));
  assert(out.every(s=>strip(s)===html));run('2026-11-25T20:00:00+09:00');assert.deepEqual(snapshot(),out);
- run('2026-11-26T00:01:00+09:00');out=snapshot();assert(out[0].includes('参考：昨夜の予報ランキング'));assert(out[1].includes('2026-11-26'));assert(!out[0].includes('3/9'));
+ run('2026-11-26T00:01:00+09:00');out=snapshot();assert(out[0].includes('参考：昨夜の予報ランキング'));assert(out[1].includes('2026-11-26'));assert(!out[0].includes('3/9'));assert(out[0].includes('今日の関東 波情報'));assert(!out[0].includes('今日の関東 波ランキング BEST9'));assert(out[0].includes('今朝の調査結果が保存されていない'));
  const next=fixture('morning','2026-11-26','2026-11-26T07:40:00+09:00',9);
  write(next);run('2026-11-26T08:00:00+09:00');out=snapshot();assert(!out[0].includes('参考：昨夜の予報ランキング'));assert(out[0].includes('当日朝の調査'));
  next.rankings[1].rank=1;write(next);run('2026-11-26T08:00:00+09:00',false);assert.deepEqual(snapshot(),out);
  next.rankings[1].rank=2;next.reports[spots[0].id].sources[1].upstream='A';write(next);run('2026-11-26T08:00:00+09:00',false);assert.deepEqual(snapshot(),out);
- const held=fixture('morning','2026-11-26','2026-11-26T08:10:00+09:00',0);write(held);run('2026-11-26T08:20:00+09:00');assert(snapshot()[0].includes('0/9'));assert(snapshot()[1].includes('参考：昨夜の予報'));
+ const held=fixture('morning','2026-11-26','2026-11-26T08:10:00+09:00',0);write(held);run('2026-11-26T08:20:00+09:00');assert(snapshot()[0].includes('0/9'));assert(snapshot()[0].includes('今日の関東 波情報'));assert(!snapshot()[0].includes('今日の関東 波ランキング BEST9'));assert(snapshot()[1].includes('参考：昨夜の予報'));
  run('2026-11-27T00:01:00+09:00');out=snapshot();assert(!out[0].includes('2026-11-26'));assert(out.every(s=>strip(s)===html));
  console.log('PASS: partial, held, evening, rollover, ranking replacement, no duplicate ranks, independence, escaping, idempotency, original HTML, expiry');
 }finally{fs.rmSync(root,{recursive:true,force:true});}
