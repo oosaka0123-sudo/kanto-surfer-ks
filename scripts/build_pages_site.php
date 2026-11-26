@@ -441,7 +441,6 @@ function buildKugenumaAccessMap(): string
     </section>
     <!-- KUGENUMA_GOOGLE_MAP_END -->';
 }
-/** 鵠沼限定の個別ページ試作。既存グラフとデータ処理は変更しない。 */
 
 function buildKugenumaTop(): string
 {
