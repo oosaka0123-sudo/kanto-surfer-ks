@@ -83,7 +83,7 @@ foreach ($spots as $spot) {
     $weatherLandUrl = buildUrl(WEATHER_ENDPOINT, [
         'latitude' => $latitude,
         'longitude' => $longitude,
-        'hourly' => implode(',', in_array($id, ['kugenuma', 'yuigahama', 'oarai_onuki', 'kashima_hirai'], true) ? [...$weatherHourly, 'precipitation_probability'] : $weatherHourly),
+        'hourly' => implode(',', [...$weatherHourly, 'precipitation_probability']),
         'timezone' => $timezone,
         'forecast_days' => 10,
         'wind_speed_unit' => 'ms',
