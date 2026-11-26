@@ -55,7 +55,7 @@ foreach ($spots as $spotId => $spotEntry) {
     $spotMeta = is_array($spotEntry['spot'] ?? null) ? $spotEntry['spot'] : ['id' => (string)$spotId];
     // First staged rollout: Kugenuma and Yuigahama use true 1-hour model slots.
     // Other seven spots remain on the original 2-hour contract until their own rollout.
-    $compactPilot = in_array((string)$spotId, ['kugenuma', 'yuigahama'], true);
+    $compactPilot = in_array((string)$spotId, ['kugenuma', 'yuigahama', 'oarai_onuki', 'kashima_hirai'], true);
     $spotStep = $compactPilot ? 1 : $hourlyStep;
     // 72h covers 04:00-20:00 of the day after tomorrow, including today's past model slots.
     $spotHours = $compactPilot ? max(72, $hourlyHours) : $hourlyHours;
@@ -84,8 +84,13 @@ foreach ($spots as $spotId => $spotEntry) {
         'verified_observations' => $observations,
     ];
     if ($compactPilot) {
-        // Yuigahama uses Shonan Port as a *reference*, not Yuigahama's local observed tide.
-        $payload['tide'] = buildShonanTides($projectRoot . '/data/tide-jma', $now, 42);
+        // Every reference tide is from the JMA station near the coastal area, not the surf break.
+        $tideStation = match ((string)$spotId) {
+            'oarai_onuki' => ['D3', '大洗'],
+            'kashima_hirai' => ['D2', '鹿島'],
+            default => ['D8', '湘南港'],
+        };
+        $payload['tide'] = buildJmaTides($projectRoot . '/data/tide-jma', $tideStation[0], $tideStation[1], $now, 42);
     }
 
     $path = rtrim($outputDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $spotId . '.json';
