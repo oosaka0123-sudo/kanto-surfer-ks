@@ -172,8 +172,9 @@ function inject(file,id,body){
  if(pos>=0)html=html.slice(0,pos)+html.slice(end+b.length);
  // Keep separate v2 editorial report accessible but collapsed, not competing with model headline.
  const editorial='<!-- KS-RESEARCH:'+id+':START -->';
- const at=html.indexOf(editorial)>=0?html.indexOf(editorial):html.indexOf('<section class="forecast-section"');
- if(at<0||!html.includes('data-forecast')||!html.includes('</main>'))throw Error('Unexpected page '+file);
+ const at=html.indexOf(editorial)>=0?html.indexOf(editorial):
+   id==='ranking'?html.indexOf('</main>'):html.indexOf('<section class="forecast-section"');
+ if(at<0||(id!=='ranking'&&!html.includes('data-forecast'))||!html.includes('</main>'))throw Error('Unexpected page '+file);
  const content=a+'<section class="ks-model" id="ks-model-'+id+'">'+style+body+'</section>'+b;
  fs.writeFileSync(file,html.slice(0,at)+content+html.slice(at));
 }
