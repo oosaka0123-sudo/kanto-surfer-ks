@@ -1,36 +1,93 @@
-/* This helper does not send data to a server or store it in cookies/local storage. */
+/* Kansai-style real contact form. HTTPS same-origin only; no public API keys. */
 (()=>{
   'use strict';
   const form=document.getElementById('ks-inquiry-form');
   if(!form)return;
+  const submit=document.getElementById('ks-inquiry-submit');
   const status=document.getElementById('ks-inquiry-status');
-  const fallback=document.querySelector('.ks-copy-fallback');
-  const output=document.getElementById('ks-inquiry-output');
+  const success=document.getElementById('ks-contact-success');
+  const error=document.getElementById('ks-contact-error');
+  const errorDetail=document.getElementById('ks-contact-error-detail');
+  const question=document.getElementById('ks-contact-question');
+  const token=document.getElementById('ks-contact-token');
+  const answer=document.getElementById('ks-contact-captcha-input');
+  const retry=document.getElementById('ks-contact-retry');
+  let pending=false;
+  let ready=false;
+
+  function showError(message){
+    success.hidden=true;
+    error.hidden=false;
+    errorDetail.textContent=message;
+    status.textContent='送信していません。';
+  }
+  function showSuccess(message){
+    error.hidden=true;
+    success.hidden=false;
+    success.querySelector('p').textContent=message;
+    status.textContent='送信処理を受け付けました。';
+  }
+
+  async function newChallenge(){
+    ready=false;
+    submit.disabled=true;
+    token.value='';
+    answer.value='';
+    question.textContent='問題を読み込み中...';
+    status.textContent='送信準備中です。';
+    try{
+      const response=await fetch('challenge.php',{cache:'no-store',credentials:'same-origin',headers:{Accept:'application/json'}});
+      const data=await response.json();
+      if(!response.ok||!data.success||!data.token||!data.question)throw Error('captcha');
+      token.value=data.token;
+      question.textContent=data.question;
+      ready=true;
+      submit.disabled=false;
+      status.textContent='入力が完了したら、計算問題に回答して送信してください。';
+    }catch(e){
+      ready=false;
+      question.textContent='問題を取得できませんでした';
+      status.textContent='送信機能に接続できません。時間をおいてお試しいただくか公式SNSをご利用ください。';
+    }
+  }
+
+  retry.addEventListener('click',()=>{
+    if(!pending)newChallenge();
+  });
   form.addEventListener('submit',async event=>{
     event.preventDefault();
+    if(pending||!ready)return;
     if(!form.reportValidity())return;
-    const kind=document.getElementById('ks-inquiry-kind').value.trim();
-    const name=document.getElementById('ks-inquiry-name').value.trim();
-    const reply=document.getElementById('ks-inquiry-reply').value.trim();
-    const message=document.getElementById('ks-inquiry-message').value.trim();
-    if(!kind||!message){status.textContent='種別とお問い合わせ内容を入力してください。';return;}
-    const lines=['【関東サーファーKS お問い合わせ】','種別：'+kind];
-    if(name)lines.push('お名前・呼び名：'+name);
-    lines.push('返信の希望：'+reply,'','内容：',message,'','（関東サーファーKSお問い合わせページから作成）');
-    const text=lines.join('\n');
-    fallback.hidden=true;
-    output.value='';
-    status.textContent='';
+    pending=true;
+    submit.disabled=true;
+    retry.disabled=true;
+    success.hidden=true;
+    error.hidden=true;
+    status.textContent='送信しています...';
     try{
-      if(!navigator.clipboard?.writeText)throw new Error('Clipboard API not available');
-      await navigator.clipboard.writeText(text);
-      status.textContent='文章をコピーしました。上のInstagramまたはFacebookを開き、メッセージ欄に貼り付けて送信してください。この操作だけでは送信されません。';
-    }catch(error){
-      output.value=text;
-      fallback.hidden=false;
-      output.focus();
-      output.select();
-      status.textContent='自動コピーを利用できない環境です。下の文章を選択してコピーし、公式SNSから送信してください。';
+      const response=await fetch(form.action,{
+        method:'POST',
+        body:new FormData(form),
+        credentials:'same-origin',
+        cache:'no-store',
+        headers:{Accept:'application/json'}
+      });
+      const data=await response.json();
+      if(!response.ok||!data.success)throw Error(data.error||'送信できませんでした。');
+      showSuccess(data.message||'お問い合わせを受け付けました。');
+      form.reset();
+      await newChallenge();
+      status.textContent='送信を受け付けました。新しいお問い合わせも入力できます。';
+    }catch(e){
+      showError(e instanceof Error?e.message:'通信エラーが発生しました。');
+      await newChallenge();
+      status.textContent='送信できませんでした。内容を確認し、必要に応じて再送してください。';
+    }finally{
+      pending=false;
+      retry.disabled=false;
+      submit.disabled=!ready;
     }
   });
+
+  newChallenge();
 })();

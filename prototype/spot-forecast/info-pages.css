@@ -103,3 +103,17 @@
  .ks-info-page p{font-size:13px;line-height:1.85}
 }
 @media(prefers-reduced-motion:reduce){.ks-info-page .ks-cta,.ks-info-page .ks-contact-channels a{transition:none}}
+
+/* Actual mail contact form and server-side CAPTCHA, aligned with Kansai UX. */
+.ks-info-page .ks-contact-message{border:1px solid #3d8794;background:#0c3945;padding:20px 24px;margin:20px 0;border-radius:4px}
+.ks-info-page .ks-contact-message[hidden]{display:none}
+.ks-info-page .ks-contact-message h3{margin:0 0 7px;font-size:18px}
+.ks-info-page .ks-contact-message p{margin:0;font-size:13px}
+.ks-info-page .ks-contact-message.ks-error{border-color:#bf6d64;background:#482d32}
+.ks-info-page .ks-honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important;opacity:0}
+.ks-info-page .ks-captcha-row{display:flex;align-items:center;flex-wrap:wrap;gap:15px}
+.ks-info-page .ks-captcha-row strong{min-width:130px;color:#e8f5f6;background:#0b3441;padding:12px 17px;border-radius:4px;text-align:center;font:700 17px/1.5 system-ui,sans-serif}
+.ks-info-page .ks-captcha-row input{width:120px;max-width:100%;min-width:0}
+.ks-info-page .ks-captcha-retry{align-self:flex-start;border:0;border-bottom:1px solid #6a9eaf;padding:5px 0;background:none;color:#a7dae4;cursor:pointer;font-size:12px}
+.ks-info-page .ks-form-submit:disabled,.ks-info-page .ks-captcha-retry:disabled{opacity:.55;cursor:not-allowed}
+.ks-info-page .ks-form-status{min-height:20px}
