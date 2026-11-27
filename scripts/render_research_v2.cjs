@@ -134,8 +134,8 @@ const rendered=files.map(f=>{
   if((a<0)!==(b<0) || (a>=0 && (b<a || original.indexOf(start,a+1)>=0 || original.indexOf(end,b+1)>=0))) throw new Error('Broken marker '+f.rel);
   const clean=a<0?original:original.slice(0,a)+original.slice(b+end.length);
   if(clean.includes('<!-- KS-RESEARCH:')) throw new Error('Unexpected marker '+f.rel);
-  const at=clean.indexOf('<section class="forecast-section"');
-  if(at<0 || !clean.includes('data-forecast') || !clean.includes('</main>')) throw new Error('Unexpected HTML '+f.rel);
+  const at=f.id==='ranking'?clean.indexOf('</main>'):clean.indexOf('<section class="forecast-section"');
+  if(at<0 || (f.id!=='ranking'&&!clean.includes('data-forecast')) || !clean.includes('</main>')) throw new Error('Unexpected HTML '+f.rel);
   return {file,output:clean.slice(0,at)+start+f.html+end+clean.slice(at)};
 });
 for(const f of rendered) fs.writeFileSync(f.file,f.output,'utf8');
