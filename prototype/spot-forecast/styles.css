@@ -290,3 +290,22 @@
 .ks-gpt-article>.forecast-note{font-size:12px;line-height:1.7}
 .ks-gpt-article details{font-size:13px;line-height:1.7;margin:16px 0}
 @media(max-width:520px){.ks-gpt-article{padding:16px!important}.ks-gpt-article h3{font-size:19px}.ks-gpt-article>p:not(.forecast-note){font-size:14px;line-height:1.85}}
+
+
+/* Kanto SNS icons mirror Kansai Surfer: header right and centered footer row. */
+.sns-buttons{display:flex;align-items:center;gap:9px;margin-left:auto;margin-right:12px;flex-shrink:0}
+.sns-buttons a,.footer-sns a{display:inline-flex;align-items:center;justify-content:center;color:var(--text);text-decoration:none;opacity:.88;border-radius:8px;transition:opacity .15s ease,color .15s ease,background-color .15s ease}
+.sns-buttons a{width:38px;height:42px}
+.sns-buttons svg{display:block;width:22px;height:22px}
+.sns-buttons a:hover,.sns-buttons a:focus-visible,.footer-sns a:hover,.footer-sns a:focus-visible{opacity:1;color:var(--wave);background:rgba(244,93,67,.1)}
+.sns-buttons a:focus-visible,.footer-sns a:focus-visible{outline:2px solid var(--wave);outline-offset:2px}
+.site-footer .footer-sns{flex:0 0 100%;width:100%;display:flex;align-items:center;justify-content:center;gap:24px;margin:10px 0 6px;padding:12px 0 4px;order:0}
+.footer-sns a{width:48px;height:48px}
+.footer-sns svg{display:block;width:28px;height:28px}
+@media(max-width:390px){
+  .site-header .brand{gap:5px}
+  .site-header .brand-copy{font-size:clamp(11px,3.5vw,15px);letter-spacing:.04em}
+  .sns-buttons{gap:3px;margin-right:4px}
+  .sns-buttons a{width:32px;height:36px}
+  .sns-buttons svg{width:20px;height:20px}
+}
