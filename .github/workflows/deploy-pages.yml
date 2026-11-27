@@ -26,6 +26,8 @@ on:
       - 'data/tide-jma/**'
       - 'scripts/build_pages_site.php'
       - 'scripts/info_pages.php'
+      - 'scripts/thanks_page.php'
+      - 'tests/thank_you_smoke.cjs'
       - 'tests/info_pages_smoke.cjs'
       - 'tests/contact_backend_smoke.cjs'
       - 'backend/contact/**'
@@ -54,6 +56,8 @@ on:
       - 'data/tide-jma/**'
       - 'scripts/build_pages_site.php'
       - 'scripts/info_pages.php'
+      - 'scripts/thanks_page.php'
+      - 'tests/thank_you_smoke.cjs'
       - 'tests/info_pages_smoke.cjs'
       - 'tests/contact_backend_smoke.cjs'
       - 'backend/contact/**'
@@ -92,6 +96,9 @@ jobs:
           php tests/tide_jma_smoke.php
           php -l scripts/build_pages_site.php
           php -l scripts/info_pages.php
+          php -l scripts/thanks_page.php
+          node --check prototype/spot-forecast/thanks-helper.js
+          node --check tests/thank_you_smoke.cjs
           php -l backend/contact/common.php
           php -l backend/contact/challenge.php
           php -l backend/contact/send.php
@@ -129,6 +136,10 @@ jobs:
           test -f "$RUNNER_TEMP/site/index.html"
           node tests/sns_links_smoke.cjs "$RUNNER_TEMP/site"
           node tests/info_pages_smoke.cjs "$RUNNER_TEMP/site"
+          node tests/thank_you_smoke.cjs "$RUNNER_TEMP/site"
+          test -f "$RUNNER_TEMP/site/contact/thanks/index.html"
+          grep -q 'noindex,follow' "$RUNNER_TEMP/site/contact/thanks/index.html"
+          ! grep -q '/contact/thanks/' "$RUNNER_TEMP/site/sitemap.xml"
           # PHP backends are separately FTPS deployed and must never be served as raw source by GitHub Pages.
           ! test -f "$RUNNER_TEMP/site/contact/send.php"
           ! test -f "$RUNNER_TEMP/site/contact/challenge.php"

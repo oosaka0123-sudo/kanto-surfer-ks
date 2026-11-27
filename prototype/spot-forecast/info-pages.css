@@ -117,3 +117,24 @@
 .ks-info-page .ks-captcha-retry{align-self:flex-start;border:0;border-bottom:1px solid #6a9eaf;padding:5px 0;background:none;color:#a7dae4;cursor:pointer;font-size:12px}
 .ks-info-page .ks-form-submit:disabled,.ks-info-page .ks-captcha-retry:disabled{opacity:.55;cursor:not-allowed}
 .ks-info-page .ks-form-status{min-height:20px}
+
+
+/* Contact acknowledgement: spacious, Kansai-inspired deep ocean / coral treatment. */
+.ks-info-page .ks-thankyou-card{position:relative;isolation:isolate;overflow:hidden;text-align:center;background:radial-gradient(ellipse at 50% 12%,rgba(65,151,164,.15),transparent 54%),linear-gradient(125deg,#103949 0%,#092c3b 65%,#062632 100%);border:1px solid #396270;border-radius:8px;padding:clamp(34px,7vw,72px) clamp(20px,5vw,58px) 58px;margin:22px 0 36px;box-shadow:0 22px 55px rgba(0,11,19,.18)}
+.ks-info-page .ks-thankyou-card:before{content:"";position:absolute;z-index:-1;left:-25%;right:-25%;height:160px;bottom:-112px;border:1px solid rgba(128,208,220,.20);border-radius:50%;transform:rotate(-7deg);box-shadow:0 -33px 0 -32px rgba(128,208,220,.14),0 -70px 0 -69px rgba(128,208,220,.1)}
+.ks-info-page .ks-thankyou-mark{display:flex;justify-content:center;color:#f1a88d;margin-bottom:23px}
+.ks-info-page .ks-thankyou-mark svg{max-width:100%;filter:drop-shadow(0 0 14px rgba(237,164,140,.13))}
+.ks-info-page .ks-thankyou-card .ks-eyebrow{letter-spacing:.23em;margin-bottom:13px}
+.ks-info-page .ks-thankyou-card h2{font-family:Georgia,"Yu Mincho","Hiragino Mincho ProN",serif;font-size:clamp(30px,5.8vw,54px);letter-spacing:-.035em;line-height:1.4;margin:0 0 23px}
+.ks-info-page .ks-thankyou-card p{max-width:640px;margin:0 auto 11px;font-size:14px;line-height:1.95}
+.ks-info-page .ks-thankyou-card .ks-thankyou-lead{font-size:clamp(17px,2vw,20px);font-weight:600;color:#e4f4f5;line-height:1.75;margin-bottom:13px}
+.ks-info-page .ks-thankyou-card .ks-thankyou-note{font-size:11px;color:#92b2bd;margin-top:12px}
+.ks-info-page .ks-thankyou-card [hidden]{display:none!important}
+.ks-info-page .ks-thankyou-actions{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap;margin-top:30px}
+.ks-info-page .ks-thankyou-actions .ks-cta{margin:0}
+.ks-info-page .ks-thankyou-link{color:#c3e1e8;font-size:13px;text-decoration:none;border-bottom:1px solid #638a96;padding-bottom:5px}
+.ks-info-page .ks-thankyou-link:hover{color:#fff}
+.ks-info-page .ks-thankyou-bottom{text-align:center;margin:0 auto;padding:28px 18px 44px}
+.ks-info-page .ks-thankyou-bottom h2{font-family:Georgia,"Yu Mincho",serif;font-size:clamp(29px,4.2vw,44px);margin:5px 0 15px}
+.ks-info-page .ks-thankyou-bottom p:not(.ks-eyebrow){max-width:580px;margin:0 auto;color:#a8c2cb;font-size:13px}
+@media(max-width:520px){.ks-info-page .ks-thankyou-card{padding:36px 18px 38px;margin:12px 0 22px}.ks-info-page .ks-thankyou-mark svg{height:68px;width:68px}.ks-info-page .ks-thankyou-actions{flex-direction:column;gap:22px}.ks-info-page .ks-thankyou-actions .ks-cta{width:100%;max-width:300px}.ks-info-page .ks-thankyou-bottom{padding:22px 10px 32px}}

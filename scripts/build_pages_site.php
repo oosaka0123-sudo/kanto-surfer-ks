@@ -95,6 +95,24 @@ foreach ($infoPages as $slug => $page) {
     );
 }
 
+// A standalone acknowledgement is intentionally not in the public sitemap.
+$thanksDir = $outputDir . '/contact/thanks';
+ensureDirectory($thanksDir);
+$thanksBody = require __DIR__ . '/thanks_page.php';
+atomicWrite(
+    $thanksDir . '/index.html',
+    buildInfoPage(
+        $spots,
+        'contact/thanks',
+        'お問い合わせありがとうございました。｜関東サーファーKS',
+        '関東サーファーKSのお問い合わせ完了案内。',
+        'THANK YOU',
+        $thanksBody,
+        '../../',
+        true
+    )
+);
+
 $sitemapUrls = ['https://kanto.rss7.net/'];
 foreach ($spots as $spot) {
     $sitemapUrls[] = 'https://kanto.rss7.net/spots/' . rawurlencode((string)$spot['slug']) . '/';
@@ -897,11 +915,15 @@ function buildKantoSnsLinks(bool $footer = false): string
         . '</nav>';
 }
 
-function buildInfoPage(array $spots, string $slug, string $title, string $description, string $heading, string $body): string
+function buildInfoPage(
+    array $spots, string $slug, string $title, string $description, string $heading, string $body,
+    string $relativePrefix = '../', bool $noindex = false
+): string
 {
-    $spotNavLinks = buildSpotNavigationLinks($spots, '../');
+    $spotNavLinks = buildSpotNavigationLinks($spots, $relativePrefix);
     $styleVersion = substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/styles.css'), 0, 12);
-    $canonicalUrl = 'https://kanto.rss7.net/' . rawurlencode($slug) . '/';
+    $canonicalUrl = 'https://kanto.rss7.net/' . implode('/', array_map('rawurlencode', explode('/', $slug))) . '/';
+    $robots = $noindex ? 'noindex,follow' : 'index,follow';
     $infoCss = file_get_contents(dirname(__DIR__) . '/prototype/spot-forecast/info-pages.css');
     if ($infoCss === false) throw new RuntimeException('Information page CSS could not be loaded');
     $contactScript = '';
@@ -909,6 +931,10 @@ function buildInfoPage(array $spots, string $slug, string $title, string $descri
         $helper = file_get_contents(dirname(__DIR__) . '/prototype/spot-forecast/contact-helper.js');
         if ($helper === false) throw new RuntimeException('Contact helper could not be loaded');
         $contactScript = '<script id="ks-contact-script">' . $helper . '</script>';
+    } elseif ($slug === 'contact/thanks') {
+        $helper = file_get_contents(dirname(__DIR__) . '/prototype/spot-forecast/thanks-helper.js');
+        if ($helper === false) throw new RuntimeException('Thank-you helper could not be loaded');
+        $contactScript = '<script id="ks-thanks-script">' . $helper . '</script>';
     }
     return '<!doctype html>
 <html lang="ja">
@@ -916,18 +942,18 @@ function buildInfoPage(array $spots, string $slug, string $title, string $descri
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#082331">
-  <meta name="robots" content="index,follow">
+  <meta name="robots" content="' . $robots . '">
   <meta name="description" content="' . h($description) . '">
   <link rel="canonical" href="' . h($canonicalUrl) . '">
   <title>' . h($title) . '</title>
-  <link rel="stylesheet" href="../styles.css?v=' . h($styleVersion) . '">
+  <link rel="stylesheet" href="' . h($relativePrefix) . 'styles.css?v=' . h($styleVersion) . '">
   <style id="ks-info-styles">' . $infoCss . '</style>
-  <script defer src="../app.js?v=' . h(substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/app.js'), 0, 12)) . '"></script>
+  <script defer src="' . h($relativePrefix) . 'app.js?v=' . h(substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/app.js'), 0, 12)) . '"></script>
 </head>
 <body>
-  <header class="site-header"><a class="brand" href="../" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a>' . buildKantoSnsLinks() . buildHeaderMenu($spotNavLinks, '../') . '</header>
-  <main class="info-page ks-info-page"><a class="back-home" href="../">← ホームへ</a><p class="beta-label">KANTO SURFER KS / SITE INFO</p><h1>' . h($heading) . '</h1>' . $body . '</main>
-  <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a>' . buildKantoSnsLinks(true) . '<nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="../about/">サイト概要</a><a href="../contact/">お問い合わせ</a><a href="../privacy/">プライバシー</a></nav></footer>
+  <header class="site-header"><a class="brand" href="' . h($relativePrefix) . '" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a>' . buildKantoSnsLinks() . buildHeaderMenu($spotNavLinks, $relativePrefix) . '</header>
+  <main class="info-page ks-info-page"><a class="back-home" href="' . h($relativePrefix) . '">← ホームへ</a><p class="beta-label">KANTO SURFER KS / SITE INFO</p><h1>' . h($heading) . '</h1>' . $body . '</main>
+  <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a>' . buildKantoSnsLinks(true) . '<nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="' . h($relativePrefix) . 'about/">サイト概要</a><a href="' . h($relativePrefix) . 'contact/">お問い合わせ</a><a href="' . h($relativePrefix) . 'privacy/">プライバシー</a></nav></footer>
   ' . $contactScript . '
 </body>
 </html>

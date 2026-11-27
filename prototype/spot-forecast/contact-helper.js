@@ -74,10 +74,19 @@
       });
       const data=await response.json();
       if(!response.ok||!data.success)throw Error(data.error||'送信できませんでした。');
+      // Navigate only when the PHP endpoint confirms that it accepted the message.
       showSuccess(data.message||'お問い合わせを受け付けました。');
       form.reset();
-      await newChallenge();
-      status.textContent='送信を受け付けました。新しいお問い合わせも入力できます。';
+      try{
+        // Only a timestamp is stored; never persist names, email or message text.
+        sessionStorage.setItem('ks-kanto-contact-accepted-at',String(Date.now()));
+        window.location.assign(new URL('thanks/',window.location.href).href);
+        return;
+      }catch(navigationError){
+        // Privacy-mode storage restrictions must not erase a verified success.
+        await newChallenge();
+        status.textContent='送信を受け付けました。完了ページへ移動できない環境のため、この画面でお知らせしています。';
+      }
     }catch(e){
       showError(e instanceof Error?e.message:'通信エラーが発生しました。');
       await newChallenge();
