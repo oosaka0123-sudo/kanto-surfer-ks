@@ -25,6 +25,8 @@ on:
       - 'tests/kugenuma_hourly_smoke.cjs'
       - 'data/tide-jma/**'
       - 'scripts/build_pages_site.php'
+      - 'scripts/info_pages.php'
+      - 'tests/info_pages_smoke.cjs'
       - '.github/workflows/deploy-pages.yml'
   pull_request:
     branches: [main]
@@ -49,6 +51,8 @@ on:
       - 'tests/kugenuma_hourly_smoke.cjs'
       - 'data/tide-jma/**'
       - 'scripts/build_pages_site.php'
+      - 'scripts/info_pages.php'
+      - 'tests/info_pages_smoke.cjs'
       - '.github/workflows/deploy-pages.yml'
   schedule:
     - cron: '17 * * * *'
@@ -83,6 +87,9 @@ jobs:
           php -l scripts/tide_jma.php
           php tests/tide_jma_smoke.php
           php -l scripts/build_pages_site.php
+          php -l scripts/info_pages.php
+          node --check prototype/spot-forecast/contact-helper.js
+          node --check tests/info_pages_smoke.cjs
           node --check prototype/spot-forecast/app.js
           node --check scripts/render_daily_research.cjs
           node tests/research_best9_smoke.cjs
@@ -113,6 +120,7 @@ jobs:
         run: |
           test -f "$RUNNER_TEMP/site/index.html"
           node tests/sns_links_smoke.cjs "$RUNNER_TEMP/site"
+          node tests/info_pages_smoke.cjs "$RUNNER_TEMP/site"
           jq -e '.spot.id=="kugenuma" and .tide.station_id=="D8" and (.tide.days | length)>=3 and any(.hourly[]; .precipitation_1h_mm != null)' "$RUNNER_TEMP/site/data/kugenuma.json" >/dev/null
           jq -e '.spot.id=="yuigahama" and .tide.station_id=="D8" and (.tide.days | length)>=3 and any(.hourly[]; .precipitation_1h_mm != null)' "$RUNNER_TEMP/site/data/yuigahama.json" >/dev/null
           jq -e '.spot.id=="oarai_onuki" and .tide.station_id=="D3" and (.tide.days | length)>=3 and any(.hourly[]; .precipitation_probability_pct != null)' "$RUNNER_TEMP/site/data/oarai_onuki.json" >/dev/null
