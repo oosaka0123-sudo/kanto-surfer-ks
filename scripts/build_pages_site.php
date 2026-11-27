@@ -250,6 +250,7 @@ function buildForecastPage(
 <body' . ($spotPilot ? ' class="kugenuma-landing' . ($yuigahamaPilot ? ' yuigahama-landing' : ($ibarakiPilot ? ' ibaraki-landing' : ($chibaPilot ? ' chiba-landing' : ''))) . '"' : '') . '>
   <header class="site-header">
     <a class="brand" href="' . h($homeHref) . '" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a>
+    ' . buildKantoSnsLinks() . '
     ' . buildHeaderMenu($spotNavLinks, $assetPrefix) . '
   </header>
   <main>
@@ -281,7 +282,7 @@ function buildForecastPage(
       . $pilotBottom
       . ($kugenumaPilot ? buildKugenumaAccessMap() : ($yuigahamaPilot ? buildYuigahamaAccessMap() : ($ibarakiPilot ? buildIbarakiAccessMap($activeSpot) : ($chibaPilot ? buildChibaAccessMap($activeSpot) : '')))) . '
   </main>
-  <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="' . h($trustPrefix) . 'about/">サイト概要</a><a href="' . h($trustPrefix) . 'contact/">お問い合わせ</a><a href="' . h($trustPrefix) . 'privacy/">プライバシー</a></nav></footer>
+  <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a>' . buildKantoSnsLinks(true) . '<nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="' . h($trustPrefix) . 'about/">サイト概要</a><a href="' . h($trustPrefix) . 'contact/">お問い合わせ</a><a href="' . h($trustPrefix) . 'privacy/">プライバシー</a></nav></footer>
 </body>
 </html>
 ';
@@ -906,6 +907,24 @@ function contextItem(string $label, string $value): string
     return '<div><dt>' . h($label) . '</dt><dd>' . h($value) . '</dd></div>';
 }
 
+
+/**
+ * Kansai Surf SNS layout: two icons at the header's right edge, centered in footer.
+ * Instagram is Kanto's verified handle. Facebook is explicitly labelled as the
+ * sister Kansai site until a dedicated Kanto Facebook page URL is registered.
+ */
+function buildKantoSnsLinks(bool $footer = false): string
+{
+    $className = $footer ? 'footer-sns' : 'sns-buttons';
+    $label = $footer ? 'SNSリンク' : '公式SNS・系列サイト';
+    $instagramIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17.3" cy="6.9" r="1.1" fill="currentColor"/></svg>';
+    $facebookIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14.4 21v-7.6h2.6l.4-3.1h-3V8.3c0-.9.3-1.4 1.5-1.4h1.7V4.2a23 23 0 0 0-2.5-.2c-3 0-4.8 1.8-4.8 5v1.3H8v3.1h2.3V21h4.1Z"/></svg>';
+    return '<nav class="' . $className . '" aria-label="' . h($label) . '">'
+        . '<a href="https://www.instagram.com/kanto_surfer_ks/" target="_blank" rel="noopener noreferrer" aria-label="関東サーファーKS Instagram" title="Instagram｜関東サーファーKS">' . $instagramIcon . '</a>'
+        . '<a href="https://www.facebook.com/kansaisurfer/" target="_blank" rel="noopener noreferrer" aria-label="関西サーファーKS Facebook（姉妹サイト）" title="Facebook｜関西サーファーKS（姉妹サイト）">' . $facebookIcon . '</a>'
+        . '</nav>';
+}
+
 function buildInfoPage(array $spots, string $slug, string $title, string $description, string $heading, string $body): string
 {
     $spotNavLinks = buildSpotNavigationLinks($spots, '../');
@@ -925,9 +944,9 @@ function buildInfoPage(array $spots, string $slug, string $title, string $descri
   <script defer src="../app.js?v=' . h(substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/app.js'), 0, 12)) . '"></script>
 </head>
 <body>
-  <header class="site-header"><a class="brand" href="../" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a>' . buildHeaderMenu($spotNavLinks, '../') . '</header>
+  <header class="site-header"><a class="brand" href="../" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a>' . buildKantoSnsLinks() . buildHeaderMenu($spotNavLinks, '../') . '</header>
   <main class="info-page"><a class="back-home" href="../">← ホームへ</a><p class="beta-label">KANTO SURFER KS / SITE INFO</p><h1>' . h($heading) . '</h1>' . $body . '</main>
-  <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a><nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="../about/">サイト概要</a><a href="../contact/">お問い合わせ</a><a href="../privacy/">プライバシー</a></nav></footer>
+  <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a>' . buildKantoSnsLinks(true) . '<nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="../about/">サイト概要</a><a href="../contact/">お問い合わせ</a><a href="../privacy/">プライバシー</a></nav></footer>
 </body>
 </html>
 ';

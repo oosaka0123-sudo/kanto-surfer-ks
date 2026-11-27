@@ -13,6 +13,7 @@ on:
       - 'scripts/render_research_v2.cjs'
       - 'scripts/render_model_rankings.cjs'
       - 'tests/model_rankings_smoke.cjs'
+      - 'tests/sns_links_smoke.cjs'
       - 'tests/research_v2_smoke.cjs'
       - 'tests/research_best9_smoke.cjs'
       - 'prototype/spot-forecast/**'
@@ -36,6 +37,7 @@ on:
       - 'scripts/render_research_v2.cjs'
       - 'scripts/render_model_rankings.cjs'
       - 'tests/model_rankings_smoke.cjs'
+      - 'tests/sns_links_smoke.cjs'
       - 'tests/research_v2_smoke.cjs'
       - 'tests/research_best9_smoke.cjs'
       - 'prototype/spot-forecast/**'
@@ -110,6 +112,7 @@ jobs:
       - name: Verify Pages artifact
         run: |
           test -f "$RUNNER_TEMP/site/index.html"
+          node tests/sns_links_smoke.cjs "$RUNNER_TEMP/site"
           jq -e '.spot.id=="kugenuma" and .tide.station_id=="D8" and (.tide.days | length)>=3 and any(.hourly[]; .precipitation_1h_mm != null)' "$RUNNER_TEMP/site/data/kugenuma.json" >/dev/null
           jq -e '.spot.id=="yuigahama" and .tide.station_id=="D8" and (.tide.days | length)>=3 and any(.hourly[]; .precipitation_1h_mm != null)' "$RUNNER_TEMP/site/data/yuigahama.json" >/dev/null
           jq -e '.spot.id=="oarai_onuki" and .tide.station_id=="D3" and (.tide.days | length)>=3 and any(.hourly[]; .precipitation_probability_pct != null)' "$RUNNER_TEMP/site/data/oarai_onuki.json" >/dev/null
