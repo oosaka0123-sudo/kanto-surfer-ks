@@ -55,11 +55,14 @@ function pickArticle(required,options){
   let s=required+options.filter((_,i)=>Boolean(mask&(1<<i))).join('');
   for(let extra=0;extra<(1<<suffix.length);extra++){
    let v=s+suffix.filter((_,i)=>Boolean(extra&(1<<i))).join('');
-   if(len(v)>=90&&len(v)<=120)candidates.push(v);
+   if(len(v)>=90&&len(v)<=120)candidates.push({text:v,mask,extra});
   }
  }
  if(!candidates.length)throw Error('Cannot create 90–120-character grounded article: '+required);
- return candidates.sort((a,b)=>Math.abs(len(a)-105)-Math.abs(len(b)-105)||len(a)-len(b))[0];
+ return candidates.sort((a,b)=>Number(Boolean(b.mask&1))-Number(Boolean(a.mask&1))||
+   Number(Boolean(b.mask&2))-Number(Boolean(a.mask&2))||
+   Math.abs(len(a.text)-105)-Math.abs(len(b.text)-105)||
+   Number(Boolean(a.extra))-Number(Boolean(b.extra)))[0].text;
 }
 function compute(data,spot,date){
  if(data.spot?.id!==spot.id||!Array.isArray(data.hourly))return null;
@@ -77,8 +80,8 @@ function compute(data,spot,date){
  const windPart=wind.category==='off'?7:wind.category==='side'?1:-8;
  const dangerPenalty=avg>2.3?24+(avg-2.3)*16:avg>1.8?(avg-1.8)*9:0;
  const value=20*Math.min(avg,2.5)+2.1*Math.min(period,13)+windPart-Math.max(0,wind.speed-4)*2-dangerPenalty;
- const requiredHome=spot.display_name+'は朝9時の海上モデル波高'+range+'m、周期'+round(period)+'秒前後。風は'+wind.label+'で'+wind.effect+'。';
- const requiredSpot=spot.display_name+'の朝9時はモデル波高'+range+'m、周期'+round(period)+'秒前後。'+wind.label+'風の影響は'+wind.effect+'。';
+ const requiredHome=spot.display_name+'は朝9時の海上モデル波高'+range+'m、周期'+round(period)+'秒前後。風は'+wind.label+'。'+wind.effect+'。';
+ const requiredSpot=spot.display_name+'の朝9時はモデル波高'+range+'m、周期'+round(period)+'秒前後。風は'+wind.label+'。'+wind.effect+'。';
  const home=pickArticle(requiredHome,[tip[spot.id][0]+'。',tide?tide+'。':'','数字だけでなく波の割れ方も確かめたい。'].filter(Boolean));
  const detail=pickArticle(requiredSpot,[tip[spot.id][1]+'。',tide?tide+'。':'','潮と風の変化にも注意したい。'].filter(Boolean));
  return {id:spot.id,slug:spot.slug,name:spot.display_name,score:value,model_wave_min_m:min,model_wave_max_m:max,model_period_s:period,wind,home,detail,tide};
