@@ -104,6 +104,46 @@ function rankFor(date){
  return {date,status:'model_reference',entries};
 }
 const model={schema_version:1,kind:'KS_MODEL_REFERENCE',generated_at:generatedAt||null,updated_at:now.toISOString(),today:rankFor(today),tomorrow:rankFor(tomorrow)};
+// Optional human-edited copy written by the existing ChatGPT schedule. Ranking and metrics
+// remain deterministic. Reject the entire editorial file if it is stale or inconsistent.
+function applyEditorial(day,slot){
+ if(day.status!=='model_reference')return;
+ const dir=arg['editorial-dir']||path.join(process.cwd(),'content','model-editorial');
+ const file=path.join(dir,slot,day.date+'.json');
+ if(!fs.existsSync(file))return;
+ try{
+  const d=JSON.parse(fs.readFileSync(file,'utf8'));
+  const dayBefore=new Date(Date.parse(day.date+'T00:00:00Z')-86400000).toISOString().slice(0,10);
+  const publicationDate=slot==='morning'?day.date:dayBefore;
+  if(d.schema_version!==1||d.status!=='approved'||d.slot!==slot||d.date!==day.date||
+     typeof d.generated_at!=='string'||d.generated_at.slice(0,10)!==publicationDate||
+     !Number.isFinite(Date.parse(d.generated_at))||Date.parse(d.generated_at)>+now+900000||
+     !d.articles||Object.keys(d.articles).length!==9)throw Error('header/date/coverage');
+  const replacements=new Map();
+  for(const e of day.entries){
+   const a=d.articles[e.id];
+   if(!a||typeof a.home!=='string'||typeof a.detail!=='string'||
+      len(a.home)<90||len(a.home)>120||len(a.detail)<90||len(a.detail)>120||
+      a.home===a.detail||!Number.isFinite(a.wave_9_m)||!Number.isFinite(a.period_9_s)||
+      !directions.includes(a.wind_label))throw Error('article '+e.id);
+   if(Math.abs(a.wave_9_m-e.model_wave_min_m)>0.25||
+      Math.abs(a.period_9_s-e.model_period_s)>2.5||
+      Math.abs(((directions.indexOf(a.wind_label)-directions.indexOf(e.wind.label))*22.5+540)%360-180)>67.5){
+      throw Error('model drift '+e.id);
+   }
+   replacements.set(e.id,a);
+  }
+  for(const e of day.entries){
+   const copy=replacements.get(e.id);
+   e.home=copy.home;e.detail=copy.detail;e.editorial='reviewed';
+  }
+  console.log('PASS: applied nine validated editorial articles for '+slot+'/'+day.date);
+ }catch(e){
+  console.error('SKIP editorial '+slot+'/'+day.date+': '+e.message+'; using deterministic safe fallback');
+ }
+}
+applyEditorial(model.today,'morning');
+applyEditorial(model.tomorrow,'evening');
 const style='<style id="ks-model-rank-css">.ks-model{width:min(calc(100% - 16px),1040px);margin:18px auto;padding:16px;box-sizing:border-box;background:#0b2c39;color:#f4fafb;border:1px solid #3d6674;border-radius:12px;overflow-wrap:anywhere}.ks-model h2{margin:0 0 10px;font-size:clamp(19px,5vw,26px);line-height:1.45}.ks-model h3{font-size:18px;margin:0 0 5px}.ks-model .ks-model-info{font-size:12px;color:#bdd5df;line-height:1.7}.ks-model-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}.ks-model-item{padding:12px;border:1px solid #335663;border-radius:9px}.ks-model-item p,.ks-model p{font:14px/1.75 system-ui,"Yu Gothic",sans-serif;margin:6px 0}.ks-model a{color:#bbeaff;text-decoration:underline}.ks-model .ks-model-day+.ks-model-day{border-top:1px solid #3d6674;margin-top:18px;padding-top:18px}.ks-editorial-details{width:min(calc(100% - 16px),1040px);margin:8px auto;color:#d3e7ef}.ks-editorial-details summary{cursor:pointer;font-size:13px;padding:7px}.ks-editorial-details .ks-research{margin:8px auto}</style>';
 function blockDay(d,label,id){
  if(d.status!=='model_reference')return '<div class="ks-model-day"><h2>'+label+'の関東 波情報</h2><p>9地点の比較可能なモデル予報が揃っていないため、参考ランキングは保留です。</p><p class="ks-model-info">不足：'+esc(d.missing.join('、'))+'</p></div>';
