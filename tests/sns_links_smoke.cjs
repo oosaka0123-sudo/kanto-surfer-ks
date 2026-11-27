@@ -5,7 +5,7 @@ const ids=['kugenuma','yuigahama','oarai-onuki','kashima-hirai','katakai','ichin
 const pages=['index.html',...ids.map(x=>'spots/'+x+'/index.html'),'about/index.html','contact/index.html','privacy/index.html'];
 const socials=[
  ['https://www.instagram.com/kanto_surfer_ks/','関東サーファーKS Instagram'],
- ['https://www.facebook.com/kansaisurfer/','関西サーファーKS Facebook（姉妹サイト）']
+ ['https://www.facebook.com/profile.php?id=61595144364123','関東サーファーKS Facebook']
 ];
 for(const file of pages){
  const html=fs.readFileSync(path.join(root,file),'utf8');
@@ -23,7 +23,7 @@ for(const file of pages){
  assert(footer.includes('footer-spot-grid'),file+': existing 9-spot footer missing');
  const spotSegment=(footer.split('class="footer-spot-grid"')[1]||'').split('</div>')[0];
  assert.equal((spotSegment.match(/<a /g)||[]).length,9,file+': 9 spot links missing');
- assert(!html.includes('facebook.com/kanto')&&!html.includes('instagram.com/kansaisurfer.ks'),file+': unverified Kanto Facebook or wrong Instagram');
+ assert(!html.includes('facebook.com/kansaisurfer/')&&!html.includes('instagram.com/kansaisurfer.ks'),file+': wrong Kansai SNS links');
 }
 const css=fs.readFileSync(path.join(root,'styles.css'),'utf8');
 assert(css.includes('.sns-buttons')&&css.includes('.footer-sns')&&css.includes('@media(max-width:390px)'),'SNS responsive layout missing');
