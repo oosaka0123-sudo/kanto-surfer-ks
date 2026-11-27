@@ -115,7 +115,7 @@ function applyEditorial(day,slot){
   const d=JSON.parse(fs.readFileSync(file,'utf8'));
   const dayBefore=new Date(Date.parse(day.date+'T00:00:00Z')-86400000).toISOString().slice(0,10);
   const publicationDate=slot==='morning'?day.date:dayBefore;
-  if(d.schema_version!==1||d.status!=='approved'||d.slot!==slot||d.date!==day.date||
+  if(d.schema_version!==1||d.status!=='ready'||d.slot!==slot||d.date!==day.date||
      typeof d.generated_at!=='string'||d.generated_at.slice(0,10)!==publicationDate||
      !Number.isFinite(Date.parse(d.generated_at))||Date.parse(d.generated_at)>+now+900000||
      !d.articles||Object.keys(d.articles).length!==9)throw Error('header/date/coverage');
