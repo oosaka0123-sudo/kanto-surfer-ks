@@ -68,6 +68,19 @@ try{
  fs.writeFileSync(editorialFile,JSON.stringify(edited));render();
  updated=JSON.parse(fs.readFileSync(path.join(site,'data/model-ranking.json'),'utf8'));
  assert.ok(updated.today.entries.every(e=>!e.editorial));
+ // Human copy with numeric placeholders can survive small model revisions, with the
+ // fresh model values interpolated before the 90-120 character quality gate.
+ for(const e of ranking.today.entries){
+   const a=edited.articles[e.id];
+   a.home=e.home.replace(e.model_wave_min_m.toFixed(2),'{{wave_9_m}}').replace(e.model_period_s.toFixed(1),'{{period_9_s}}');
+   a.detail=e.detail.replace(e.model_wave_min_m.toFixed(2),'{{wave_9_m}}').replace(e.model_period_s.toFixed(1),'{{period_9_s}}');
+   assert.ok(a.home.includes('{{wave_9_m}}')&&a.home.includes('{{period_9_s}}'));
+   a.wave_9_m=e.model_wave_min_m+0.1;a.period_9_s=e.model_period_s+0.5;
+ }
+ fs.writeFileSync(editorialFile,JSON.stringify(edited));render();
+ updated=JSON.parse(fs.readFileSync(path.join(site,'data/model-ranking.json'),'utf8'));
+ assert.ok(updated.today.entries.every(e=>e.editorial==='reviewed'));
+ assert.ok(updated.today.entries.every(e=>!e.home.includes('{{')));
  fs.rmSync(path.join(site,'data',spots[0].id+'.json'));
  render();
  const held=JSON.parse(fs.readFileSync(path.join(site,'data/model-ranking.json'),'utf8'));
