@@ -84,35 +84,7 @@ foreach ($spots as $spot) {
     );
 }
 
-$infoPages = [
-    'about' => [
-        'title' => 'サイト概要・データについて｜関東サーファーKS',
-        'description' => '関東サーファーKSのデータ元、更新方法、モデル波高と実際のブレイクサイズの違い、検証方針を説明します。',
-        'heading' => 'サイト概要・データについて',
-        'body' => '<p>関東サーファーKSは、関東主要サーフスポットの海洋モデル予報を見やすく確認するための波予報サイトです。</p>
-<h2>現在の公開データ</h2>
-<p>Open-MeteoのMarine / Weatherデータを定期取得し、関東9地点の時間別（48時間）予報と10日間の波・風予報として表示しています。公開値はモデル値であり、実際のブレイクサイズを直接示すものではありません。</p>
-<h2>検証方針</h2>
-<p>モデル値と実波の照合、地点ごとの海岸向き・遮蔽・風の影響を段階的に検証しています。検証が終わっていない実ブレイクサイズ、点数、ランキングは公開値として自動生成しません。</p>
-<h2>更新</h2>
-<p>公開サイトはGitHub Actionsで定期生成しています。取得・生成に失敗した場合は、推測値で埋めず処理を失敗させる方針です。</p>'
-    ],
-    'contact' => [
-        'title' => 'お問い合わせ｜関東サーファーKS',
-        'description' => '関東サーファーKSのお問い合わせ案内です。',
-        'heading' => 'お問い合わせ',
-        'body' => '<p>お問い合わせ・情報提供は、<a href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer">関東サーファー YouTubeチャンネル</a>の案内をご利用ください。</p>
-<p>このサイトの波予報は海での安全を保証するものではありません。緊急連絡や救助要請の窓口としては使用できません。</p>'
-    ],
-    'privacy' => [
-        'title' => 'プライバシーポリシー｜関東サーファーKS',
-        'description' => '関東サーファーKSの現在のプライバシー方針です。',
-        'heading' => 'プライバシーポリシー',
-        'body' => '<p>現在、このサイト独自のお問い合わせフォーム、独自Cookie、独自アクセス解析は導入していません。</p>
-<p>今後、問い合わせ機能やアクセス解析等を導入する場合は、実際の運用内容に合わせてこのページを更新します。</p>
-<p>公開サイトには、内部検証記録、認証情報、非公開スポット情報を含めません。</p>'
-    ],
-];
+$infoPages = require __DIR__ . '/info_pages.php';
 
 foreach ($infoPages as $slug => $page) {
     $dir = $outputDir . '/' . $slug;
@@ -930,6 +902,14 @@ function buildInfoPage(array $spots, string $slug, string $title, string $descri
     $spotNavLinks = buildSpotNavigationLinks($spots, '../');
     $styleVersion = substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/styles.css'), 0, 12);
     $canonicalUrl = 'https://kanto.rss7.net/' . rawurlencode($slug) . '/';
+    $infoCss = file_get_contents(dirname(__DIR__) . '/prototype/spot-forecast/info-pages.css');
+    if ($infoCss === false) throw new RuntimeException('Information page CSS could not be loaded');
+    $contactScript = '';
+    if ($slug === 'contact') {
+        $helper = file_get_contents(dirname(__DIR__) . '/prototype/spot-forecast/contact-helper.js');
+        if ($helper === false) throw new RuntimeException('Contact helper could not be loaded');
+        $contactScript = '<script id="ks-contact-script">' . $helper . '</script>';
+    }
     return '<!doctype html>
 <html lang="ja">
 <head>
@@ -941,12 +921,14 @@ function buildInfoPage(array $spots, string $slug, string $title, string $descri
   <link rel="canonical" href="' . h($canonicalUrl) . '">
   <title>' . h($title) . '</title>
   <link rel="stylesheet" href="../styles.css?v=' . h($styleVersion) . '">
+  <style id="ks-info-styles">' . $infoCss . '</style>
   <script defer src="../app.js?v=' . h(substr(hash_file('sha256', dirname(__DIR__) . '/prototype/spot-forecast/app.js'), 0, 12)) . '"></script>
 </head>
 <body>
   <header class="site-header"><a class="brand" href="../" aria-label="関東サーファーKS ホーム"><span class="brand-mark">KS</span><span class="brand-copy">Kanto Surf</span></a>' . buildKantoSnsLinks() . buildHeaderMenu($spotNavLinks, '../') . '</header>
-  <main class="info-page"><a class="back-home" href="../">← ホームへ</a><p class="beta-label">KANTO SURFER KS / SITE INFO</p><h1>' . h($heading) . '</h1>' . $body . '</main>
+  <main class="info-page ks-info-page"><a class="back-home" href="../">← ホームへ</a><p class="beta-label">KANTO SURFER KS / SITE INFO</p><h1>' . h($heading) . '</h1>' . $body . '</main>
   <footer class="site-footer"><span>KS / KANTO SURFER</span><span>MODEL FORECAST</span><a class="youtube-link" href="https://www.youtube.com/channel/UCsGqnLPpcWnAB740uqkglzg" target="_blank" rel="noopener noreferrer" aria-label="関東サーファー YouTube"><svg viewBox="0 0 28 20" aria-hidden="true"><path d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.8 0 14 0 14 0S5.2 0 3 0.6A3.5 3.5 0 0 0 0.6 3.1C0 5.3 0 10 0 10s0 4.7 0.6 6.9A3.5 3.5 0 0 0 3 19.4c2.2 0.6 11 0.6 11 0.6s8.8 0 11-0.6a3.5 3.5 0 0 0 2.4-2.5C28 14.7 28 10 28 10s0-4.7-0.6-6.9Z"/><path class="youtube-play" d="m11.2 14.3 7.3-4.3-7.3-4.3v8.6Z"/></svg><span>YouTube</span></a>' . buildKantoSnsLinks(true) . '<nav class="footer-spot-nav" aria-label="サーフスポット個別ページ"><strong>サーフスポット</strong><div class="footer-spot-grid">' . $spotNavLinks . '</div></nav><nav class="trust-links" aria-label="サイト情報"><a href="../about/">サイト概要</a><a href="../contact/">お問い合わせ</a><a href="../privacy/">プライバシー</a></nav></footer>
+  ' . $contactScript . '
 </body>
 </html>
 ';
