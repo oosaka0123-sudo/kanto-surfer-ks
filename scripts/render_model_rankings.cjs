@@ -64,19 +64,21 @@ function pickArticle(required,options){
 function compute(data,spot,date){
  if(data.spot?.id!==spot.id||!Array.isArray(data.hourly))return null;
  const dateRows=data.hourly.filter(r=>typeof r.time==='string'&&r.time.slice(0,10)===date&&Number(r.time.slice(11,13))>=7&&Number(r.time.slice(11,13))<=10);
- const rows=dateRows.filter(r=>Number.isFinite(Number(r.model_wave_height_m))&&Number(r.model_wave_height_m)>=0&&Number.isFinite(Number(r.period_s))&&Number(r.period_s)>0);
- if(rows.length<2)return null;
+ // Some spots publish two-hourly data (09:00, 11:00), while others use hourly data.
+ // Compare the same 09:00 JST model timestamp for all nine spots; never blend incomparable windows.
+ const rows=dateRows.filter(r=>r.time.slice(11,13)==='09'&&Number.isFinite(Number(r.model_wave_height_m))&&Number(r.model_wave_height_m)>=0&&Number.isFinite(Number(r.period_s))&&Number(r.period_s)>0);
+ if(rows.length!==1)return null;
  const wave=rows.map(r=>Number(r.model_wave_height_m)),period=mean(rows.map(r=>Number(r.period_s)));
  const wind=windInfo(rows,spot.id);if(!wind)return null;
  const min=Math.min(...wave),max=Math.max(...wave),avg=mean(wave);
- const range=round(min,2)+'〜'+round(max,2);
+ const range=Math.abs(max-min)<0.005?round(mean(wave),2):round(min,2)+'〜'+round(max,2);
  const tide=findTide(data,date);
  // Heuristic comparisons only; no observed break size, empirical surf-point grading, or numeric score displayed.
  const windPart=wind.category==='off'?7:wind.category==='side'?1:-8;
  const dangerPenalty=avg>2.3?24+(avg-2.3)*16:avg>1.8?(avg-1.8)*9:0;
  const value=20*Math.min(avg,2.5)+2.1*Math.min(period,13)+windPart-Math.max(0,wind.speed-4)*2-dangerPenalty;
- const requiredHome=spot.display_name+'は朝7〜10時の海上モデル波高'+range+'m、周期'+round(period)+'秒前後。風は'+wind.label+'で'+wind.effect+'。';
- const requiredSpot=spot.display_name+'の朝7〜10時はモデル波高'+range+'m、周期'+round(period)+'秒前後。'+wind.label+'風の影響は'+wind.effect+'。';
+ const requiredHome=spot.display_name+'は朝9時の海上モデル波高'+range+'m、周期'+round(period)+'秒前後。風は'+wind.label+'で'+wind.effect+'。';
+ const requiredSpot=spot.display_name+'の朝9時はモデル波高'+range+'m、周期'+round(period)+'秒前後。'+wind.label+'風の影響は'+wind.effect+'。';
  const home=pickArticle(requiredHome,[tip[spot.id][0]+'。',tide?tide+'。':'','数字だけでなく波の割れ方も確かめたい。'].filter(Boolean));
  const detail=pickArticle(requiredSpot,[tip[spot.id][1]+'。',tide?tide+'。':'','潮と風の変化にも注意したい。'].filter(Boolean));
  return {id:spot.id,slug:spot.slug,name:spot.display_name,score:value,model_wave_min_m:min,model_wave_max_m:max,model_period_s:period,wind,home,detail,tide};
@@ -103,12 +105,12 @@ const style='<style id="ks-model-rank-css">.ks-model{width:min(calc(100% - 16px)
 function blockDay(d,label,id){
  if(d.status!=='model_reference')return '<div class="ks-model-day"><h2>'+label+'の関東 波情報</h2><p>9地点の比較可能なモデル予報が揃っていないため、参考ランキングは保留です。</p><p class="ks-model-info">不足：'+esc(d.missing.join('、'))+'</p></div>';
  const lis=d.entries.map(e=>'<li class="ks-model-item"><h3>'+e.rank+'位 <a href="'+(id==='ranking'?'spots/'+esc(e.slug)+'/':'../../spots/'+esc(e.slug)+'/')+'">'+esc(e.name)+'</a></h3><p>'+esc(e.home)+'</p></li>').join('');
- return '<div class="ks-model-day"><h2>'+label+'の関東 KSモデル参考ランキング BEST9</h2><p class="ks-model-info">朝7〜10時の海上モデル波高・周期・風と海岸向きの相性による暫定比較。実際のブレイクサイズや安全性の順位ではありません。</p><ol class="ks-model-list">'+lis+'</ol></div>';
+ return '<div class="ks-model-day"><h2>'+label+'の関東 KSモデル参考ランキング BEST9</h2><p class="ks-model-info">朝7〜10時の目安として、共通の9時の海上モデル波高・周期・風と海岸向きを比較。実際のブレイクサイズや安全性の順位ではありません。</p><ol class="ks-model-list">'+lis+'</ol></div>';
 }
 function spotDay(d,s,label){
  const e=d.entries.find(x=>x.id===s.id);
  if(!e)return '<div class="ks-model-day"><h2>'+label+'の波の狙い方</h2><p>比較可能なモデルデータが不足しているため、この日の短文予報は保留です。</p></div>';
- return '<div class="ks-model-day"><h2>'+label+'の波の狙い方</h2><p class="ks-model-info">KSモデル参考 '+e.rank+'位／9地点・朝7〜10時</p><p>'+esc(e.detail)+'</p></div>';
+ return '<div class="ks-model-day"><h2>'+label+'の波の狙い方</h2><p class="ks-model-info">KSモデル参考 '+e.rank+'位／9地点・朝9時代表値</p><p>'+esc(e.detail)+'</p></div>';
 }
 function inject(file,id,body){
  let html=fs.readFileSync(file,'utf8');
