@@ -30,7 +30,8 @@ assert(html.includes('href="/"')&&html.includes('href="/contact/"'),'Return to h
 assert(html.includes('class="footer-spot-grid"'),'Nine spots stay in footer');
 assert(html.includes('https://www.instagram.com/kanto_surfer_ks/'),'Instagram preserved');
 assert(html.includes('https://www.facebook.com/profile.php?id=61595144364123'),'Facebook preserved');
-assert((html.match(/href="\.\.\/\.\.\/spots\//g)||[]).length===9,'Exactly nine spot links expected');
+const footerSpotLinks=html.match(/<div class="footer-spot-grid">([\s\S]*?)<\/div>/)?.[1]||'';
+assert((footerSpotLinks.match(/href="\.\.\/\.\.\/spots\//g)||[]).length===9,'Exactly nine footer spot links expected');
 assert(contact.includes('action="send.php"'),'Real POST form maintained');
 assert(sending.includes("if(!response.ok||!data.success)throw"),'Only successful POST responses may redirect');
 assert(sending.includes("window.location.assign(new URL('thanks/',window.location.href).href)"),'Redirect only on success');
