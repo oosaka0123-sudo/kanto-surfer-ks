@@ -124,7 +124,7 @@ function spotDay(day,d,s,fallback){
   if(fallback?.reports[s.id]) out+='<h3>参考：昨夜の予報</h3>'+reportMarkup(fallback,s);
   return out;
 }
-const wrap=(a,b)=>'<section class="ks-research" id="ks-research-v2">'+style+'<div class="ks-slot">'+a+'</div><div class="ks-slot">'+b+'</div>'+safeNote+'</section>';
+const wrap=(a,b)=>'<details class="ks-editorial-details"><summary>補足：独立調査記事・出典を見る</summary><section class="ks-research" id="ks-research-v2">'+style+'<div class="ks-slot">'+a+'</div><div class="ks-slot">'+b+'</div>'+safeNote+'</section></details>';
 const files=[{rel:'index.html',id:'ranking',html:wrap(homeDay('今日',morning,prior),homeDay('明日',evening))}];
 for(const s of spots) files.push({rel:'spots/'+s.slug+'/index.html',id:s.id,html:wrap(spotDay('今日',morning,s,prior),spotDay('明日',evening,s))});
 const rendered=files.map(f=>{

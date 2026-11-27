@@ -10,6 +10,8 @@ on:
       - 'content/research/**'
       - 'scripts/render_daily_research.cjs'
       - 'scripts/render_research_v2.cjs'
+      - 'scripts/render_model_rankings.cjs'
+      - 'tests/model_rankings_smoke.cjs'
       - 'tests/research_v2_smoke.cjs'
       - 'tests/research_best9_smoke.cjs'
       - 'prototype/spot-forecast/**'
@@ -30,6 +32,8 @@ on:
       - 'content/research/**'
       - 'scripts/render_daily_research.cjs'
       - 'scripts/render_research_v2.cjs'
+      - 'scripts/render_model_rankings.cjs'
+      - 'tests/model_rankings_smoke.cjs'
       - 'tests/research_v2_smoke.cjs'
       - 'tests/research_best9_smoke.cjs'
       - 'prototype/spot-forecast/**'
@@ -80,6 +84,8 @@ jobs:
           node tests/research_best9_smoke.cjs
           node --check scripts/render_research_v2.cjs
           node tests/research_v2_smoke.cjs
+          node --check scripts/render_model_rankings.cjs
+          node tests/model_rankings_smoke.cjs
 
       - name: Fetch 8-day Open-Meteo forecast
         run: php scripts/fetch_open_meteo.php --output-dir="$RUNNER_TEMP/raw"
@@ -95,6 +101,9 @@ jobs:
 
       - name: Insert validated morning and evening research
         run: node scripts/render_research_v2.cjs --root "$RUNNER_TEMP/site" --research-dir content/research --config config/representative-spots.json
+
+      - name: Render KS model reference BEST9 and short spot articles
+        run: node scripts/render_model_rankings.cjs --root "$RUNNER_TEMP/site" --config config/representative-spots.json
 
       - name: Verify Pages artifact
         run: |
@@ -142,7 +151,10 @@ jobs:
           jq -e 'all(.hourly[]; has("precipitation_probability_pct"))' "$RUNNER_TEMP/site/data/kugenuma.json" >/dev/null
           test -f "$RUNNER_TEMP/site/app.js"
           test -f "$RUNNER_TEMP/site/styles.css"
-          test "$(find "$RUNNER_TEMP/site/data" -maxdepth 1 -name '*.json' | wc -l)" -eq 10
+          test "$(find "$RUNNER_TEMP/site/data" -maxdepth 1 -name '*.json' | wc -l)" -eq 11
+          jq -e '.today.status == "model_reference" and (.today.entries | length) == 9 and .tomorrow.status == "model_reference" and (.tomorrow.entries | length) == 9' "$RUNNER_TEMP/site/data/model-ranking.json" >/dev/null
+          grep -q 'KSモデル参考ランキング BEST9' "$RUNNER_TEMP/site/index.html"
+          grep -q '今日の波の狙い方' "$RUNNER_TEMP/site/spots/kugenuma/index.html"
           test "$(find "$RUNNER_TEMP/site/spots" -mindepth 2 -maxdepth 2 -name 'index.html' | wc -l)" -eq 9
           for page in about contact privacy; do
             test -f "$RUNNER_TEMP/site/$page/index.html"
