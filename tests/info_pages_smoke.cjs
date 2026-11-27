@@ -29,11 +29,12 @@ for(const value of ['個人情報の取得と利用','アクセス記録とCooki
   assert(data.privacy.includes(value),'Missing privacy '+value);
 }
 const contact=data.contact;
-for(const value of ['id="ks-inquiry-form"','id="ks-inquiry-kind"','id="ks-inquiry-name"','id="ks-inquiry-reply"','id="ks-inquiry-message"','id="ks-inquiry-copy"','id="ks-inquiry-status"','id="ks-inquiry-output"','id="ks-contact-script"','送信機能はありません','当サイトのサーバーへ送信されません']){
+for(const value of ['id="ks-inquiry-form"','id="ks-inquiry-kind"','id="ks-inquiry-name"','id="ks-inquiry-reply"','id="ks-inquiry-message"','id="ks-inquiry-submit"','id="ks-inquiry-status"','id="ks-contact-token"','id="ks-contact-question"','id="ks-contact-retry"','name="website"','name="captcha"','action="send.php"','method="post"','id="ks-contact-success"','id="ks-contact-error"','id="ks-contact-script"','お問い合わせを受け付けました','関西サーファーKSと同じように']){
   assert(contact.includes(value),'Missing contact form '+value);
 }
-assert(!/<form[^>]+action=/.test(contact),'Contact must never fake a backend');
+assert(/<form[^>]+action="send\.php"/.test(contact),'Contact must POST to send.php');
+assert(contact.includes('challenge.php')===false,'The challenge URL is provided by helper JS, not user HTML');
 assert(!data.about.includes('id="ks-contact-script"')&&!data.privacy.includes('id="ks-contact-script"'),'Contact helper should load on contact only');
 assert((data.about.match(/class="ks-value-grid"/g)||[]).length===1);
 assert((data.contact.match(/<option value=/g)||[]).length>=5);
-console.log('PASS Kanto trust pages: 3 generated routes, Kansai-inspired sections, 9 spots, canonical/SEO, SNS and honest local-only contact');
+console.log('PASS Kanto trust pages: 3 generated routes, Kansai-inspired sections, 9 spots, canonical/SEO, SNS and secure mail form');
