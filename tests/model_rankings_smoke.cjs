@@ -5,6 +5,7 @@ const base=path.resolve(__dirname,'..'),config=path.join(base,'config/representa
 const spots=JSON.parse(fs.readFileSync(config,'utf8')).spots;
 const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'ks-model-v3-')),site=path.join(tmp,'site');
 const pages=[{id:'ranking',path:'index.html'},...spots.map(s=>({id:s.id,path:'spots/'+s.slug+'/index.html'}))];
+const editorialDir=path.join(tmp,'editorial');
 const original='<html><main><section class="forecast-section" data-forecast><h2>Wave</h2></section></main></html>';
 const today='2026-11-27',tomorrow='2026-11-28',gen='2026-11-27T07:20:00+09:00';
 for(const p of pages){const f=path.join(site,p.path);fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,original);}
@@ -18,7 +19,7 @@ for(const [i,s] of spots.entries()){
  fs.writeFileSync(path.join(site,'data',s.id+'.json'),JSON.stringify(data));
 }
 function render(expectSuccess=true){
- const p=spawnSync(process.execPath,[path.join(base,'scripts/render_model_rankings.cjs'),'--root',site,'--config',config,'--now','2026-11-27T09:20:00+09:00'],{encoding:'utf8'});
+ const p=spawnSync(process.execPath,[path.join(base,'scripts/render_model_rankings.cjs'),'--root',site,'--config',config,'--editorial-dir',editorialDir,'--now','2026-11-27T09:20:00+09:00'],{encoding:'utf8'});
  assert.equal(p.status===0,expectSuccess,p.stderr||p.stdout);
 }
 function snap(){return pages.map(p=>fs.readFileSync(path.join(site,p.path),'utf8'));}
@@ -47,6 +48,26 @@ try{
   else{assert.ok(html.includes('今日の波の狙い方'));assert.ok(html.includes('明日の波の狙い方'));}
  }
  render();assert.deepEqual(snap(),before,'Idempotent rendering');
+ // Verified editorial should replace only the articles, never ranks or forecast metadata.
+ const edited={schema_version:1,status:'ready',slot:'morning',date:today,generated_at:'2026-11-27T08:00:00+09:00',model_generated_at:gen,articles:{}};
+ for(const e of ranking.today.entries){
+   edited.articles[e.id]={
+     home:e.home.replace('朝9時','朝の9時'),detail:e.detail.replace('朝9時','朝の9時'),
+     wave_9_m:e.model_wave_min_m,period_9_s:e.model_period_s,wind_label:e.wind.label
+   };
+ }
+ fs.mkdirSync(path.join(editorialDir,'morning'),{recursive:true});
+ const editorialFile=path.join(editorialDir,'morning',today+'.json');
+ fs.writeFileSync(editorialFile,JSON.stringify(edited));
+ render();
+ let updated=JSON.parse(fs.readFileSync(path.join(site,'data/model-ranking.json'),'utf8'));
+ assert.ok(updated.today.entries.every(e=>e.editorial==='reviewed'));
+ assert.deepEqual(updated.today.entries.map(e=>e.rank),ranking.today.entries.map(e=>e.rank));
+ // Drift in a single spot rejects all editorial entries and keeps verified fallback.
+ edited.articles[spots[0].id].wave_9_m+=1;
+ fs.writeFileSync(editorialFile,JSON.stringify(edited));render();
+ updated=JSON.parse(fs.readFileSync(path.join(site,'data/model-ranking.json'),'utf8'));
+ assert.ok(updated.today.entries.every(e=>!e.editorial));
  fs.rmSync(path.join(site,'data',spots[0].id+'.json'));
  render();
  const held=JSON.parse(fs.readFileSync(path.join(site,'data/model-ranking.json'),'utf8'));
