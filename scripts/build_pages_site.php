@@ -921,7 +921,7 @@ function buildKantoSnsLinks(bool $footer = false): string
     $facebookIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14.4 21v-7.6h2.6l.4-3.1h-3V8.3c0-.9.3-1.4 1.5-1.4h1.7V4.2a23 23 0 0 0-2.5-.2c-3 0-4.8 1.8-4.8 5v1.3H8v3.1h2.3V21h4.1Z"/></svg>';
     return '<nav class="' . $className . '" aria-label="' . h($label) . '">'
         . '<a href="https://www.instagram.com/kanto_surfer_ks/" target="_blank" rel="noopener noreferrer" aria-label="関東サーファーKS Instagram" title="Instagram｜関東サーファーKS">' . $instagramIcon . '</a>'
-        . '<a href="https://www.facebook.com/kansaisurfer/" target="_blank" rel="noopener noreferrer" aria-label="関西サーファーKS Facebook（姉妹サイト）" title="Facebook｜関西サーファーKS（姉妹サイト）">' . $facebookIcon . '</a>'
+        . '<a href="https://www.facebook.com/profile.php?id=61595144364123" target="_blank" rel="noopener noreferrer" aria-label="関東サーファーKS Facebook" title="Facebook｜関東サーファーKS">' . $facebookIcon . '</a>'
         . '</nav>';
 }
 
