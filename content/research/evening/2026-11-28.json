@@ -1,0 +1,20 @@
+{
+  "schema_version": 2,
+  "slot": "evening",
+  "date": "2026-11-28",
+  "generated_at": "2026-11-27T19:34:27+09:00",
+  "status": "held",
+  "rankings": [],
+  "reports": {},
+  "missing": {
+    "kugenuma": "対象日の独立出典の照合前につき掲載未確定",
+    "yuigahama": "対象日の独立出典の照合前につき掲載未確定",
+    "oarai_onuki": "対象日の独立出典の照合前につき掲載未確定",
+    "kashima_hirai": "対象日の独立出典の照合前につき掲載未確定",
+    "katakai": "対象日の独立出典の照合前につき掲載未確定",
+    "ichinomiya": "対象日の独立出典の照合前につき掲載未確定",
+    "taito": "対象日の独立出典の照合前につき掲載未確定",
+    "onjuku": "対象日の独立出典の照合前につき掲載未確定",
+    "kamogawa_maruki": "対象日の独立出典の照合前につき掲載未確定"
+  }
+}
