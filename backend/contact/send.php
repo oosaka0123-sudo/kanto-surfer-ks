@@ -76,14 +76,14 @@ $body="関東サーファーKSへのお問い合わせ\n"
     ."お名前：".$name."\n"
     ."メールアドレス：".$email."\n"
     ."電話番号：".($phone!==''?$phone:'未入力')."\n"
-    ."受信日時（JST）：".date('Y-m-d H:i:s')."\n"
+    ."受信日時（JST）：".(new DateTimeImmutable('now',new DateTimeZone('Asia/Tokyo')))->format('Y-m-d H:i:s')."\n"
     ."----------------------------------------\n"
     .$message."\n";
 $headers='From: '.$from."\r\nReply-To: ".$email."\r\n"
         ."MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8";
 $test=ksTestMode();
 if (function_exists('mb_language')) {
-    mb_language('Japanese');
+    mb_language('uni'); // Match the UTF-8 MIME header instead of ISO-2022-JP.
     mb_internal_encoding('UTF-8');
 }
 $accepted=$test?true:(
