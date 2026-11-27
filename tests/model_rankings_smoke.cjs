@@ -40,7 +40,7 @@ try{
  const before=snap();
  for(const [i,p] of pages.entries()){
   const html=before[i];
-  assert.equal((html.match(/<!-- KS-MODEL:/g)||[]).length,1);
+  assert.equal((html.match(/<!-- KS-MODEL:[a-z0-9_]+:START -->/g)||[]).length,1);
   assert.equal(strip(html,p.id),original);
   assert.ok(html.includes('ks-model'));
   if(i===0){assert.equal((html.match(/<li class="ks-model-item">/g)||[]).length,18);}
