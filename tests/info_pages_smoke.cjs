@@ -29,11 +29,11 @@ for(const value of ['個人情報の取得と利用','アクセス記録とCooki
   assert(data.privacy.includes(value),'Missing privacy '+value);
 }
 const contact=data.contact;
-for(const value of ['id="ks-inquiry-form"','id="ks-inquiry-kind"','id="ks-inquiry-name"','id="ks-inquiry-reply"','id="ks-inquiry-message"','id="ks-inquiry-submit"','id="ks-inquiry-status"','id="ks-contact-token"','id="ks-contact-question"','id="ks-contact-retry"','name="website"','name="captcha"','action="send.php"','method="post"','id="ks-contact-success"','id="ks-contact-error"','id="ks-contact-script"','お問い合わせを受け付けました','関西サーファーKSと同じように']){
+for(const value of ['id="ks-inquiry-form"','id="ks-inquiry-kind"','id="ks-inquiry-name"','id="ks-inquiry-email"','id="ks-inquiry-phone"','id="ks-inquiry-message"','id="ks-inquiry-submit"','id="ks-inquiry-status"','id="ks-contact-token"','id="ks-contact-question"','id="ks-contact-retry"','name="website"','name="captcha"','action="send.php"','method="post"','id="ks-contact-success"','id="ks-contact-error"','id="ks-contact-script"','お問い合わせを受け付けました','関西サーファーKSと同じように']){
   assert(contact.includes(value),'Missing contact form '+value);
 }
 assert(/<form[^>]+action="send\.php"/.test(contact),'Contact must POST to send.php');
-assert(contact.includes('challenge.php')===false,'The challenge URL is provided by helper JS, not user HTML');
+assert(contact.includes('challenge.php'),'The challenge endpoint must be called by the form helper');
 assert(!data.about.includes('id="ks-contact-script"')&&!data.privacy.includes('id="ks-contact-script"'),'Contact helper should load on contact only');
 assert((data.about.match(/class="ks-value-grid"/g)||[]).length===1);
 assert((data.contact.match(/<option value=/g)||[]).length>=5);
