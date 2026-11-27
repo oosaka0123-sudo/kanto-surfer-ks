@@ -156,7 +156,18 @@ jobs:
           test "$(find "$RUNNER_TEMP/site/data" -maxdepth 1 -name '*.json' | wc -l)" -eq 11
           jq -e '.today.status == "model_reference" and (.today.entries | length) == 9 and .tomorrow.status == "model_reference" and (.tomorrow.entries | length) == 9' "$RUNNER_TEMP/site/data/model-ranking.json" >/dev/null
           grep -q 'KSモデル参考ランキング BEST9' "$RUNNER_TEMP/site/index.html"
+          # Ranking home must NOT inherit the default Kugenuma wave chart or 10-day table.
+          ! grep -q 'id="forecast-title"' "$RUNNER_TEMP/site/index.html"
+          ! grep -q 'id="daily-forecast"' "$RUNNER_TEMP/site/index.html"
+          ! grep -q 'data-forecast' "$RUNNER_TEMP/site/index.html"
+          grep -q '波サイズ予想：' "$RUNNER_TEMP/site/index.html"
+          jq -e 'all(.today.entries[]; .surf_size.status == "experimental" and (.surf_size.label | length > 0)) and all(.tomorrow.entries[]; .surf_size.status == "experimental" and (.surf_size.label | length > 0))' "$RUNNER_TEMP/site/data/model-ranking.json" >/dev/null
           grep -q '今日の波の狙い方' "$RUNNER_TEMP/site/spots/kugenuma/index.html"
+          for place in kugenuma yuigahama oarai-onuki kashima-hirai katakai ichinomiya taito onjuku kamogawa-maruki; do
+            grep -q 'id="forecast-title"' "$RUNNER_TEMP/site/spots/$place/index.html"
+            grep -q 'id="daily-forecast"' "$RUNNER_TEMP/site/spots/$place/index.html"
+            grep -q '波サイズ予想：' "$RUNNER_TEMP/site/spots/$place/index.html"
+          done
           test "$(find "$RUNNER_TEMP/site/spots" -mindepth 2 -maxdepth 2 -name 'index.html' | wc -l)" -eq 9
           for page in about contact privacy; do
             test -f "$RUNNER_TEMP/site/$page/index.html"

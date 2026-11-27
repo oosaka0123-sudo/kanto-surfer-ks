@@ -392,6 +392,9 @@ function publicRow(array $hour, DateTimeImmutable $time, ?string $date = null): 
         'time' => $time->format('c'),
         'weather_label' => weatherLabel((int)($weather['weather_code'] ?? -1)),
         'model_wave_height_m' => nullableNumber($marine['wave_height'] ?? null),
+        // Model wave bearings are the direction FROM which the sea and swell approach.
+        'model_wave_direction_deg' => nullableNumber($marine['wave_direction'] ?? null),
+        'model_swell_direction_deg' => nullableNumber($marine['swell_wave_direction'] ?? null),
         'period_s' => $period,
         'wind_speed_ms' => nullableNumber($weather['wind_speed_10m'] ?? null),
         'temperature_c' => nullableNumber($weather['temperature_2m'] ?? null),

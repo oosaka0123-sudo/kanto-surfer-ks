@@ -162,14 +162,14 @@ function buildForecastPage(
     $spotNavLinks = buildSpotNavigationLinks($spots, $assetPrefix, $homePage ? null : $id);
 
     $title = $homePage
-        ? '関東サーファーKS｜時間別・10日間波予報'
+        ? '関東サーファーKS｜今日・明日の波予想BEST9'
         : $name . 'の波予報｜関東サーファーKS';
     $description = $homePage
-        ? '関東サーファーKS。関東9地点の時間別・10日間モデル波予報。'
+        ? '関東9地点の今日・明日の波予想ランキングと各ポイント約100字の予報記事。'
         : $name . '（' . $region . '）の時間別・10日間モデル波予報。Open-Meteo海洋モデルを使用しています。';
     $heading = $homePage ? '関東9地点の波予報' : $name . ($id === 'kugenuma' ? 'の波情報' : 'の波予報');
     $intro = $homePage
-        ? 'Open-Meteoの海洋モデルを使った波予報です。各スポットの個別予報はページ下部のリンクからご覧ください。'
+        ? '関東9地点の波サイズ参考予想と100字記事を掲載。波・風グラフと10日間予報は各スポットページからご覧ください。'
         : $name . '（' . $region . '）のモデル予報です。モデル波高は実際のブレイクサイズを直接示す値ではありません。';
 
     $context = '';
@@ -234,7 +234,7 @@ function buildForecastPage(
     $canonicalPath = $homePage ? '' : 'spots/' . rawurlencode((string)$activeSpot['slug']) . '/';
     $canonicalUrl = 'https://kanto.rss7.net/' . $canonicalPath;
 
-    return '<!doctype html>
+    $pageHtml = '<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8">
@@ -285,6 +285,21 @@ function buildForecastPage(
 </body>
 </html>
 ';
+    if ($homePage) {
+        // The home page is for nine-spot rankings, never the default Kugenuma graph or daily table.
+        // The nine individual spot pages retain their full forecast charts and ten-day tables.
+        $begin = strpos($pageHtml, '<section class="forecast-section" aria-labelledby="forecast-title">');
+        $end = $begin === false ? false : strpos($pageHtml, '</main>', $begin);
+        if ($begin === false || $end === false) {
+            throw new RuntimeException('Home forecast removal anchor not found');
+        }
+        $legacy = substr($pageHtml, $begin, $end - $begin);
+        if (!str_contains($legacy, 'id="daily-forecast"') || !str_contains($legacy, 'data-forecast')) {
+            throw new RuntimeException('Unexpected home forecast layout; refusing unsafe removal');
+        }
+        $pageHtml = substr($pageHtml, 0, $begin) . substr($pageHtml, $end);
+    }
+    return $pageHtml;
 }
 
 /**
