@@ -119,19 +119,28 @@ function applyEditorial(day,slot){
      typeof d.generated_at!=='string'||d.generated_at.slice(0,10)!==publicationDate||
      !Number.isFinite(Date.parse(d.generated_at))||Date.parse(d.generated_at)>+now+900000||
      !d.articles||Object.keys(d.articles).length!==9)throw Error('header/date/coverage');
+  const substitutions=(txt,e)=>txt.replaceAll('{{wave_9_m}}',round(e.model_wave_min_m,2))
+    .replaceAll('{{period_9_s}}',round(e.model_period_s,1))
+    .replaceAll('{{wind_label}}',e.wind.label);
   const replacements=new Map();
   for(const e of day.entries){
    const a=d.articles[e.id];
    if(!a||typeof a.home!=='string'||typeof a.detail!=='string'||
-      len(a.home)<90||len(a.home)>120||len(a.detail)<90||len(a.detail)>120||
-      a.home===a.detail||!Number.isFinite(a.wave_9_m)||!Number.isFinite(a.period_9_s)||
+      !Number.isFinite(a.wave_9_m)||!Number.isFinite(a.period_9_s)||
       !directions.includes(a.wind_label))throw Error('article '+e.id);
-   if(Math.abs(a.wave_9_m-e.model_wave_min_m)>0.25||
-      Math.abs(a.period_9_s-e.model_period_s)>2.5||
+   // A numbered article without placeholders may only be published against an exact snapshot.
+   const templated=a.home.includes('{{wave_9_m}}')&&a.detail.includes('{{wave_9_m}}')&&
+      a.home.includes('{{period_9_s}}')&&a.detail.includes('{{period_9_s}}');
+   const waveLimit=templated?0.25:0.015,periodLimit=templated?2.5:0.15;
+   if(Math.abs(a.wave_9_m-e.model_wave_min_m)>waveLimit||
+      Math.abs(a.period_9_s-e.model_period_s)>periodLimit||
       Math.abs(((directions.indexOf(a.wind_label)-directions.indexOf(e.wind.label))*22.5+540)%360-180)>67.5){
       throw Error('model drift '+e.id);
    }
-   replacements.set(e.id,a);
+   const home=substitutions(a.home,e),detail=substitutions(a.detail,e);
+   if(home.includes('{{')||detail.includes('{{')||len(home)<90||len(home)>120||
+      len(detail)<90||len(detail)>120||home===detail)throw Error('text length/tokens '+e.id);
+   replacements.set(e.id,{home,detail});
   }
   for(const e of day.entries){
    const copy=replacements.get(e.id);
