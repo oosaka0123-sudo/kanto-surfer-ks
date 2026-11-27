@@ -26,6 +26,28 @@ const tip={
  onjuku:['湾内でセットが入りやすい場所を探したい','湾内の場所による波の違いを確認して判断したい'],
  kamogawa_maruki:['南東向きの浜でセットの入り方を確認したい','南東向きの海岸で風と波の変化を見極めたい']
 };
+// Uncalibrated surf-face proxy. Never describe this as a measured wave size.
+const coastBearing={kugenuma:190,yuigahama:165,oarai_onuki:135,kashima_hirai:45,
+  katakai:135,ichinomiya:90,taito:70,onjuku:135,kamogawa_maruki:135};
+const sizeNames=['フラット','スネ','ヒザ','モモ','コシ','ハラ','ムネ','カタ','アタマ','アタマオーバー'];
+const sizeEdges=[0.12,0.26,0.43,0.60,0.78,0.98,1.20,1.48,1.87];
+function surfSizeReference(row,spot,waveHeight,period){
+ const bearing=row.model_wave_direction_deg;
+ if(typeof bearing!=='number'||!Number.isFinite(bearing)||bearing<0||bearing>360)
+   return {status:'pending',label:'判定保留',reason:'波向きのモデル値なし'};
+ const coast=coastBearing[spot.id];
+ if(!Number.isFinite(coast))throw Error('Unknown coast orientation '+spot.id);
+ const diff=Math.abs((((bearing%360)-coast+540)%360)-180);
+ // Simplified exposure factor; local bathymetry, shelter and refraction are unmodelled.
+ const exposure=diff<=40?1:diff<=70?0.8:diff<=100?0.55:0.22;
+ const periodFactor=Math.min(1.12,Math.max(0.72,0.78+Math.max(0,period-4)*0.052));
+ const proxy=waveHeight*0.9*exposure*periodFactor;
+ const bucket=v=>{const i=sizeEdges.findIndex(n=>v<n);return sizeNames[i<0?9:i]};
+ const low=bucket(proxy*0.76),high=bucket(proxy*1.24);
+ return {status:'experimental',label:low===high?low:low+'〜'+high,
+   model_wave_direction_deg:bearing,exposure,method:'wave-height-period-direction-coast-v1',
+   confidence:'low'};
+}
 const round=(v,n=1)=>(Math.round(v*10**n)/10**n).toFixed(n);
 const mean=v=>v.reduce((a,b)=>a+b,0)/v.length;
 function windInfo(samples,id){
@@ -76,15 +98,18 @@ function compute(data,spot,date){
  const min=Math.min(...wave),max=Math.max(...wave),avg=mean(wave);
  const range=Math.abs(max-min)<0.005?round(mean(wave),2):round(min,2)+'〜'+round(max,2);
  const tide=findTide(data,date);
+ const surfSize=surfSizeReference(rows[0],spot,avg,period);
+ if(surfSize.status!=='experimental')return null;
  // Heuristic comparisons only; no observed break size, empirical surf-point grading, or numeric score displayed.
  const windPart=wind.category==='off'?7:wind.category==='side'?1:-8;
  const dangerPenalty=avg>2.3?24+(avg-2.3)*16:avg>1.8?(avg-1.8)*9:0;
- const value=20*Math.min(avg,2.5)+2.1*Math.min(period,13)+windPart-Math.max(0,wind.speed-4)*2-dangerPenalty;
+ const value=20*Math.min(avg,2.5)+2.1*Math.min(period,13)+windPart-Math.max(0,wind.speed-4)*2-dangerPenalty
+   -14*(1-surfSize.exposure);
  const requiredHome=spot.display_name+'は朝9時の海上モデル波高'+range+'m、周期'+round(period)+'秒前後。風は'+wind.label+'。'+wind.effect+'。';
  const requiredSpot=spot.display_name+'の朝9時はモデル波高'+range+'m、周期'+round(period)+'秒前後。風は'+wind.label+'。'+wind.effect+'。';
  const home=pickArticle(requiredHome,[tip[spot.id][0]+'。',tide?tide+'。':'','数字だけでなく波の割れ方も確かめたい。'].filter(Boolean));
  const detail=pickArticle(requiredSpot,[tip[spot.id][1]+'。',tide?tide+'。':'','潮と風の変化にも注意したい。'].filter(Boolean));
- return {id:spot.id,slug:spot.slug,name:spot.display_name,score:value,model_wave_min_m:min,model_wave_max_m:max,model_period_s:period,wind,home,detail,tide};
+ return {id:spot.id,slug:spot.slug,name:spot.display_name,score:value,surf_size:surfSize,model_wave_min_m:min,model_wave_max_m:max,model_period_s:period,wind,home,detail,tide};
 }
 const raw=new Map();let generatedAt=null;
 for(const s of spots){
@@ -153,16 +178,16 @@ function applyEditorial(day,slot){
 }
 applyEditorial(model.today,'morning');
 applyEditorial(model.tomorrow,'evening');
-const style='<style id="ks-model-rank-css">.ks-model{width:min(calc(100% - 16px),1040px);margin:18px auto;padding:16px;box-sizing:border-box;background:#0b2c39;color:#f4fafb;border:1px solid #3d6674;border-radius:12px;overflow-wrap:anywhere}.ks-model h2{margin:0 0 10px;font-size:clamp(19px,5vw,26px);line-height:1.45}.ks-model h3{font-size:18px;margin:0 0 5px}.ks-model .ks-model-info{font-size:12px;color:#bdd5df;line-height:1.7}.ks-model-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}.ks-model-item{padding:12px;border:1px solid #335663;border-radius:9px}.ks-model-item p,.ks-model p{font:14px/1.75 system-ui,"Yu Gothic",sans-serif;margin:6px 0}.ks-model a{color:#bbeaff;text-decoration:underline}.ks-model .ks-model-day+.ks-model-day{border-top:1px solid #3d6674;margin-top:18px;padding-top:18px}.ks-editorial-details{width:min(calc(100% - 16px),1040px);margin:8px auto;color:#d3e7ef}.ks-editorial-details summary{cursor:pointer;font-size:13px;padding:7px}.ks-editorial-details .ks-research{margin:8px auto}</style>';
+const style='<style id="ks-model-rank-css">.ks-model{width:min(calc(100% - 16px),1040px);margin:18px auto;padding:16px;box-sizing:border-box;background:#0b2c39;color:#f4fafb;border:1px solid #3d6674;border-radius:12px;overflow-wrap:anywhere}.ks-model h2{margin:0 0 10px;font-size:clamp(19px,5vw,26px);line-height:1.45}.ks-model h3{font-size:18px;margin:0 0 5px}.ks-model .ks-model-info{font-size:12px;color:#bdd5df;line-height:1.7}.ks-model-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}.ks-model-item{padding:12px;border:1px solid #335663;border-radius:9px}.ks-model-item p,.ks-model p{font:14px/1.75 system-ui,"Yu Gothic",sans-serif;margin:6px 0}.ks-surf-size{display:inline-block;margin:5px 0 7px;padding:5px 9px;border:1px solid #b3b4a4;border-radius:5px;font-size:13px;color:#fff4d3;font-weight:700}.ks-surf-disclaimer{font-size:12px;color:#c4d2d9;line-height:1.65;margin:6px 0 10px}.ks-model a{color:#bbeaff;text-decoration:underline}.ks-model .ks-model-day+.ks-model-day{border-top:1px solid #3d6674;margin-top:18px;padding-top:18px}.ks-editorial-details{width:min(calc(100% - 16px),1040px);margin:8px auto;color:#d3e7ef}.ks-editorial-details summary{cursor:pointer;font-size:13px;padding:7px}.ks-editorial-details .ks-research{margin:8px auto}</style>';
 function blockDay(d,label,id){
  if(d.status!=='model_reference')return '<div class="ks-model-day"><h2>'+label+'の関東 波情報</h2><p>9地点の比較可能なモデル予報が揃っていないため、参考ランキングは保留です。</p><p class="ks-model-info">不足：'+esc(d.missing.join('、'))+'</p></div>';
- const lis=d.entries.map(e=>'<li class="ks-model-item"><h3>'+e.rank+'位 <a href="'+(id==='ranking'?'spots/'+esc(e.slug)+'/':'../../spots/'+esc(e.slug)+'/')+'">'+esc(e.name)+'</a></h3><p>'+esc(e.home)+'</p></li>').join('');
- return '<div class="ks-model-day"><h2>'+label+'の関東 KSモデル参考ランキング BEST9</h2><p class="ks-model-info">朝7〜10時の目安として、共通の9時の海上モデル波高・周期・風と海岸向きを比較。実際のブレイクサイズや安全性の順位ではありません。</p><ol class="ks-model-list">'+lis+'</ol></div>';
+ const lis=d.entries.map(e=>'<li class="ks-model-item"><h3>'+e.rank+'位 <a href="'+(id==='ranking'?'spots/'+esc(e.slug)+'/':'../../spots/'+esc(e.slug)+'/')+'">'+esc(e.name)+'</a></h3><span class="ks-surf-size">波サイズ予想：'+esc(e.surf_size.label)+'（試験推定）</span><p>'+esc(e.home)+'</p></li>').join('');
+ return '<div class="ks-model-day"><h2>'+label+'の関東 KSモデル参考ランキング BEST9</h2><p class="ks-model-info">朝7〜10時の目安として、共通の9時の海上モデル波高・周期・風と海岸向きを比較。波サイズは沖の波高・周期・波向きと海岸向きからの未較正の試験推定で、実際のブレイクサイズや安全性を保証しません。</p><ol class="ks-model-list">'+lis+'</ol></div>';
 }
 function spotDay(d,s,label){
  const e=d.entries.find(x=>x.id===s.id);
  if(!e)return '<div class="ks-model-day"><h2>'+label+'の波の狙い方</h2><p>比較可能なモデルデータが不足しているため、この日の短文予報は保留です。</p></div>';
- return '<div class="ks-model-day"><h2>'+label+'の波の狙い方</h2><p class="ks-model-info">KSモデル参考 '+e.rank+'位／9地点・朝9時代表値</p><p>'+esc(e.detail)+'</p></div>';
+ return '<div class="ks-model-day"><h2>'+label+'の波の狙い方</h2><p class="ks-model-info">KSモデル参考 '+e.rank+'位／9地点・朝9時代表値</p><span class="ks-surf-size">波サイズ予想：'+esc(e.surf_size.label)+'（試験推定）</span><p>'+esc(e.detail)+'</p><p class="ks-surf-disclaimer">未較正のモデル換算目安です。現地の波サイズではありません。</p></div>';
 }
 function inject(file,id,body){
  let html=fs.readFileSync(file,'utf8');
