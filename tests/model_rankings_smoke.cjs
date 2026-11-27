@@ -7,12 +7,13 @@ const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'ks-model-v3-')),site=path.join(t
 const pages=[{id:'ranking',path:'index.html'},...spots.map(s=>({id:s.id,path:'spots/'+s.slug+'/index.html'}))];
 const editorialDir=path.join(tmp,'editorial');
 const original='<html><main><section class="forecast-section" data-forecast><h2>Wave</h2></section></main></html>';
+const homeOriginal='<html><main><p>Ranking only; no default spot chart.</p></main></html>';
 const today='2026-11-27',tomorrow='2026-11-28',gen='2026-11-27T07:20:00+09:00';
-for(const p of pages){const f=path.join(site,p.path);fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,original);}
+for(const p of pages){const f=path.join(site,p.path);fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,p.id==='ranking'?homeOriginal:original);}
 for(const [i,s] of spots.entries()){
  const hourly=[];
  for(const [di,date] of [today,tomorrow].entries()){
-  hourly.push({time:date+'T09:00:00+09:00',model_wave_height_m:+(0.48+i*.08+di*.1).toFixed(2),period_s:6+(i%4),wind_speed_ms:2+i*.2,wind_direction_label:['北','北西','西','西南西','東'][i%5]});
+  hourly.push({time:date+'T09:00:00+09:00',model_wave_height_m:+(0.48+i*.08+di*.1).toFixed(2),period_s:6+(i%4),model_wave_direction_deg:[190,165,135,45,135,90,70,135,135][i],wind_speed_ms:2+i*.2,wind_direction_label:['北','北西','西','西南西','東'][i%5]});
  }
  const data={spot:{id:s.id},generated_at:gen,hourly,tide:{days:[{date:today,hourly_cm:Array.from({length:24},(_,h)=>100+h*2)},{date:tomorrow,hourly_cm:Array.from({length:24},(_,h)=>90+h*3)}]}};
  fs.mkdirSync(path.join(site,'data'),{recursive:true});
@@ -35,6 +36,8 @@ try{
    assert.ok(Array.from(e.home).length>=90&&Array.from(e.home).length<=120,e.id+' home');
    assert.ok(Array.from(e.detail).length>=90&&Array.from(e.detail).length<=120,e.id+' detail');
    assert.notEqual(e.home,e.detail);
+   assert.equal(e.surf_size.status,'experimental');
+   assert.match(e.surf_size.label,/^(フラット|スネ|ヒザ|モモ|コシ|ハラ|ムネ|カタ|アタマ)(〜.+)?$/);
    assert.ok(e.home.includes('モデル')&&e.detail.includes('モデル'));
   }
  }
@@ -42,7 +45,8 @@ try{
  for(const [i,p] of pages.entries()){
   const html=before[i];
   assert.equal((html.match(/<!-- KS-MODEL:[a-z0-9_]+:START -->/g)||[]).length,1);
-  assert.equal(strip(html,p.id),original);
+  assert.equal(strip(html,p.id),p.id==='ranking'?homeOriginal:original);
+  if(p.id==='ranking')assert.ok(!html.includes('data-forecast')&&!html.includes('daily-forecast'));
   assert.ok(html.includes('ks-model'));
   if(i===0){assert.equal((html.match(/<li class="ks-model-item">/g)||[]).length,18);}
   else{assert.ok(html.includes('今日の波の狙い方'));assert.ok(html.includes('明日の波の狙い方'));}
@@ -81,6 +85,17 @@ try{
  updated=JSON.parse(fs.readFileSync(path.join(site,'data/model-ranking.json'),'utf8'));
  assert.ok(updated.today.entries.every(e=>e.editorial==='reviewed'));
  assert.ok(updated.today.entries.every(e=>!e.home.includes('{{')));
+ // Missing 09h wave direction must never produce a made-up surf-size estimate.
+ const missingDirection=path.join(site,'data',spots[1].id+'.json');
+ const existing=JSON.parse(fs.readFileSync(missingDirection,'utf8'));
+ existing.hourly[0].model_wave_direction_deg=null;
+ fs.writeFileSync(missingDirection,JSON.stringify(existing));
+ render();
+ const heldDirection=JSON.parse(fs.readFileSync(path.join(site,'data/model-ranking.json'),'utf8'));
+ assert.equal(heldDirection.today.status,'held');
+ assert.equal(heldDirection.tomorrow.status,'model_reference');
+ existing.hourly[0].model_wave_direction_deg=165;
+ fs.writeFileSync(missingDirection,JSON.stringify(existing));
  fs.rmSync(path.join(site,'data',spots[0].id+'.json'));
  render();
  const held=JSON.parse(fs.readFileSync(path.join(site,'data/model-ranking.json'),'utf8'));
