@@ -80,7 +80,7 @@ $privacy = <<<'HTML'
 <section class="ks-legal-intro">
   <p class="ks-eyebrow">PRIVACY &amp; TRUST</p>
   <p class="ks-lead">関東サーファーKS（以下「当サイト」）は、関東9地点の波情報と予報を提供するサイトです。利用者のプライバシーを尊重し、取得する情報と外部サービスの扱いを分かりやすくお知らせします。</p>
-  <p class="ks-date">制定・最終更新：2026年11月27日</p>
+  <p class="ks-date">制定：2026年11月27日／フォーム運用更新：2026年11月27日</p>
 </section>
 <nav class="ks-legal-toc" aria-label="このページの目次"><strong>このページの内容</strong>
   <a href="#privacy-data">個人情報の取得と利用</a>
@@ -90,12 +90,12 @@ $privacy = <<<'HTML'
   <a href="#privacy-rights">権利・お問い合わせ</a>
 </nav>
 <section class="ks-legal-section" id="privacy-data"><span class="ks-index">01</span><h2>個人情報の取得と利用</h2>
-  <p>当サイトの連絡案内ページには、問い合わせ文を手元で作成・コピーする機能があります。入力した氏名・返信先・本文を当サイトのサーバーへ送信・保存する機能ではありません。利用者が公式InstagramやFacebookからメッセージを送った場合は、そのサービスを通じてお預かりした連絡内容を問い合わせへの対応に利用します。</p>
+  <p>お問い合わせフォームに入力された氏名、メールアドレス、任意の電話番号、問い合わせ種別と本文は、送信時に当サイトのサーバーで検証したうえで、担当者へのメール通知と自動返信に利用します。受信メールとして問い合わせ対応に必要な範囲で保管する場合があります。公式Instagram・Facebookからの連絡には各サービスの取り扱いが適用されます。</p>
   <p>取得した情報は、本人の同意なく目的外利用や第三者提供をしません。ただし法令に基づく場合などを除きます。機密情報、住所、電話番号などは必要がない限り記載しないでください。</p>
 </section>
 <section class="ks-legal-section" id="privacy-logs"><span class="ks-index">02</span><h2>アクセス記録とCookie</h2>
   <p>Webサーバーや配信事業者は、安定運用や不正アクセス対策のため、IPアドレス、閲覧時刻、ブラウザ情報などのアクセスログを記録する場合があります。</p>
-  <p>当サイトの問い合わせ文作成機能は入力内容をCookieや独自のデータベースに保存しません。一方、外部SNS、動画・地図サービスなどでは各社のCookieや類似技術が利用される場合があります。ブラウザの設定でCookieを管理できます。</p>
+  <p>お問い合わせフォームでは、不正送信を防ぐため、計算問題の検証にセッションCookieを使用します。また、送信回数の制限にIPアドレスを加工した識別子と送信時刻を一時的に利用します。問い合わせ本文をアクセス解析に利用することはありません。外部SNSや動画・地図サービスなどでは、それぞれのCookie・類似技術が利用される場合があります。</p>
 </section>
 <section class="ks-legal-section" id="privacy-services"><span class="ks-index">03</span><h2>外部サービス・アクセス解析・広告</h2>
   <p>当サイトではOpen-Meteoの気象・海洋データを参照し、YouTube、Instagram、Facebookなど外部サイトへのリンクを設けています。リンク先ではそれぞれの事業者の利用規約とプライバシーポリシーが適用されます。</p>
@@ -128,30 +128,43 @@ $contact = <<<'HTML'
   </div>
 </section>
 <section class="ks-section" aria-labelledby="contact-template-heading">
-  <p class="ks-eyebrow">02 / MESSAGE HELPER</p>
-  <h2 id="contact-template-heading">問い合わせ文を作成</h2>
-  <p>関西版の問い合わせフォームにならい、相談種別から文章を作成できます。<strong>このフォーム自体に送信機能はありません。</strong>「文章をコピー」したあと、ご利用のSNSで貼り付けて送信してください。入力内容は当サイトのサーバーへ送信されません。</p>
-  <form class="ks-inquiry-form" id="ks-inquiry-form">
+  <p class="ks-eyebrow">02 / CONTACT FORM</p>
+  <h2 id="contact-template-heading">お問い合わせフォーム</h2>
+  <p>関西サーファーKSと同じように、内容を入力してそのまま送信できます。受信内容は担当者へのメールで通知され、入力された返信用アドレスには受付メールを自動送信します。</p>
+  <div class="ks-contact-message ks-success" id="ks-contact-success" role="status" aria-live="polite" hidden>
+    <h3>お問い合わせを受け付けました</h3><p>ご連絡ありがとうございます。必要に応じて返信いたします。メールの配信に時間がかかる場合があります。</p>
+  </div>
+  <div class="ks-contact-message ks-error" id="ks-contact-error" role="alert" aria-live="assertive" hidden>
+    <h3>送信できませんでした</h3><p id="ks-contact-error-detail">入力内容を確認して、もう一度お試しください。</p>
+  </div>
+  <form class="ks-inquiry-form" id="ks-inquiry-form" action="send.php" method="post">
     <div class="ks-form-field"><label for="ks-inquiry-kind">お問い合わせ種別 <span>必須</span></label>
-      <select id="ks-inquiry-kind" name="kind" required>
+      <select id="ks-inquiry-kind" name="purpose" required>
         <option value="">選択してください</option>
-        <option value="サイトへのご意見・改善提案">サイトへのご意見・改善提案</option>
-        <option value="スポット情報の追加・修正">スポット情報の追加・修正</option>
-        <option value="スポンサー・広告掲載のご相談">スポンサー・広告掲載のご相談</option>
-        <option value="業務提携・取材のご依頼">業務提携・取材のご依頼</option>
-        <option value="その他のお問い合わせ">その他のお問い合わせ</option>
+        <option value="opinion">サイトへのご意見・改善提案</option>
+        <option value="spot">スポット情報の追加・修正リクエスト</option>
+        <option value="sponsor">スポンサー・広告掲載のご相談</option>
+        <option value="business">業務提携・取材のご依頼</option>
+        <option value="other">その他のお問い合わせ</option>
       </select>
     </div>
     <div class="ks-form-grid">
-      <div class="ks-form-field"><label for="ks-inquiry-name">お名前・呼び名 <small>任意</small></label><input id="ks-inquiry-name" name="name" type="text" maxlength="60" autocomplete="name" placeholder="お名前やニックネーム"></div>
-      <div class="ks-form-field"><label for="ks-inquiry-reply">返信方法の希望 <small>任意</small></label><select id="ks-inquiry-reply" name="reply"><option value="送信したSNSで返信希望">送信したSNSで返信希望</option><option value="返信不要">返信不要</option></select></div>
+      <div class="ks-form-field"><label for="ks-inquiry-name">お名前 <span>必須</span></label><input id="ks-inquiry-name" name="name" type="text" required maxlength="50" autocomplete="name" placeholder="山田 太郎"></div>
+      <div class="ks-form-field"><label for="ks-inquiry-email">メールアドレス <span>必須</span></label><input id="ks-inquiry-email" name="email" type="email" required maxlength="120" autocomplete="email" placeholder="example@email.com"></div>
     </div>
-    <div class="ks-form-field"><label for="ks-inquiry-message">お問い合わせ内容 <span>必須</span></label><textarea id="ks-inquiry-message" name="message" required maxlength="2000" rows="6" placeholder="地点名、日時、内容などを具体的にご記入ください（2000文字以内）"></textarea></div>
-    <button type="submit" class="ks-cta ks-form-submit" id="ks-inquiry-copy">文章をコピー <span aria-hidden="true">↗</span></button>
-    <p id="ks-inquiry-status" class="ks-form-status" role="status" aria-live="polite"></p>
-    <label class="ks-copy-fallback" for="ks-inquiry-output" hidden>コピーできない場合は、以下を選択してコピーしてください。<textarea id="ks-inquiry-output" readonly rows="6"></textarea></label>
+    <div class="ks-form-field"><label for="ks-inquiry-phone">電話番号 <small>任意</small></label><input id="ks-inquiry-phone" name="phone" type="tel" maxlength="30" autocomplete="tel" placeholder="記入は任意です"></div>
+    <div class="ks-form-field"><label for="ks-inquiry-message">お問い合わせ内容 <span>必須</span></label><textarea id="ks-inquiry-message" name="message" required maxlength="2000" rows="7" placeholder="地点名、日時、内容などを具体的にご記入ください（2000文字以内）"></textarea></div>
+    <div class="ks-honeypot" aria-hidden="true"><label for="ks-website">Website（入力しないでください）</label><input id="ks-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+    <input type="hidden" id="ks-contact-token" name="token" value="">
+    <div class="ks-form-field ks-contact-captcha">
+      <label for="ks-contact-captcha-input">迷惑送信対策：計算問題 <span>必須</span></label>
+      <div class="ks-captcha-row"><strong id="ks-contact-question">問題を読み込み中...</strong><input id="ks-contact-captcha-input" name="captcha" inputmode="numeric" type="number" required min="0" max="99" placeholder="答え" aria-label="計算問題の答え"></div>
+      <button type="button" class="ks-captcha-retry" id="ks-contact-retry">別の問題を表示する</button>
+    </div>
+    <button type="submit" class="ks-cta ks-form-submit" id="ks-inquiry-submit" disabled>送信する <span aria-hidden="true">↗</span></button>
+    <p id="ks-inquiry-status" class="ks-form-status" role="status" aria-live="polite">送信準備中です。</p>
   </form>
-  <p class="ks-note">このページでは送信完了や返信を保証しません。SNS側で送信を完了してください。緊急の救助・事故対応は受け付けていません。</p>
+  <p class="ks-note">お送りいただいた情報は返信とお問い合わせへの対応に利用します。<a href="../privacy/">プライバシーポリシー</a>をご確認ください。サイトが利用できない場合は上記の公式SNSをご利用ください。緊急の救助・事故対応は受け付けません。</p>
 </section>
 <section class="ks-end-cta">
   <p class="ks-eyebrow">THANK YOU FOR SHARING</p>
