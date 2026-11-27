@@ -232,8 +232,9 @@ function fetchJsonOnce(string $url): array
 
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_TIMEOUT => 25,
+            CURLOPT_CONNECTTIMEOUT => 15,
+            CURLOPT_TIMEOUT => 35,
+            CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4, // Avoid IPv6/dual-stack GitHub runner timeouts.
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS => 3,
             CURLOPT_USERAGENT => USER_AGENT,
