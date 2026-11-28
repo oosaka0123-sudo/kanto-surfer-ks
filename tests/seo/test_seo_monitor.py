@@ -455,6 +455,35 @@ class RepoSafetyTests(unittest.TestCase):
         self.assertNotIn("upload-pages-artifact", wf)
         self.assertNotIn("contents: write", wf)
 
+    def test_final_delivery_state_requires_successful_upload(self):
+        import subprocess
+        import textwrap
+
+        wf = (ROOT / ".github" / "workflows" / "seo-monitor.yml").read_text(encoding="utf-8")
+        start = wf.index('            if [ "$state" = "ok" ]; then')
+        end = wf.index('\n          fi\n          [ -n "$state" ]', start)
+        guard = textwrap.dedent(wf[start:end])
+        cases = [
+            ("ok", "0", "0", "", "skipped", "ok"),
+            ("ok", "0", "0", "age1example", "success", "ok"),
+            ("ok", "0", "0", "age1example", "failure", "delivery_error"),
+            ("ok", "0", "0", "age1example", "skipped", "delivery_error"),
+            ("ok", "0", "0", "age1example", "cancelled", "delivery_error"),
+            ("ok", "0", "1", "", "skipped", "delivery_error"),
+            ("ok", "1", "0", "age1example", "success", "failed"),
+            ("partial", "1", "1", "age1example", "failure", "partial"),
+            ("auth_error", "", "", "age1example", "failure", "auth_error"),
+        ]
+        for initial, monitor, delivery, recipient, upload, expected in cases:
+            with self.subTest(initial=initial, monitor=monitor, delivery=delivery, upload=upload):
+                env = dict(os.environ, state=initial, MONITOR_CODE=monitor,
+                           DELIVERY_CODE=delivery, SEO_REPORT_AGE_RECIPIENT=recipient,
+                           AGE_UPLOAD_OUTCOME=upload)
+                result = subprocess.run(["bash", "-eu", "-c", guard + '\nprintf "%s" "$state"'],
+                                        env=env, capture_output=True, text=True, check=True)
+                self.assertEqual(result.stdout, expected)
+
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
