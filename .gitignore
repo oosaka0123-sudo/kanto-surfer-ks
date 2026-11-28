@@ -22,3 +22,4 @@ Thumbs.db
 # Decrypted private Search Console reports (never commit)
 /gsc-report-private/
 *.tar.gz.enc
+__pycache__/
