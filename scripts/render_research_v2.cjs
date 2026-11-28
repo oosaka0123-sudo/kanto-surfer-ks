@@ -20,6 +20,35 @@ assert(ids.size===9 && spots.every(s=>/^[a-z0-9_-]+$/.test(s.id) && /^[a-z0-9-]+
 const str = (x, max=500) => typeof x==='string' && x.trim().length>0 && x.length<=max;
 const iso = x => typeof x==='string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+09:00$/.test(x) && Number.isFinite(Date.parse(x));
 const esc = x => String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Known publisher families and disclosed shared forecast origins. These are conservative
+// deduplication rules, not a claim that every article on a provider uses the same model.
+const canonicalHost=host=>host.toLowerCase().replace(/\.+$/,'');
+const hostIs=(host,base)=>host===base||host.endsWith('.'+base);
+function publisherFamily(host){
+  for(const base of ['bc01.com','surfline.com','namiaru.com','namiaru.tv','i92surf.com','surf-ok.jp','surfarea.info','jma.go.jp','kaiho.mlit.go.jp','open-meteo.com']){
+    if(hostIs(host,base)) return ['namiaru.tv','i92surf.com'].includes(base)?'namiaru.com':base;
+  }
+  return host.replace(/^www\./,'');
+}
+function sourceOrigin(s,u){
+  const host=canonicalHost(u.hostname);
+  const origin=s.upstream.normalize('NFKC').trim().toLowerCase().replace(/[\s\p{P}\p{S}]+/gu,'');
+  if(!origin||['unknown','unverified','unspecified','na','none','不明','未確認','未特定','不詳','確認不可'].includes(origin)) return null;
+  const forecast=s.kind==='forecast';
+  const sharedOpen=(forecast?/openmeteo|オープンメテオ/:/^(openmeteo|オープンメテオ)$/).test(origin);
+  const sharedSurf=(forecast?/surfline|サーフライン/:/^(surfline|サーフライン)$/).test(origin);
+  if(sharedOpen||(forecast&&(host==='kanto.rss7.net'||hostIs(host,'surf-ok.jp')||hostIs(host,'surfarea.info')))) return 'open-meteo';
+  // Namiaru's numerical forecast partnership with Surfline is documented; do not
+  // count their forecasts as separate origins. Observed local reports remain distinct.
+  if(sharedSurf||(forecast&&(hostIs(host,'surfline.com')||hostIs(host,'namiaru.com')||hostIs(host,'namiaru.tv')||hostIs(host,'i92surf.com')||/なみある|namiaru/.test(origin)))) return 'surfline';
+  // Official marine forecasts relayed by the Coast Guard are issued by JMA.
+  if(/^(jma|気象庁|japanmeteorologicalagency)$/.test(origin)||hostIs(host,'jma.go.jp')||
+     (hostIs(host,'kaiho.mlit.go.jp')&&(forecast||s.kind==='official_warning'&&
+      (/\/keihou_kaijou\.html$/.test(u.pathname)||/\/micsmail\/dtl\/uyh\/3000\.html$/.test(u.pathname))))) return 'jma';
+  // Independently issued Coast Guard safety notices are not JMA relays.
+  if(/^(jcg|海上保安庁|japancoastguard)$/.test(origin)) return 'jcg';
+  return origin;
+}
 function read(slot,date) {
   const file = path.join(opts['research-dir'],slot,date+'.json');
   if(!fs.existsSync(file)) return null;
@@ -39,6 +68,7 @@ function read(slot,date) {
        (slot==='evening' && r.basis!=='forecast') || !Array.isArray(r.paragraphs) || r.paragraphs.length<2 || r.paragraphs.length>5 ||
        !r.paragraphs.every(p=>str(p,800)) || !Array.isArray(r.sources) || r.sources.length<2 || r.sources.length>8) bad('report '+k);
     const domains=new Set(), upstream=new Set();
+    const waveOrigins=new Set(), wavePublishers=new Set();
     let hasWave=false, hasObserved=false, hasForecast=false;
     for(const s of r.sources) {
       if(!s || !str(s.name,100) || !str(s.url,400) || !str(s.upstream,100) || !['spot','region'].includes(s.scope) ||
@@ -47,9 +77,12 @@ function read(slot,date) {
          Date.parse(d.generated_at)-Date.parse(s.checked_at)>86400000 ||
          (s.issued_at!==null && (!iso(s.issued_at) || Date.parse(s.issued_at)>Date.parse(s.checked_at)+900000))) bad('source '+k);
       let u; try {u=new URL(s.url);} catch {bad('url '+k);}
-      if(u.protocol!=='https:' || u.username || u.password || !u.hostname.includes('.')) bad('unsafe URL '+k);
-      domains.add(u.hostname.toLowerCase().replace(/^www\./,''));
-      upstream.add(s.upstream.trim().toLowerCase());
+      if(u.protocol!=='https:' || u.username || u.password || !canonicalHost(u.hostname).includes('.')) bad('unsafe URL '+k);
+      const origin=sourceOrigin(s,u), publisher=publisherFamily(canonicalHost(u.hostname));
+      if(origin===null) bad('unknown upstream '+k);
+      domains.add(publisher);
+      upstream.add(origin);
+      if(['forecast','observed'].includes(s.kind)){waveOrigins.add(origin);wavePublishers.add(publisher);}
       if(s.scope==='spot' && ['forecast','observed'].includes(s.kind)) hasWave=true;
       if(s.scope==='spot' && s.kind==='observed') hasObserved=true;
       if(s.kind==='forecast') hasForecast=true;
@@ -57,6 +90,8 @@ function read(slot,date) {
     if(domains.size<2 || upstream.size<2 || !hasWave ||
        (r.basis!=='forecast' && !hasObserved) || (r.basis!=='observed' && !hasForecast) ||
        (slot==='evening' && r.sources.some(s=>s.kind==='observed'))) bad('independence or basis '+k);
+    // Warning/tide alone are valuable supporting evidence, not a second wave forecast.
+    if(d.status==='published'&&(waveOrigins.size<2||wavePublishers.size<2)) bad('rank requires two independent wave sources '+k);
     if(r.warning!==undefined && !str(r.warning,300)) bad('warning '+k);
   }
   if(d.status==='published') {

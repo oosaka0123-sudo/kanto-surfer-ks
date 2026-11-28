@@ -36,6 +36,56 @@ try{
  write(next);run('2026-11-26T08:00:00+09:00');out=snapshot();assert(!out[0].includes('参考：昨夜の予報ランキング'));assert(out[0].includes('当日朝の調査'));
  next.rankings[1].rank=1;write(next);run('2026-11-26T08:00:00+09:00',false);assert.deepEqual(snapshot(),out);
  next.rankings[1].rank=2;next.reports[spots[0].id].sources[1].upstream='A';write(next);run('2026-11-26T08:00:00+09:00',false);assert.deepEqual(snapshot(),out);
+ // Distinct domains and spelling variants must not manufacture independent sources.
+ const cases=[
+  [{url:'https://kanto.rss7.net/data/kugenuma.json',upstream:'Open-Meteo'},{url:'https://surf-ok.jp/forecast/kugenuma/',upstream:'Surf-OK'}],
+  [{url:'https://surf-ok.jp/test',upstream:'Open-Meteo'},{url:'https://surf-ok.jp./test',upstream:'Surf-OK'}],
+  [{url:'https://www.jma.go.jp/test',upstream:'JMA'},{url:'https://www6.kaiho.mlit.go.jp/test/alternate-forecast.html',upstream:'海上保安庁'}],
+  [{url:'https://example.com/test',upstream:'A'},{url:'https://example.org/test',upstream:'B',kind:'official_warning'}],
+  [{url:'https://kanto.rss7.net/data/kugenuma.json',upstream:'Open Meteo'},{url:'https://surfarea.info/forecast/kugenuma/',upstream:'SURFAREA'}],
+  [{url:'https://www.surfline.com/surf-report/test',upstream:'Surfline'},{url:'https://liff.namiaru.com/test',upstream:'なみある？'}],
+  [{url:'https://m.bc01.com/test',upstream:'BCM A'},{url:'https://www.bc01.com/test',upstream:'BCM B'}],
+  [{url:'https://www.data.jma.go.jp/test',upstream:'気象庁'},{url:'https://www7.kaiho.mlit.go.jp/micsmail/dtl/uyh/3000.html',upstream:'海上保安庁'}],
+  [{url:'https://example.com/test',upstream:'未確認'},{url:'https://example.org/test',upstream:'B'}],
+  [{url:'https://example.com/test',upstream:'A'},{url:'https://example.org/test',upstream:'B',kind:'tide'}]
+ ];
+ for(const pair of cases){
+   const sample=fixture('morning','2026-11-26','2026-11-26T07:40:00+09:00',9);
+   const sources=sample.reports[spots[0].id].sources;
+   pair.forEach((s,i)=>Object.assign(sources[i],s));
+   write(sample);run('2026-11-26T08:00:00+09:00',false);assert.deepEqual(snapshot(),out);
+ }
+ // Independent official forecast plus a point forecast remains eligible.
+ const valid=fixture('morning','2026-11-26','2026-11-26T07:40:00+09:00',9);
+ const sources=valid.reports[spots[0].id].sources;
+ Object.assign(sources[0],{url:'https://kanto.rss7.net/data/kugenuma.json',upstream:'Open-Meteo'});
+ Object.assign(sources[1],{url:'https://www.data.jma.go.jp/test',upstream:'JMA'});
+ write(valid);run('2026-11-26T08:00:00+09:00');out=snapshot();
+ // A point forecast and a separate official warning can support a partial report, not a full ranking.
+ const partial=fixture('morning','2026-11-26','2026-11-26T07:40:00+09:00',1);
+ partial.reports[spots[0].id].sources[1].kind='official_warning';
+ partial.reports[spots[0].id].warning='Synthetic safety warning';
+ write(partial);run('2026-11-26T08:00:00+09:00');
+ assert(snapshot()[0].includes('1/9'));assert(snapshot()[1].includes('Synthetic safety warning'));assert(snapshot()[1].includes('TEST ONLY'));
+ // A separately issued Coast Guard safety notice is not a JMA forecast relay.
+ const jcg=fixture('morning','2026-11-26','2026-11-26T07:40:00+09:00',1);
+ const j=jcg.reports[spots[0].id];
+ Object.assign(j.sources[0],{url:'https://www.jma.go.jp/test',upstream:'気象庁'});
+ Object.assign(j.sources[1],{url:'https://www6.kaiho.mlit.go.jp/test/local-hazard.html',upstream:'海上保安庁',kind:'official_warning'});
+ j.warning='Synthetic independent local hazard';
+ write(jcg);run('2026-11-26T08:00:00+09:00');
+ assert(snapshot()[1].includes('Synthetic independent local hazard'));
+ const jcgOut=snapshot();
+ // The known JMA relay cannot count as a separate source even if labeled as JCG.
+ j.sources[1].url='https://www7.kaiho.mlit.go.jp/micsmail/dtl/uyh/3000.html';
+ write(jcg);run('2026-11-26T08:00:00+09:00',false);assert.deepEqual(snapshot(),jcgOut);
+ // Independent local observation may reference a model comparison without sharing its origin.
+ const mixed=fixture('morning','2026-11-26','2026-11-26T07:40:00+09:00',1);
+ const m=mixed.reports[spots[0].id];m.basis='mixed';
+ Object.assign(m.sources[0],{url:'https://example.org/observation',upstream:'Local observers (Surfline comparison)',kind:'observed'});
+ Object.assign(m.sources[1],{url:'https://www.surfline.com/forecast',upstream:'Surfline',kind:'forecast'});
+ write(mixed);run('2026-11-26T08:00:00+09:00');
+ assert(snapshot()[1].includes('観測と予報を区別して掲載'));assert(snapshot()[0].includes('1/9'));
  const held=fixture('morning','2026-11-26','2026-11-26T08:10:00+09:00',0);write(held);run('2026-11-26T08:20:00+09:00');assert(snapshot()[0].includes('0/9'));assert(snapshot()[0].includes('今日の関東 波情報'));assert(!snapshot()[0].includes('今日の関東 波ランキング BEST9'));assert(snapshot()[1].includes('参考：昨夜の予報'));
  run('2026-11-27T00:01:00+09:00');out=snapshot();assert(!out[0].includes('2026-11-26'));assert(out.every(s=>strip(s)===html));
  console.log('PASS: partial, held, evening, rollover, ranking replacement, no duplicate ranks, independence, escaping, idempotency, original HTML, expiry');
