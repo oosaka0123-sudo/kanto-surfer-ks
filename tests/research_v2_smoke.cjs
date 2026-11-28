@@ -67,6 +67,18 @@ try{
  partial.reports[spots[0].id].warning='Synthetic safety warning';
  write(partial);run('2026-11-26T08:00:00+09:00');
  assert(snapshot()[0].includes('1/9'));assert(snapshot()[1].includes('Synthetic safety warning'));assert(snapshot()[1].includes('TEST ONLY'));
+ // A separately issued Coast Guard safety notice is not a JMA forecast relay.
+ const jcg=fixture('morning','2026-11-26','2026-11-26T07:40:00+09:00',1);
+ const j=jcg.reports[spots[0].id];
+ Object.assign(j.sources[0],{url:'https://www.jma.go.jp/test',upstream:'気象庁'});
+ Object.assign(j.sources[1],{url:'https://www6.kaiho.mlit.go.jp/test/local-hazard.html',upstream:'海上保安庁',kind:'official_warning'});
+ j.warning='Synthetic independent local hazard';
+ write(jcg);run('2026-11-26T08:00:00+09:00');
+ assert(snapshot()[1].includes('Synthetic independent local hazard'));
+ const jcgOut=snapshot();
+ // The known JMA relay cannot count as a separate source even if labeled as JCG.
+ j.sources[1].url='https://www7.kaiho.mlit.go.jp/micsmail/dtl/uyh/3000.html';
+ write(jcg);run('2026-11-26T08:00:00+09:00',false);assert.deepEqual(snapshot(),jcgOut);
  // Independent local observation may reference a model comparison without sharing its origin.
  const mixed=fixture('morning','2026-11-26','2026-11-26T07:40:00+09:00',1);
  const m=mixed.reports[spots[0].id];m.basis='mixed';
