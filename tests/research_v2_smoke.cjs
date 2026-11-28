@@ -29,7 +29,9 @@ try{
  const morning=fixture('morning','2026-11-25','2026-11-25T07:40:00+09:00',3);
  write(morning);write(evening);
  run('2026-11-25T20:00:00+09:00');
- let out=snapshot(); assert(out[0].includes('3/9'));assert(out[0].includes('2026-11-26'));assert(out[1].includes('TEST ONLY'));assert(out[5].includes('Insufficient independent evidence'));assert(!out[1].includes('<script>'));assert(out[1].includes('&lt;script&gt;'));
+ let out=snapshot();
+ assert(out.every(s=>s.includes('<div class="ks-slot" data-day="today"><h2>今日')&&s.includes('<div class="ks-slot" data-day="tomorrow"><h2>明日')&&s.includes('--day-head:#075985')&&s.includes('--day-head:#9a3412')),'research day colors on all pages');
+ assert(out[0].includes('3/9'));assert(out[0].includes('2026-11-26'));assert(out[1].includes('TEST ONLY'));assert(out[5].includes('Insufficient independent evidence'));assert(!out[1].includes('<script>'));assert(out[1].includes('&lt;script&gt;'));
  assert(out.every(s=>strip(s)===html));run('2026-11-25T20:00:00+09:00');assert.deepEqual(snapshot(),out);
  run('2026-11-26T00:01:00+09:00');out=snapshot();assert(out[0].includes('参考：昨夜の予報ランキング'));assert(out[1].includes('2026-11-26'));assert(!out[0].includes('3/9'));assert(out[0].includes('今日の関東 波情報'));assert(!out[0].includes('今日の関東 波ランキング BEST9'));assert(out[0].includes('今朝の調査結果が保存されていない'));
  const next=fixture('morning','2026-11-26','2026-11-26T07:40:00+09:00',9);
