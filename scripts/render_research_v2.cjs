@@ -43,7 +43,10 @@ function sourceOrigin(s,u){
   if(sharedSurf||(forecast&&(hostIs(host,'surfline.com')||hostIs(host,'namiaru.com')||hostIs(host,'namiaru.tv')||hostIs(host,'i92surf.com')||/なみある|namiaru/.test(origin)))) return 'surfline';
   // Official marine forecasts relayed by the Coast Guard are issued by JMA.
   if(/^(jma|気象庁|japanmeteorologicalagency)$/.test(origin)||hostIs(host,'jma.go.jp')||
-     (hostIs(host,'kaiho.mlit.go.jp')&&['forecast','official_warning'].includes(s.kind))) return 'jma';
+     (hostIs(host,'kaiho.mlit.go.jp')&&(forecast||s.kind==='official_warning'&&
+      (/\/keihou_kaijou\.html$/.test(u.pathname)||/\/micsmail\/dtl\/uyh\/3000\.html$/.test(u.pathname))))) return 'jma';
+  // Independently issued Coast Guard safety notices are not JMA relays.
+  if(/^(jcg|海上保安庁|japancoastguard)$/.test(origin)) return 'jcg';
   return origin;
 }
 function read(slot,date) {
