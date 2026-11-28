@@ -41,6 +41,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install required encryption test tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq age
+          command -v age
+          command -v age-keygen
+
       - name: Unit tests (offline)
         run: |
           python3 tests/seo/test_seo_monitor.py
@@ -158,17 +165,22 @@ jobs:
           rm -rf "$RUNNER_TEMP/gsc-private"
 
       - name: Upload age-encrypted report
+        id: upload_age
         if: always() && steps.cfg.outputs.state == 'enabled' && env.SEO_REPORT_AGE_RECIPIENT != ''
         uses: actions/upload-artifact@v4
         with:
           name: gsc-report-age
           path: ${{ runner.temp }}/gsc-encrypted/*.age
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 90
 
       - name: Determine state
         id: final
         if: always()
+        env:
+          MONITOR_CODE: ${{ steps.monitor.outputs.code }}
+          DELIVERY_CODE: ${{ steps.deliver.outputs.code }}
+          AGE_UPLOAD_OUTCOME: ${{ steps.upload_age.outcome }}
         run: |
           state="${{ steps.cfg.outputs.state }}"
           if [ "$state" = "enabled" ]; then
@@ -177,7 +189,13 @@ jobs:
             else
               state=auth_error   # 認証ステップで失敗し、取得まで進めなかった
             fi
-            if [ "$state" = "ok" ] && [ "${{ steps.deliver.outputs.code }}" != "0" ]; then state=delivery_error; fi
+            if [ "$state" = "ok" ]; then
+              if [ "$MONITOR_CODE" != "0" ]; then
+                state=failed
+              elif [ "$DELIVERY_CODE" != "0" ] || { [ -n "$SEO_REPORT_AGE_RECIPIENT" ] && [ "$AGE_UPLOAD_OUTCOME" != "success" ]; }; then
+                state=delivery_error
+              fi
+            fi
           fi
           [ -n "$state" ] || state=unknown
           echo "state=$state" >> "$GITHUB_OUTPUT"
