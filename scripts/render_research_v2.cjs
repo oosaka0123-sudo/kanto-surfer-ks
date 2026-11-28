@@ -105,7 +105,7 @@ function read(slot,date) {
   return d;
 }
 const morning=read('morning',today), prior=read('evening',today), evening=read('evening',tomorrow);
-const style='<style id="ks-research-v2-css">.ks-research{width:min(calc(100% - 16px),1040px);margin:18px auto;padding:14px;box-sizing:border-box;background:#092735;color:#f3faff;border:1px solid #315563;border-radius:10px;overflow-wrap:anywhere}.ks-research h2{font-size:clamp(19px,4.8vw,26px);line-height:1.5;margin:0 0 8px}.ks-research h3{font-size:18px;margin:12px 0 6px}.ks-research p,.ks-research li{font-family:system-ui,"Yu Gothic",sans-serif;font-size:14px;line-height:1.85;margin:8px 0}.ks-research a{color:#b8e9ff}.ks-research ol{padding-left:1.5em}.ks-research .ks-note{font-size:12px;color:#bdd4df}.ks-research .ks-slot+.ks-slot{border-top:1px solid #315563;margin-top:16px;padding-top:16px}</style>';
+const style='<style id="ks-research-v2-css">.ks-research{width:min(calc(100% - 16px),1040px);margin:18px auto;padding:14px;box-sizing:border-box;background:#092735;color:#f3faff;border:1px solid #315563;border-radius:10px;overflow-wrap:anywhere}.ks-research h2{font-size:clamp(19px,4.8vw,26px);line-height:1.5;margin:0 0 8px}.ks-research h3{font-size:18px;margin:12px 0 6px}.ks-research p,.ks-research li{font-family:system-ui,"Yu Gothic",sans-serif;font-size:14px;line-height:1.85;margin:8px 0}.ks-research a{color:#b8e9ff}.ks-research ol{padding-left:1.5em}.ks-research .ks-note{font-size:12px;color:#bdd4df}.ks-research .ks-slot{--day-accent:#7dd3fc;--day-head:#075985;--day-edge:#38bdf8;--day-panel:#102f42;border:1px solid var(--day-edge);border-radius:10px;padding:12px;background:var(--day-panel);box-sizing:border-box}.ks-research .ks-slot[data-day="tomorrow"]{--day-accent:#fdba74;--day-head:#9a3412;--day-edge:#fb923c;--day-panel:#362821}.ks-research .ks-slot+.ks-slot{margin-top:16px}.ks-research .ks-slot h2{background:var(--day-head);color:#fff;border-left:5px solid var(--day-accent);border-radius:8px;padding:10px 12px}.ks-research .ks-slot a{color:var(--day-accent)}</style>';
 const label = d => d.slot==='morning'?'当日朝の調査':'前日夜の予報';
 const stamp = d => '<p class="ks-note">'+esc(d.date)+' 対象｜'+esc(d.generated_at.slice(0,16).replace('T',' '))+' JST 更新｜'+label(d)+'</p>';
 const safeNote='<p class="ks-note">海上モデル波高は現地ブレイクサイズとは異なります。予報・順位は安全性を保証しません。現地状況と最新の注意報を確認してください。</p>';
@@ -159,7 +159,7 @@ function spotDay(day,d,s,fallback){
   if(fallback?.reports[s.id]) out+='<h3>参考：昨夜の予報</h3>'+reportMarkup(fallback,s);
   return out;
 }
-const wrap=(a,b)=>'<details class="ks-editorial-details"><summary>補足：独立調査記事・出典を見る</summary><section class="ks-research" id="ks-research-v2">'+style+'<div class="ks-slot">'+a+'</div><div class="ks-slot">'+b+'</div>'+safeNote+'</section></details>';
+const wrap=(a,b)=>'<details class="ks-editorial-details"><summary>補足：独立調査記事・出典を見る</summary><section class="ks-research" id="ks-research-v2">'+style+'<div class="ks-slot" data-day="today">'+a+'</div><div class="ks-slot" data-day="tomorrow">'+b+'</div>'+safeNote+'</section></details>';
 const files=[{rel:'index.html',id:'ranking',html:wrap(homeDay('今日',morning,prior),homeDay('明日',evening))}];
 for(const s of spots) files.push({rel:'spots/'+s.slug+'/index.html',id:s.id,html:wrap(spotDay('今日',morning,s,prior),spotDay('明日',evening,s))});
 const rendered=files.map(f=>{
