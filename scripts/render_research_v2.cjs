@@ -22,27 +22,28 @@ const iso = x => typeof x==='string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+0
 const esc = x => String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // Known publisher families and disclosed shared forecast origins. These are conservative
 // deduplication rules, not a claim that every article on a provider uses the same model.
+const canonicalHost=host=>host.toLowerCase().replace(/\.+$/,'');
 const hostIs=(host,base)=>host===base||host.endsWith('.'+base);
 function publisherFamily(host){
-  for(const base of ['bc01.com','surfline.com','namiaru.com','namiaru.tv','surf-ok.jp','surfarea.info','jma.go.jp','kaiho.mlit.go.jp','open-meteo.com']){
-    if(hostIs(host,base)) return base==='namiaru.tv'?'namiaru.com':base;
+  for(const base of ['bc01.com','surfline.com','namiaru.com','namiaru.tv','i92surf.com','surf-ok.jp','surfarea.info','jma.go.jp','kaiho.mlit.go.jp','open-meteo.com']){
+    if(hostIs(host,base)) return ['namiaru.tv','i92surf.com'].includes(base)?'namiaru.com':base;
   }
   return host.replace(/^www\./,'');
 }
 function sourceOrigin(s,u){
-  const host=u.hostname.toLowerCase();
+  const host=canonicalHost(u.hostname);
   const origin=s.upstream.normalize('NFKC').trim().toLowerCase().replace(/[\s\p{P}\p{S}]+/gu,'');
   if(!origin||['unknown','unverified','unspecified','na','none','不明','未確認','未特定','不詳','確認不可'].includes(origin)) return null;
   const forecast=s.kind==='forecast';
-  const sharedOpen=/openmeteo|オープンメテオ/.test(origin);
-  const sharedSurf=/surfline|サーフライン/.test(origin);
+  const sharedOpen=(forecast?/openmeteo|オープンメテオ/:/^(openmeteo|オープンメテオ)$/).test(origin);
+  const sharedSurf=(forecast?/surfline|サーフライン/:/^(surfline|サーフライン)$/).test(origin);
   if(sharedOpen||(forecast&&(host==='kanto.rss7.net'||hostIs(host,'surf-ok.jp')||hostIs(host,'surfarea.info')))) return 'open-meteo';
   // Namiaru's numerical forecast partnership with Surfline is documented; do not
   // count their forecasts as separate origins. Observed local reports remain distinct.
   if(sharedSurf||(forecast&&(hostIs(host,'surfline.com')||hostIs(host,'namiaru.com')||hostIs(host,'namiaru.tv')||hostIs(host,'i92surf.com')||/なみある|namiaru/.test(origin)))) return 'surfline';
   // Official marine forecasts relayed by the Coast Guard are issued by JMA.
   if(/^(jma|気象庁|japanmeteorologicalagency)$/.test(origin)||hostIs(host,'jma.go.jp')||
-     (hostIs(host,'kaiho.mlit.go.jp')&&(/\/keihou_kaijou\.html$/.test(u.pathname)||/\/micsmail\/dtl\/uyh\/3000\.html$/.test(u.pathname)))) return 'jma';
+     (hostIs(host,'kaiho.mlit.go.jp')&&['forecast','official_warning'].includes(s.kind))) return 'jma';
   return origin;
 }
 function read(slot,date) {
@@ -73,8 +74,8 @@ function read(slot,date) {
          Date.parse(d.generated_at)-Date.parse(s.checked_at)>86400000 ||
          (s.issued_at!==null && (!iso(s.issued_at) || Date.parse(s.issued_at)>Date.parse(s.checked_at)+900000))) bad('source '+k);
       let u; try {u=new URL(s.url);} catch {bad('url '+k);}
-      if(u.protocol!=='https:' || u.username || u.password || !u.hostname.includes('.')) bad('unsafe URL '+k);
-      const origin=sourceOrigin(s,u), publisher=publisherFamily(u.hostname.toLowerCase());
+      if(u.protocol!=='https:' || u.username || u.password || !canonicalHost(u.hostname).includes('.')) bad('unsafe URL '+k);
+      const origin=sourceOrigin(s,u), publisher=publisherFamily(canonicalHost(u.hostname));
       if(origin===null) bad('unknown upstream '+k);
       domains.add(publisher);
       upstream.add(origin);
