@@ -1,15 +1,16 @@
 # SEO登録・監視（読み取り専用）。波予報デプロイ（deploy-pages.yml）とは独立し、サイトを変更しない。
 # - technical: 公開情報のみ（HTTP / canonical / robots / sitemap）。ログ・Summaryに表示してよい。
-# - gsc: Search Console 公式API（webmasters.readonly）。結果は暗号化した artifact のみ。ログには件数だけ。
-#   認証が未設定なら何もせずスキップ（失敗扱いにしない）。Indexing API は使わない。
-# - notify: 定期/手動実行の失敗時に Issue へ通知（公開してよい情報のみ）。
+# - gsc: Search Console 公式API（webmasters.readonly）。デフォルトブランチ（main）でのみ実行。
+#   結果は非公開リポジトリ または age 公開鍵暗号 artifact にだけ渡す。ログには状態と件数だけ。
+#   認証や受け渡し先が未設定なら何もせず「未設定」として終了（失敗扱いにしない）。Indexing API は使わない。
+# - notify: 技術監査 / Search Console を別々の Issue で通知し、それぞれ本当に復旧したときだけ閉じる。
 name: SEO Monitor
 
 on:
   workflow_dispatch:
     inputs:
       run_gsc:
-        description: 'Search Console API の読み取り監視も実行する'
+        description: 'Search Console API の読み取り監視も実行する（main のみ）'
         type: boolean
         default: true
   schedule:
@@ -41,10 +42,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Unit tests (offline)
-        run: python3 tests/seo/test_seo_monitor.py
+        run: |
+          python3 tests/seo/test_seo_monitor.py
+          bash -n scripts/seo/deliver_report.sh scripts/seo/decrypt_report.sh
 
       - name: Audit production (HTTP / canonical / robots.txt / sitemap.xml)
-        id: audit
         run: |
           set +e
           python3 scripts/seo/technical_audit.py --config "$SEO_CONFIG" \
@@ -66,38 +68,54 @@ jobs:
 
   gsc:
     name: Search Console read-only monitor
-    if: github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.run_gsc)
+    # 認証つきの処理はデフォルトブランチ（main）でのみ。PR・他ブランチからは実行しない。
+    if: >-
+      github.event_name != 'pull_request' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      (github.event_name != 'workflow_dispatch' || inputs.run_gsc)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
-      id-token: write   # Workload Identity Federation（鍵なし認証）用。設定がなければ使われない
+      id-token: write   # Workload Identity Federation（鍵なし認証）用
+    outputs:
+      state: ${{ steps.final.outputs.state }}
     env:
       USE_WIF: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && vars.GCP_SERVICE_ACCOUNT != '' }}
-      USE_KEY: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON != '' }}
-      HAS_PASSPHRASE: ${{ secrets.SEO_REPORT_PASSPHRASE != '' }}
+      HAS_KEY: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON != '' }}
+      ALLOW_KEY: ${{ vars.GSC_ALLOW_SA_KEY == 'true' }}
+      SEO_REPORT_AGE_RECIPIENT: ${{ vars.SEO_REPORT_AGE_RECIPIENT }}
+      SEO_PRIVATE_REPO: ${{ vars.SEO_PRIVATE_REPO }}
     steps:
-      - name: Check credential configuration
+      - name: Check configuration
         id: cfg
         run: |
-          if [ "$USE_WIF" != "true" ] && [ "$USE_KEY" != "true" ]; then
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          auth=none
+          if [ "$USE_WIF" = "true" ]; then auth=wif
+          elif [ "$HAS_KEY" = "true" ] && [ "$ALLOW_KEY" = "true" ]; then auth=key
+          elif [ "$HAS_KEY" = "true" ]; then
+            echo "::notice title=GSC監視::鍵方式は既定で無効です（Workload Identity Federation を推奨。例外的に使う場合のみ GSC_ALLOW_SA_KEY=true）"
+          fi
+          echo "auth=$auth" >> "$GITHUB_OUTPUT"
+          if [ "$auth" = "none" ]; then
+            echo "state=not_configured" >> "$GITHUB_OUTPUT"
             echo "::notice title=GSC監視::Search Console の認証が未設定のためスキップしました（docs/seo-monitor.md 参照）"
             echo "### Search Console 監視: 未設定のためスキップ" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          if [ "$HAS_PASSPHRASE" != "true" ]; then
-            echo "::error title=GSC監視::SEO_REPORT_PASSPHRASE が未設定です。非公開データを安全に保存できないため実行しません"
+          if [ -z "$SEO_REPORT_AGE_RECIPIENT" ] && [ -z "$SEO_PRIVATE_REPO" ]; then
+            echo "state=misconfigured" >> "$GITHUB_OUTPUT"
+            echo "::error title=GSC監視::非公開レポートの受け渡し先（SEO_PRIVATE_REPO か SEO_REPORT_AGE_RECIPIENT）が未設定のため実行しません"
             exit 1
           fi
-          echo "enabled=true" >> "$GITHUB_OUTPUT"
+          echo "state=enabled" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v4
-        if: steps.cfg.outputs.enabled == 'true'
+        if: steps.cfg.outputs.state == 'enabled'
 
       - name: Authenticate (Workload Identity Federation)
         id: auth_wif
-        if: steps.cfg.outputs.enabled == 'true' && env.USE_WIF == 'true'
+        if: steps.cfg.outputs.auth == 'wif' && steps.cfg.outputs.state == 'enabled'
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -106,9 +124,9 @@ jobs:
           access_token_scopes: https://www.googleapis.com/auth/webmasters.readonly
           create_credentials_file: false
 
-      - name: Authenticate (service account key)
+      - name: Authenticate (service account key — explicit exception only)
         id: auth_key
-        if: steps.cfg.outputs.enabled == 'true' && env.USE_WIF != 'true'
+        if: steps.cfg.outputs.auth == 'key' && steps.cfg.outputs.state == 'enabled'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
@@ -118,47 +136,68 @@ jobs:
 
       - name: Read Search Console (URL Inspection + Search Analytics)
         id: monitor
-        if: steps.cfg.outputs.enabled == 'true'
+        if: steps.cfg.outputs.state == 'enabled'
         env:
           GSC_ACCESS_TOKEN: ${{ steps.auth_wif.outputs.access_token || steps.auth_key.outputs.access_token }}
         run: |
           set +e
-          python3 scripts/seo/gsc_monitor.py --config "$SEO_CONFIG" --out-dir "$RUNNER_TEMP/gsc-private"
+          python3 scripts/seo/gsc_monitor.py --config "$SEO_CONFIG" \
+            --out-dir "$RUNNER_TEMP/gsc-private" --status-out "$RUNNER_TEMP/gsc-status.json"
           echo "code=$?" >> "$GITHUB_OUTPUT"
 
-      - name: Encrypt private report
-        if: steps.cfg.outputs.enabled == 'true' && always()
+      - name: Deliver private report (private repo and/or age-encrypted artifact)
+        id: deliver
+        if: always() && steps.cfg.outputs.state == 'enabled'
         env:
-          SEO_REPORT_PASSPHRASE: ${{ secrets.SEO_REPORT_PASSPHRASE }}
+          SEO_PRIVATE_REPO_TOKEN: ${{ secrets.SEO_PRIVATE_REPO_TOKEN }}
         run: |
-          dir="$RUNNER_TEMP/gsc-private"
-          if [ ! -f "$dir/gsc-report.json" ]; then echo "レポートなし"; exit 0; fi
-          stamp=$(TZ=Asia/Tokyo date +%Y%m%d-%H%M)
-          mkdir -p "$RUNNER_TEMP/gsc-encrypted"
-          tar -C "$dir" -czf - . | openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt \
-            -pass env:SEO_REPORT_PASSPHRASE -out "$RUNNER_TEMP/gsc-encrypted/gsc-report-$stamp.tar.gz.enc"
-          rm -rf "$dir"
-          echo "### Search Console 監視: 取得完了（結果は暗号化 artifact のみ）" >> "$GITHUB_STEP_SUMMARY"
+          set +e
+          site=$(python3 -c "import json;print(json.load(open('$SEO_CONFIG'))['site_id'])")
+          bash scripts/seo/deliver_report.sh "$RUNNER_TEMP/gsc-private" "$RUNNER_TEMP/gsc-encrypted" "$site"
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          rm -rf "$RUNNER_TEMP/gsc-private"
 
-      - name: Upload encrypted report
-        if: steps.cfg.outputs.enabled == 'true' && always()
+      - name: Upload age-encrypted report
+        if: always() && steps.cfg.outputs.state == 'enabled' && env.SEO_REPORT_AGE_RECIPIENT != ''
         uses: actions/upload-artifact@v4
         with:
-          name: gsc-report-encrypted
-          path: ${{ runner.temp }}/gsc-encrypted/*.enc
+          name: gsc-report-age
+          path: ${{ runner.temp }}/gsc-encrypted/*.age
           if-no-files-found: ignore
           retention-days: 90
 
-      - name: Fail on API errors
-        if: steps.cfg.outputs.enabled == 'true' && steps.monitor.outputs.code != '0'
+      - name: Determine state
+        id: final
+        if: always()
         run: |
-          echo "::error title=GSC監視::Search Console API の取得に失敗しました（詳細は暗号化レポート参照）"
-          exit 1
+          state="${{ steps.cfg.outputs.state }}"
+          if [ "$state" = "enabled" ]; then
+            if [ -f "$RUNNER_TEMP/gsc-status.json" ]; then
+              state=$(python3 -c "import json;print(json.load(open('$RUNNER_TEMP/gsc-status.json'))['state'])")
+            else
+              state=auth_error   # 認証ステップで失敗し、取得まで進めなかった
+            fi
+            if [ "$state" = "ok" ] && [ "${{ steps.deliver.outputs.code }}" != "0" ]; then state=delivery_error; fi
+          fi
+          [ -n "$state" ] || state=unknown
+          echo "state=$state" >> "$GITHUB_OUTPUT"
+          label=$(case "$state" in
+            ok) echo "取得・保存完了";; not_configured) echo "未設定のためスキップ";;
+            misconfigured) echo "設定不足";; auth_error) echo "認証/権限エラー";;
+            partial) echo "一部取得失敗";; failed) echo "取得失敗";; delivery_error) echo "取得は成功・保存に失敗";;
+            *) echo "$state";; esac)
+          echo "### Search Console 監視: $label（state=$state）" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f "$RUNNER_TEMP/gsc-status.json" ]; then
+            python3 -c "import json;s=json.load(open('$RUNNER_TEMP/gsc-status.json'));print(f\"- URL検査 {s['inspections_ok']}/{s['inspections_total']}・検索実績 {s['analytics_ok']}/{s['analytics_total']}・検索データ {s['search_data']}・キーワード表 {s['keywords']}\")" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          case "$state" in ok|not_configured) exit 0;; *) echo "::error title=GSC監視::state=$state"; exit 1;; esac
 
   notify:
     name: Notify on failure / recovery
     needs: [technical, gsc]
-    if: always() && github.event_name != 'pull_request'
+    if: >-
+      always() && github.event_name != 'pull_request' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -168,9 +207,9 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       TECH: ${{ needs.technical.result }}
-      GSC: ${{ needs.gsc.result }}
+      GSC_RESULT: ${{ needs.gsc.result }}
+      GSC_STATE: ${{ needs.gsc.outputs.state }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-      TITLE: 'SEO監視アラート（自動）'
     steps:
       - name: Download technical audit
         if: needs.technical.result == 'failure'
@@ -180,31 +219,56 @@ jobs:
           path: audit
         continue-on-error: true
 
-      - name: Open, update or close alert issue
+      - name: Open, update or close alert issues
         run: |
-          existing=$(gh issue list --state open --search "in:title \"$TITLE\"" --json number --jq '.[0].number // empty')
           now=$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M JST')
-          if [ "$TECH" = "failure" ] || [ "$GSC" = "failure" ]; then
-            {
-              echo "## $now SEO監視でエラー"
-              echo "- 実行: $RUN_URL"
-              echo "- 技術監査（公開情報）: $TECH"
-              echo "- Search Console 読み取り: $GSC（非公開データはここに書きません。暗号化レポートを確認）"
-              if [ -f audit/technical-audit.json ]; then
-                echo ""
-                echo "### 技術監査のエラー"
-                python3 -c "import json;r=json.load(open('audit/technical-audit.json'));[print('- '+i['check']+': '+i['url']+' — '+i['message']) for i in r['findings'] if i['level']=='error']"
-              fi
-            } > body.md
-            if [ -n "$existing" ]; then
-              gh issue comment "$existing" --body-file body.md
-            else
-              gh issue create --title "$TITLE" --body-file body.md
-            fi
-          elif [ -n "$existing" ] && [ "$TECH" = "success" ]; then
-            gh issue comment "$existing" --body "## $now 復旧を確認しました
-          - 実行: $RUN_URL（技術監査: $TECH / Search Console: $GSC）"
-            gh issue close "$existing"
-          else
-            echo "通知不要（technical=$TECH gsc=$GSC）"
-          fi
+          find_issue() { gh issue list --state open --search "in:title \"$1\"" --json number,title --jq ".[] | select(.title == \"$1\") | .number" | head -1; }
+          alert() {  # $1=title $2=body file
+            n=$(find_issue "$1")
+            if [ -n "$n" ]; then gh issue comment "$n" --body-file "$2"; else gh issue create --title "$1" --body-file "$2"; fi
+          }
+          recover() {  # $1=title $2=message
+            n=$(find_issue "$1")
+            if [ -n "$n" ]; then gh issue comment "$n" --body "## $now 復旧を確認しました
+          $2
+          - 実行: $RUN_URL"; gh issue close "$n"; fi
+          }
+
+          # --- 技術監査（公開情報）
+          T_TITLE='SEO監視アラート（自動）: 技術監査'
+          case "$TECH" in
+            failure)
+              {
+                echo "## $now 技術監査でエラー"
+                echo "- 実行: $RUN_URL"
+                if [ -f audit/technical-audit.json ]; then
+                  python3 -c "import json;r=json.load(open('audit/technical-audit.json'));[print('- '+i['check']+': '+i['url']+' — '+i['message']) for i in r['findings'] if i['level']=='error']"
+                else
+                  echo "- 監査結果ファイルなし（テスト失敗または実行エラー。実行ログを確認）"
+                fi
+              } > tech.md
+              alert "$T_TITLE" tech.md ;;
+            success) recover "$T_TITLE" "- 技術監査: エラー0" ;;
+            *) echo "技術監査: $TECH（通知なし）" ;;
+          esac
+
+          # --- Search Console（非公開データは書かない。状態名のみ）
+          G_TITLE='SEO監視アラート（自動）: Search Console'
+          state="${GSC_STATE:-}"
+          [ -z "$state" ] && [ "$GSC_RESULT" = "failure" ] && state=unknown_failure
+          case "$state" in
+            ok) recover "$G_TITLE" "- Search Console 読み取り: 取得・保存完了" ;;
+            not_configured|"") echo "Search Console: ${state:-$GSC_RESULT}（未設定・スキップは通知も復旧扱いもしない）" ;;
+            *)
+              case "$state" in
+                misconfigured) msg="設定不足（受け渡し先が未設定など）" ;;
+                auth_error) msg="認証/権限エラー（Workload Identity・サービスアカウントのGSC権限を確認）" ;;
+                partial) msg="一部の取得に失敗（再試行後も失敗）" ;;
+                failed) msg="取得に失敗" ;;
+                delivery_error) msg="取得は成功、非公開レポートの保存に失敗" ;;
+                *) msg="不明な失敗（実行ログを確認）" ;;
+              esac
+              # shellcheck disable=SC2016  # backticks are Markdown, not command substitution
+              printf '## %s Search Console 監視: %s\n- state: `%s`\n- 実行: %s\n- 取得データはここには書きません（非公開の保存先を確認）\n' "$now" "$msg" "$state" "$RUN_URL" > gsc.md
+              alert "$G_TITLE" gsc.md ;;
+          esac
