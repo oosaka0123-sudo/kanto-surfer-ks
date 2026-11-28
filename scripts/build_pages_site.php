@@ -152,12 +152,12 @@ function buildForecastPage(
     $spotNavLinks = buildSpotNavigationLinks($spots, $assetPrefix, $homePage ? null : $id);
 
     $title = $homePage
-        ? '関東サーファーKS｜今日・明日の波予想BEST9'
-        : $name . 'の波予報｜関東サーファーKS';
+        ? '関東の波情報・波予想 BEST9｜関東サーファーKS'
+        : $name . 'の波情報・波予想｜関東サーファーKS';
     $description = $homePage
-        ? '関東9地点の今日・明日の波予想ランキングと各ポイント約100字の予報記事。'
-        : $name . '（' . $region . '）の時間別・10日間モデル波予報。Open-Meteo海洋モデルを使用しています。';
-    $heading = $homePage ? '関東9地点の波予報' : $name . ($id === 'kugenuma' ? 'の波情報' : 'の波予報');
+        ? '湘南・茨城・千葉の9地点を比較できる今日・明日のモデル波予想ランキング。各ポイントの波高・風・潮位・10日間予報と外部ライブカメラ案内へ。'
+        : $name . '（' . $region . '）の今日・明日の波情報と時間別・10日間の波予想。Open-Meteoのモデル波高・風向風速、参考潮位、外部ライブカメラ案内を掲載。';
+    $heading = $homePage ? '関東9地点の波情報・波予想' : $name . 'の波情報';
     $intro = $homePage
         ? '関東9地点の波サイズ参考予想と100字記事を掲載。波・風グラフと10日間予報は各スポットページからご覧ください。'
         : $name . '（' . $region . '）のモデル予報です。モデル波高は実際のブレイクサイズを直接示す値ではありません。';
@@ -234,6 +234,12 @@ function buildForecastPage(
   <meta name="description" content="' . h($description) . '">
   <link rel="canonical" href="' . h($canonicalUrl) . '">
   <title>' . h($title) . '</title>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="関東サーファーKS">
+  <meta property="og:title" content="' . h($title) . '">
+  <meta property="og:description" content="' . h($description) . '">
+  <meta property="og:url" content="' . h($canonicalUrl) . '">
+  <meta property="og:locale" content="ja_JP">
   <link rel="stylesheet" href="' . h($assetPrefix) . 'styles.css?v=' . h($styleVersion) . '">
   <script defer src="' . h($assetPrefix) . 'app.js?v=' . h($appVersion) . '"></script>
 </head>
