@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "site_id": "kanto",
+  "site_name": "関東サーファーKS",
+  "base_url": "https://kanto.rss7.net/",
+  "gsc_property": "https://kanto.rss7.net/",
+  "timezone": "Asia/Tokyo",
+  "keywords_csv": "docs/seo/priority-keywords.csv",
+  "keyword_column": "キーワード",
+  "keyword_url_column": "対象URL",
+  "spot_pages": [
+    {"name": "鵠沼", "url": "https://kanto.rss7.net/spots/kugenuma/"},
+    {"name": "由比ヶ浜", "url": "https://kanto.rss7.net/spots/yuigahama/"},
+    {"name": "大洗・大貫", "url": "https://kanto.rss7.net/spots/oarai-onuki/"},
+    {"name": "鹿嶋・平井", "url": "https://kanto.rss7.net/spots/kashima-hirai/"},
+    {"name": "片貝", "url": "https://kanto.rss7.net/spots/katakai/"},
+    {"name": "一宮", "url": "https://kanto.rss7.net/spots/ichinomiya/"},
+    {"name": "太東", "url": "https://kanto.rss7.net/spots/taito/"},
+    {"name": "御宿", "url": "https://kanto.rss7.net/spots/onjuku/"},
+    {"name": "鴨川・マルキ", "url": "https://kanto.rss7.net/spots/kamogawa-maruki/"}
+  ],
+  "other_indexable_pages": [
+    "https://kanto.rss7.net/",
+    "https://kanto.rss7.net/about/",
+    "https://kanto.rss7.net/contact/",
+    "https://kanto.rss7.net/privacy/"
+  ],
+  "noindex_pages": [
+    "https://kanto.rss7.net/contact/thanks/"
+  ],
+  "not_found_probe": "https://kanto.rss7.net/__ks-seo-monitor-404-probe__/",
+  "http_to_https_probe": "http://kanto.rss7.net/",
+  "comparison_windows_days": [7, 28, 90],
+  "gsc_data_lag_days": 3
+}

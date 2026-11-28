@@ -18,3 +18,7 @@ Thumbs.db
 # Runtime public forecast payloads
 /data/public/*.json
 !/data/public/.gitkeep
+
+# Decrypted private Search Console reports (never commit)
+/gsc-report-private/
+*.tar.gz.enc

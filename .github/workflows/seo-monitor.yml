@@ -1,0 +1,210 @@
+# SEO登録・監視（読み取り専用）。波予報デプロイ（deploy-pages.yml）とは独立し、サイトを変更しない。
+# - technical: 公開情報のみ（HTTP / canonical / robots / sitemap）。ログ・Summaryに表示してよい。
+# - gsc: Search Console 公式API（webmasters.readonly）。結果は暗号化した artifact のみ。ログには件数だけ。
+#   認証が未設定なら何もせずスキップ（失敗扱いにしない）。Indexing API は使わない。
+# - notify: 定期/手動実行の失敗時に Issue へ通知（公開してよい情報のみ）。
+name: SEO Monitor
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_gsc:
+        description: 'Search Console API の読み取り監視も実行する'
+        type: boolean
+        default: true
+  schedule:
+    - cron: '43 21 * * *'   # 毎日 06:43 JST（GSCデータは2〜3日遅れのため朝1回で十分）
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/seo/**'
+      - 'tests/seo/**'
+      - 'config/seo-monitor.json'
+      - '.github/workflows/seo-monitor.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-monitor-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  SEO_CONFIG: config/seo-monitor.json
+
+jobs:
+  technical:
+    name: Technical audit (public data)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unit tests (offline)
+        run: python3 tests/seo/test_seo_monitor.py
+
+      - name: Audit production (HTTP / canonical / robots.txt / sitemap.xml)
+        id: audit
+        run: |
+          set +e
+          python3 scripts/seo/technical_audit.py --config "$SEO_CONFIG" \
+            --json-out "$RUNNER_TEMP/technical-audit.json" --md-out "$RUNNER_TEMP/technical-audit.md"
+          code=$?
+          cat "$RUNNER_TEMP/technical-audit.md" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+          exit $code
+
+      - name: Upload technical audit (public data only)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: technical-audit
+          path: |
+            ${{ runner.temp }}/technical-audit.json
+            ${{ runner.temp }}/technical-audit.md
+          if-no-files-found: ignore
+          retention-days: 30
+
+  gsc:
+    name: Search Console read-only monitor
+    if: github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.run_gsc)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write   # Workload Identity Federation（鍵なし認証）用。設定がなければ使われない
+    env:
+      USE_WIF: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && vars.GCP_SERVICE_ACCOUNT != '' }}
+      USE_KEY: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON != '' }}
+      HAS_PASSPHRASE: ${{ secrets.SEO_REPORT_PASSPHRASE != '' }}
+    steps:
+      - name: Check credential configuration
+        id: cfg
+        run: |
+          if [ "$USE_WIF" != "true" ] && [ "$USE_KEY" != "true" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=GSC監視::Search Console の認証が未設定のためスキップしました（docs/seo-monitor.md 参照）"
+            echo "### Search Console 監視: 未設定のためスキップ" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ "$HAS_PASSPHRASE" != "true" ]; then
+            echo "::error title=GSC監視::SEO_REPORT_PASSPHRASE が未設定です。非公開データを安全に保存できないため実行しません"
+            exit 1
+          fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.enabled == 'true'
+
+      - name: Authenticate (Workload Identity Federation)
+        id: auth_wif
+        if: steps.cfg.outputs.enabled == 'true' && env.USE_WIF == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/webmasters.readonly
+          create_credentials_file: false
+
+      - name: Authenticate (service account key)
+        id: auth_key
+        if: steps.cfg.outputs.enabled == 'true' && env.USE_WIF != 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/webmasters.readonly
+          create_credentials_file: false
+
+      - name: Read Search Console (URL Inspection + Search Analytics)
+        id: monitor
+        if: steps.cfg.outputs.enabled == 'true'
+        env:
+          GSC_ACCESS_TOKEN: ${{ steps.auth_wif.outputs.access_token || steps.auth_key.outputs.access_token }}
+        run: |
+          set +e
+          python3 scripts/seo/gsc_monitor.py --config "$SEO_CONFIG" --out-dir "$RUNNER_TEMP/gsc-private"
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Encrypt private report
+        if: steps.cfg.outputs.enabled == 'true' && always()
+        env:
+          SEO_REPORT_PASSPHRASE: ${{ secrets.SEO_REPORT_PASSPHRASE }}
+        run: |
+          dir="$RUNNER_TEMP/gsc-private"
+          if [ ! -f "$dir/gsc-report.json" ]; then echo "レポートなし"; exit 0; fi
+          stamp=$(TZ=Asia/Tokyo date +%Y%m%d-%H%M)
+          mkdir -p "$RUNNER_TEMP/gsc-encrypted"
+          tar -C "$dir" -czf - . | openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt \
+            -pass env:SEO_REPORT_PASSPHRASE -out "$RUNNER_TEMP/gsc-encrypted/gsc-report-$stamp.tar.gz.enc"
+          rm -rf "$dir"
+          echo "### Search Console 監視: 取得完了（結果は暗号化 artifact のみ）" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload encrypted report
+        if: steps.cfg.outputs.enabled == 'true' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gsc-report-encrypted
+          path: ${{ runner.temp }}/gsc-encrypted/*.enc
+          if-no-files-found: ignore
+          retention-days: 90
+
+      - name: Fail on API errors
+        if: steps.cfg.outputs.enabled == 'true' && steps.monitor.outputs.code != '0'
+        run: |
+          echo "::error title=GSC監視::Search Console API の取得に失敗しました（詳細は暗号化レポート参照）"
+          exit 1
+
+  notify:
+    name: Notify on failure / recovery
+    needs: [technical, gsc]
+    if: always() && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TECH: ${{ needs.technical.result }}
+      GSC: ${{ needs.gsc.result }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      TITLE: 'SEO監視アラート（自動）'
+    steps:
+      - name: Download technical audit
+        if: needs.technical.result == 'failure'
+        uses: actions/download-artifact@v4
+        with:
+          name: technical-audit
+          path: audit
+        continue-on-error: true
+
+      - name: Open, update or close alert issue
+        run: |
+          existing=$(gh issue list --state open --search "in:title \"$TITLE\"" --json number --jq '.[0].number // empty')
+          now=$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M JST')
+          if [ "$TECH" = "failure" ] || [ "$GSC" = "failure" ]; then
+            {
+              echo "## $now SEO監視でエラー"
+              echo "- 実行: $RUN_URL"
+              echo "- 技術監査（公開情報）: $TECH"
+              echo "- Search Console 読み取り: $GSC（非公開データはここに書きません。暗号化レポートを確認）"
+              if [ -f audit/technical-audit.json ]; then
+                echo ""
+                echo "### 技術監査のエラー"
+                python3 -c "import json;r=json.load(open('audit/technical-audit.json'));[print('- '+i['check']+': '+i['url']+' — '+i['message']) for i in r['findings'] if i['level']=='error']"
+              fi
+            } > body.md
+            if [ -n "$existing" ]; then
+              gh issue comment "$existing" --body-file body.md
+            else
+              gh issue create --title "$TITLE" --body-file body.md
+            fi
+          elif [ -n "$existing" ] && [ "$TECH" = "success" ]; then
+            gh issue comment "$existing" --body "## $now 復旧を確認しました
+          - 実行: $RUN_URL（技術監査: $TECH / Search Console: $GSC）"
+            gh issue close "$existing"
+          else
+            echo "通知不要（technical=$TECH gsc=$GSC）"
+          fi
