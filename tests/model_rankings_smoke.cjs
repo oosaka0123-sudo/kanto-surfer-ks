@@ -48,6 +48,8 @@ try{
   assert.equal(strip(html,p.id),p.id==='ranking'?homeOriginal:original);
   if(p.id==='ranking')assert.ok(!html.includes('data-forecast')&&!html.includes('daily-forecast'));
   assert.ok(html.includes('ks-model'));
+  assert.ok(html.includes('（'+today+'）')&&html.includes('（'+tomorrow+'）'),'absolute dates on '+p.id);
+  assert.ok(html.includes('<time datetime="'+gen+'">2026-11-27 07:20 JST</time>'),'JST generation time on '+p.id);
   if(i===0){assert.equal((html.match(/<li class="ks-model-item">/g)||[]).length,18);}
   else{assert.ok(html.includes('今日の波の狙い方'));assert.ok(html.includes('明日の波の狙い方'));}
  }
@@ -101,6 +103,7 @@ try{
  const held=JSON.parse(fs.readFileSync(path.join(site,'data/model-ranking.json'),'utf8'));
  assert.equal(held.today.status,'held');assert.equal(held.tomorrow.status,'held');
  assert.ok(snap()[0].includes('ランキングは保留'));
+ assert.ok(snap().every(html=>html.includes('（'+today+'）')&&html.includes('（'+tomorrow+'）')),'held dates remain visible');
  assert.ok(!snap()[0].includes('KSモデル参考ランキング BEST9'));
  console.log('PASS model: same-hour comparison, 18x2 ~100-char articles, 9 rankings, escaping, idempotence, held fallback');
 }finally{fs.rmSync(tmp,{recursive:true,force:true});}

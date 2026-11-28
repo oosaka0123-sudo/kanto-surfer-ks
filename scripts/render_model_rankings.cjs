@@ -179,15 +179,21 @@ function applyEditorial(day,slot){
 applyEditorial(model.today,'morning');
 applyEditorial(model.tomorrow,'evening');
 const style='<style id="ks-model-rank-css">.ks-model{width:min(calc(100% - 16px),1040px);margin:18px auto;padding:16px;box-sizing:border-box;background:#0b2c39;color:#f4fafb;border:1px solid #3d6674;border-radius:12px;overflow-wrap:anywhere}.ks-model h2{margin:0 0 10px;font-size:clamp(19px,5vw,26px);line-height:1.45}.ks-model h3{font-size:18px;margin:0 0 5px}.ks-model .ks-model-info{font-size:12px;color:#bdd5df;line-height:1.7}.ks-model-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}.ks-model-item{padding:12px;border:1px solid #335663;border-radius:9px}.ks-model-item p,.ks-model p{font:14px/1.75 system-ui,"Yu Gothic",sans-serif;margin:6px 0}.ks-surf-size{display:inline-block;margin:5px 0 7px;padding:5px 9px;border:1px solid #b3b4a4;border-radius:5px;font-size:13px;color:#fff4d3;font-weight:700}.ks-surf-disclaimer{font-size:12px;color:#c4d2d9;line-height:1.65;margin:6px 0 10px}.ks-model a{color:#bbeaff;text-decoration:underline}.ks-model .ks-model-day+.ks-model-day{border-top:1px solid #3d6674;margin-top:18px;padding-top:18px}.ks-editorial-details{width:min(calc(100% - 16px),1040px);margin:8px auto;color:#d3e7ef}.ks-editorial-details summary{cursor:pointer;font-size:13px;padding:7px}.ks-editorial-details .ks-research{margin:8px auto}</style>';
+// Absolute target dates and source generation timestamp survive delayed cron and cached pages.
+function sourceStamp(){
+ if(!model.generated_at)return '<p class="ks-model-info">予報データ生成時刻：確認できません</p>';
+ const jst=new Date(Date.parse(model.generated_at)+9*3600000).toISOString().slice(0,16).replace('T',' ');
+ return '<p class="ks-model-info">予報データ生成：<time datetime="'+esc(model.generated_at)+'">'+esc(jst)+' JST</time>｜対象日・時刻をご確認ください。</p>';
+}
 function blockDay(d,label,id){
- if(d.status!=='model_reference')return '<div class="ks-model-day"><h2>'+label+'の関東 波情報</h2><p>9地点の比較可能なモデル予報が揃っていないため、参考ランキングは保留です。</p><p class="ks-model-info">不足：'+esc(d.missing.join('、'))+'</p></div>';
+ if(d.status!=='model_reference')return '<div class="ks-model-day"><h2>'+label+'の関東 波情報（'+esc(d.date)+'）</h2><p>9地点の比較可能なモデル予報が揃っていないため、参考ランキングは保留です。</p><p class="ks-model-info">不足：'+esc(d.missing.join('、'))+'</p></div>';
  const lis=d.entries.map(e=>'<li class="ks-model-item"><h3>'+e.rank+'位 <a href="'+(id==='ranking'?'spots/'+esc(e.slug)+'/':'../../spots/'+esc(e.slug)+'/')+'">'+esc(e.name)+'</a></h3><span class="ks-surf-size">波サイズ予想：'+esc(e.surf_size.label)+'（試験推定）</span><p>'+esc(e.home)+'</p></li>').join('');
- return '<div class="ks-model-day"><h2>'+label+'の関東 KSモデル参考ランキング BEST9</h2><p class="ks-model-info">朝7〜10時の目安として、共通の9時の海上モデル波高・周期・風と海岸向きを比較。波サイズは沖の波高・周期・波向きと海岸向きからの未較正の試験推定で、実際のブレイクサイズや安全性を保証しません。</p><ol class="ks-model-list">'+lis+'</ol></div>';
+ return '<div class="ks-model-day"><h2>'+label+'の関東 KSモデル参考ランキング BEST9（'+esc(d.date)+'）</h2><p class="ks-model-info">朝7〜10時の目安として、共通の9時の海上モデル波高・周期・風と海岸向きを比較。波サイズは沖の波高・周期・波向きと海岸向きからの未較正の試験推定で、実際のブレイクサイズや安全性を保証しません。</p><ol class="ks-model-list">'+lis+'</ol></div>';
 }
 function spotDay(d,s,label){
  const e=d.entries.find(x=>x.id===s.id);
- if(!e)return '<div class="ks-model-day"><h2>'+label+'の波の狙い方</h2><p>比較可能なモデルデータが不足しているため、この日の短文予報は保留です。</p></div>';
- return '<div class="ks-model-day"><h2>'+label+'の波の狙い方</h2><p class="ks-model-info">KSモデル参考 '+e.rank+'位／9地点・朝9時代表値</p><span class="ks-surf-size">波サイズ予想：'+esc(e.surf_size.label)+'（試験推定）</span><p>'+esc(e.detail)+'</p><p class="ks-surf-disclaimer">未較正のモデル換算目安です。現地の波サイズではありません。</p></div>';
+ if(!e)return '<div class="ks-model-day"><h2>'+label+'の波の狙い方（'+esc(d.date)+'）</h2><p>比較可能なモデルデータが不足しているため、この日の短文予報は保留です。</p></div>';
+ return '<div class="ks-model-day"><h2>'+label+'の波の狙い方（'+esc(d.date)+'）</h2><p class="ks-model-info">KSモデル参考 '+e.rank+'位／9地点・朝9時代表値</p><span class="ks-surf-size">波サイズ予想：'+esc(e.surf_size.label)+'（試験推定）</span><p>'+esc(e.detail)+'</p><p class="ks-surf-disclaimer">未較正のモデル換算目安です。現地の波サイズではありません。</p></div>';
 }
 function inject(file,id,body){
  let html=fs.readFileSync(file,'utf8');
@@ -200,7 +206,7 @@ function inject(file,id,body){
  const at=html.indexOf(editorial)>=0?html.indexOf(editorial):
    id==='ranking'?html.indexOf('</main>'):html.indexOf('<section class="forecast-section"');
  if(at<0||(id!=='ranking'&&!html.includes('data-forecast'))||!html.includes('</main>'))throw Error('Unexpected page '+file);
- const content=a+'<section class="ks-model" id="ks-model-'+id+'">'+style+body+'</section>'+b;
+ const content=a+'<section class="ks-model" id="ks-model-'+id+'">'+style+sourceStamp()+body+'</section>'+b;
  fs.writeFileSync(file,html.slice(0,at)+content+html.slice(at));
 }
 const pages=[{id:'ranking',rel:'index.html',body:blockDay(model.today,'今日','ranking')+blockDay(model.tomorrow,'明日','ranking')}];
