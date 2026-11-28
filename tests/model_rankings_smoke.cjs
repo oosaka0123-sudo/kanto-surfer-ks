@@ -48,6 +48,9 @@ try{
   assert.equal(strip(html,p.id),p.id==='ranking'?homeOriginal:original);
   if(p.id==='ranking')assert.ok(!html.includes('data-forecast')&&!html.includes('daily-forecast'));
   assert.ok(html.includes('ks-model'));
+  assert.ok(html.includes('<div class="ks-model-day" data-day="today"><h2>今日') && html.includes('<div class="ks-model-day" data-day="tomorrow"><h2>明日'),'day colors on '+p.id);
+  assert.ok(html.includes('--day-head:#075985')&&html.includes('--day-head:#9a3412'),'distinct palette on '+p.id);
+
   assert.ok(html.includes('（'+today+'）')&&html.includes('（'+tomorrow+'）'),'absolute dates on '+p.id);
   assert.ok(html.includes('<time datetime="'+gen+'">2026-11-27 07:20 JST</time>'),'JST generation time on '+p.id);
   if(i===0){assert.equal((html.match(/<li class="ks-model-item">/g)||[]).length,18);}
